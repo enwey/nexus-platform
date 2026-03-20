@@ -1,0 +1,1850 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Platform Mobile UI Showcase</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(10, 20, 36, 0.8);
+      --panel-strong: #0d1a2d;
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #ecf5ff;
+      --muted: #94a3b8;
+      --cyan: #5eead4;
+      --blue: #60a5fa;
+      --gold: #fbbf24;
+      --rose: #fb7185;
+      --green: #4ade80;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      --radius: 28px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Avenir Next", "SF Pro Display", "Segoe UI Variable", "PingFang SC", "Noto Sans SC", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.24), transparent 24%),
+        radial-gradient(circle at top right, rgba(251, 191, 36, 0.14), transparent 28%),
+        linear-gradient(180deg, #081120 0%, #050c17 60%, #03070d 100%);
+    }
+
+    .shell {
+      width: min(1480px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background:
+        linear-gradient(135deg, rgba(14, 27, 47, 0.96), rgba(8, 16, 29, 0.92)),
+        radial-gradient(circle at 85% 15%, rgba(94, 234, 212, 0.2), transparent 28%);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.28), transparent 65%);
+      filter: blur(6px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: rgba(94, 234, 212, 0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(94, 234, 212, 0.18);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #bfd3e6;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .hero-meta span {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      color: #d7e3ef;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 34px 0 18px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .screen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: 30px;
+      border: 1px solid var(--line);
+      background: rgba(7, 13, 23, 0.82);
+      box-shadow: var(--shadow);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .card-head h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .platform {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .phone {
+      position: relative;
+      height: clamp(580px, 62vw, 700px);
+      overflow: hidden;
+      border-radius: 34px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background:
+        linear-gradient(180deg, rgba(13, 26, 45, 0.96), rgba(7, 13, 23, 0.98)),
+        radial-gradient(circle at 10% 0%, rgba(94, 234, 212, 0.16), transparent 30%);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      width: 120px;
+      height: 28px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(2, 6, 14, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 3;
+    }
+
+    .screen {
+      height: 100%;
+      padding: 56px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      overflow: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .screen::-webkit-scrollbar {
+      display: none;
+    }
+
+    .statusbar,
+    .tabbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #dce8f4;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .nav-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .badge,
+    .pill,
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .badge {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #dbeafe;
+    }
+
+    .pill {
+      padding: 8px 14px;
+      background: rgba(94, 234, 212, 0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(94, 234, 212, 0.16);
+    }
+
+    .chip {
+      padding: 7px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #dbe7f4;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .hero-panel {
+      padding: 18px;
+      border-radius: 26px;
+      background:
+        linear-gradient(135deg, rgba(96, 165, 250, 0.24), rgba(251, 191, 36, 0.18)),
+        linear-gradient(180deg, rgba(17, 24, 39, 0.65), rgba(12, 18, 30, 0.9));
+      min-height: 174px;
+    }
+
+    .hero-panel h4,
+    .section h4 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-panel p,
+    .section p,
+    .list-item p,
+    .tile p {
+      margin: 0;
+      color: #bbd0e4;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .cta-row,
+    .stack,
+    .row,
+    .chips,
+    .stat-grid,
+    .list {
+      display: flex;
+      gap: 10px;
+    }
+
+    .stack,
+    .list {
+      flex-direction: column;
+    }
+
+    .cta-row,
+    .row,
+    .chips {
+      flex-wrap: wrap;
+    }
+
+    .cta {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 0;
+      background: linear-gradient(135deg, #5eead4, #60a5fa);
+      color: #03111d;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .cta.ghost {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .section {
+      padding: 16px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .tile,
+    .list-item,
+    .mini-card {
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .tile strong,
+    .list-item strong,
+    .mini-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .poster {
+      min-height: 130px;
+      border-radius: 22px;
+      background:
+        linear-gradient(160deg, rgba(251, 191, 36, 0.25), rgba(96, 165, 250, 0.18)),
+        linear-gradient(180deg, rgba(9, 13, 24, 0.6), rgba(9, 13, 24, 0.96));
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    .poster::after {
+      content: "";
+      position: absolute;
+      right: -26px;
+      bottom: -24px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+    }
+
+    .poster.small {
+      min-height: 100px;
+    }
+
+    .progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(135deg, #5eead4, #60a5fa);
+    }
+
+    .avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #5eead4, #60a5fa);
+      color: #04111d;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .tabbar {
+      margin-top: auto;
+      padding: 14px 8px 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      color: #91a7bc;
+    }
+
+    .tabbar strong {
+      color: var(--text);
+    }
+
+    .game-canvas {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(94, 234, 212, 0.16), transparent 24%),
+        linear-gradient(180deg, #090f19 0%, #060912 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-canvas::before,
+    .game-canvas::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(8px);
+    }
+
+    .game-canvas::before {
+      width: 180px;
+      height: 180px;
+      top: 20%;
+      left: -40px;
+      background: rgba(96, 165, 250, 0.18);
+    }
+
+    .game-canvas::after {
+      width: 140px;
+      height: 140px;
+      bottom: 14%;
+      right: -30px;
+      background: rgba(251, 191, 36, 0.16);
+    }
+
+    .game-ui {
+      width: calc(100% - 40px);
+      padding: 16px;
+      border-radius: 24px;
+      background: rgba(4, 9, 17, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+
+    .onboarding-visual {
+      min-height: 240px;
+      border-radius: 28px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(94, 234, 212, 0.22), transparent 24%),
+        radial-gradient(circle at 70% 30%, rgba(96, 165, 250, 0.2), transparent 26%),
+        linear-gradient(160deg, rgba(10, 20, 36, 0.95), rgba(6, 12, 20, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .onboarding-orb,
+    .onboarding-card,
+    .onboarding-ring {
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .onboarding-orb {
+      width: 104px;
+      height: 104px;
+      top: 26px;
+      left: 26px;
+      background: radial-gradient(circle at 35% 35%, #5eead4, #2563eb 72%);
+      box-shadow: 0 0 40px rgba(37, 99, 235, 0.34);
+    }
+
+    .onboarding-ring {
+      width: 190px;
+      height: 190px;
+      right: -20px;
+      top: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .onboarding-card {
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .pager-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .pager-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .pager-dots span.active {
+      width: 24px;
+      background: linear-gradient(135deg, #5eead4, #60a5fa);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .auth-tab {
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #dbe7f4;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .auth-tab.active {
+      color: #03111d;
+      background: linear-gradient(135deg, #5eead4, #60a5fa);
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .auth-field {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .auth-field strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .auth-field p {
+      margin: 0;
+      color: #bfd3e6;
+      font-size: 12px;
+    }
+
+    .auth-code-row {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 10px;
+    }
+
+    .auth-helper {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .favorite-strip {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .favorite-card {
+      min-height: 138px;
+      padding: 14px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background:
+        linear-gradient(160deg, rgba(96, 165, 250, 0.18), rgba(94, 234, 212, 0.12)),
+        linear-gradient(180deg, rgba(11, 18, 32, 0.82), rgba(8, 13, 23, 0.96));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .favorite-card strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .favorite-card p {
+      margin: 0;
+      color: #bfd3e6;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .favorite-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #dce8f4;
+    }
+
+    .quick-favorite {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .quick-favorite strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .quick-favorite p {
+      margin: 0;
+      color: #bfd3e6;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+    }
+
+    .fullbleed-phone {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .fullbleed-phone .card-head {
+      padding: 0 4px 10px;
+    }
+
+    .phone.phone-fullscreen {
+      height: 760px;
+      border-radius: 38px;
+      background:
+        radial-gradient(circle at top, rgba(96, 165, 250, 0.18), transparent 22%),
+        linear-gradient(180deg, #030711 0%, #050913 38%, #02050c 100%);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.48);
+    }
+
+    .phone.phone-fullscreen::before {
+      display: none;
+    }
+
+    .screen.game-screen {
+      padding: 0;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    .game-topbar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .floating-cluster {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .floating-pill {
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(4, 9, 17, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(14px);
+      color: #eef6ff;
+      font-size: 12px;
+    }
+
+    .game-stage {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(94, 234, 212, 0.12), transparent 22%),
+        radial-gradient(circle at 20% 70%, rgba(96, 165, 250, 0.14), transparent 26%),
+        radial-gradient(circle at 80% 30%, rgba(251, 191, 36, 0.1), transparent 24%),
+        linear-gradient(180deg, #050a14 0%, #060b12 100%);
+    }
+
+    .game-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(transparent 0 78%, rgba(2, 5, 12, 0.64) 100%),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 74px),
+        linear-gradient(rgba(255,255,255,0.025) 0, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 74px);
+      opacity: 0.6;
+    }
+
+    .boss-orb {
+      position: absolute;
+      top: 16%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fde68a, #f97316 60%, rgba(249, 115, 22, 0.05) 100%);
+      box-shadow: 0 0 70px rgba(249, 115, 22, 0.36);
+    }
+
+    .boss-orb::after {
+      content: "";
+      position: absolute;
+      inset: -18px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .player-core,
+    .energy-node {
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .player-core {
+      width: 58px;
+      height: 58px;
+      left: 50%;
+      bottom: 24%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle at 30% 30%, #5eead4, #2563eb 75%);
+      box-shadow: 0 0 40px rgba(37, 99, 235, 0.42);
+    }
+
+    .energy-node {
+      width: 14px;
+      height: 14px;
+      background: rgba(191, 219, 254, 0.9);
+      box-shadow: 0 0 16px rgba(191, 219, 254, 0.4);
+    }
+
+    .node-a { top: 34%; left: 18%; }
+    .node-b { top: 44%; right: 16%; }
+    .node-c { bottom: 30%; left: 24%; }
+
+    .game-bottom {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      z-index: 3;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .hud-panel {
+      padding: 12px 14px;
+      border-radius: 22px;
+      background: rgba(4, 9, 17, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      color: #eef6ff;
+    }
+
+    .hud-panel strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .hud-panel p {
+      margin: 0;
+      font-size: 12px;
+      color: #bfd3e6;
+    }
+
+    .joystick {
+      width: 88px;
+      height: 88px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      position: relative;
+    }
+
+    .joystick::after {
+      content: "";
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      left: 22px;
+      top: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .action-stack {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fire-button {
+      width: 72px;
+      height: 72px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      position: relative;
+      background: radial-gradient(circle at 30% 30%, #fb7185, #be123c 78%);
+      box-shadow: 0 0 26px rgba(244, 63, 94, 0.34);
+    }
+
+    .fire-button.small {
+      width: 52px;
+      height: 52px;
+      background: radial-gradient(circle at 30% 30%, #fbbf24, #d97706 78%);
+      box-shadow: 0 0 22px rgba(217, 119, 6, 0.3);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metrics .mini-card {
+      text-align: center;
+      padding: 12px;
+    }
+
+    .footer-note {
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .shell {
+        width: min(100%, calc(100% - 28px));
+        padding-top: 28px;
+      }
+
+      .hero {
+        padding: 28px;
+      }
+
+      .hero p {
+        font-size: 15px;
+      }
+
+      .phone {
+        height: clamp(560px, 78vw, 680px);
+      }
+    }
+
+    @media (max-width: 820px) {
+      .section-title {
+        align-items: flex-start;
+      }
+
+      .screen-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        max-width: 430px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .phone {
+        height: 680px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100%, calc(100% - 24px));
+        padding-top: 24px;
+      }
+
+      .hero {
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: clamp(28px, 8vw, 40px);
+      }
+
+      .hero-meta span {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .section-title {
+        margin-top: 26px;
+      }
+
+      .section-title h2 {
+        font-size: 22px;
+      }
+
+      .card {
+        padding: 14px;
+        border-radius: 24px;
+      }
+
+      .phone {
+        height: min(700px, calc(100vh - 120px));
+        border-radius: 28px;
+      }
+
+      .phone::before {
+        top: 10px;
+        width: 108px;
+        height: 24px;
+      }
+
+      .screen {
+        padding: 48px 14px 14px;
+      }
+
+      .hero-panel,
+      .section,
+      .tile,
+      .list-item,
+      .mini-card,
+      .poster {
+        border-radius: 18px;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .tile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .favorite-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .cta {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .shell {
+        width: min(100%, calc(100% - 16px));
+      }
+
+      .hero {
+        padding: 20px;
+        border-radius: 24px;
+      }
+
+      .hero p,
+      .section-title p,
+      .footer-note {
+        font-size: 12px;
+      }
+
+      .card {
+        padding: 12px;
+        border-radius: 20px;
+      }
+
+      .card-head h3 {
+        font-size: 15px;
+      }
+
+      .phone {
+        height: min(680px, calc(100vh - 96px));
+      }
+
+      .nav-title {
+        font-size: 20px;
+      }
+
+      .hero-panel h4,
+      .section h4 {
+        font-size: 22px;
+      }
+
+      .badge,
+      .pill,
+      .chip {
+        font-size: 11px;
+      }
+
+      .game-ui {
+        width: calc(100% - 20px);
+        padding: 14px;
+      }
+
+      .phone.phone-fullscreen {
+        height: min(760px, calc(100vh - 72px));
+      }
+
+      .game-topbar {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+      }
+
+      .game-bottom {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        align-items: end;
+      }
+
+      .action-stack {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <span class="eyebrow">Commercial Mobile UI</span>
+      <h1>Nexus Platform 移动端商业化 UI 原型</h1>
+      <p>
+        这份页面集将 Android 和 iOS 统一成一套更成熟的游戏平台体验，强调游戏发现、会员转化、资产沉淀与内容运营。
+        页面以 HTML 平铺展示，适合先做产品讨论、视觉对齐，再拆分到原生实现。
+      </p>
+      <div class="hero-meta">
+        <span>品牌方向: 次世代游戏娱乐平台</span>
+        <span>平台策略: Android / iOS 共用视觉语言</span>
+        <span>页面覆盖: 启动、3 张引导、邮箱登录、注册、忘记密码、首页、详情、会员、运行态</span>
+      </div>
+    </section>
+
+    <div class="section-title">
+      <h2>核心页面总览</h2>
+      <p>建议先以这套 UI 原型作为移动端产品蓝本，再逐页映射到 Android XML / Compose 与 SwiftUI。</p>
+    </div>
+
+    <section class="screen-grid">
+      <article class="card">
+        <div class="card-head">
+          <h3>01 启动画面</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>5G · 100%</span>
+            </div>
+            <div style="flex:1; display:grid; place-items:center;">
+              <div style="text-align:center;">
+                <div style="width:92px;height:92px;border-radius:28px;margin:0 auto 20px;background:linear-gradient(135deg,#5eead4,#60a5fa);display:grid;place-items:center;color:#04111d;font-size:34px;font-weight:900;">N</div>
+                <div style="font-size:32px;font-weight:800;letter-spacing:-0.05em;">Nexus Arcade</div>
+                <div class="muted" style="margin-top:10px;">Play everywhere. Progress everywhere.</div>
+              </div>
+            </div>
+            <div class="progress"><span style="width:58%;"></span></div>
+            <div class="muted" style="text-align:center;font-size:12px;">同步云端游戏资产与推荐流</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>02 引导页 1</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 98%</span>
+            </div>
+            <div class="onboarding-visual">
+              <div class="onboarding-orb"></div>
+              <div class="onboarding-ring"></div>
+              <div class="onboarding-card" style="left:26px; right:26px; bottom:26px; padding:18px;">
+                <span class="pill">引导 1 / 3</span>
+                <h4 style="margin-top:12px;">收藏你的常玩游戏</h4>
+                <p>让首页优先展示你最关心的内容，打开 App 就能马上继续玩。</p>
+              </div>
+            </div>
+            <div class="pager-dots"><span class="active"></span><span></span><span></span></div>
+            <div class="cta-row">
+              <button class="cta">下一步</button>
+              <button class="cta ghost">跳过</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>03 引导页 2</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 97%</span>
+            </div>
+            <div class="onboarding-visual" style="background:radial-gradient(circle at 70% 20%, rgba(251, 191, 36, 0.18), transparent 24%), radial-gradient(circle at 24% 72%, rgba(96, 165, 250, 0.18), transparent 28%), linear-gradient(160deg, rgba(10, 20, 36, 0.95), rgba(6, 12, 20, 0.98));">
+              <div class="onboarding-card" style="left:20px; top:28px; width:124px; height:160px; padding:16px;"></div>
+              <div class="onboarding-card" style="right:22px; top:48px; width:146px; height:112px; padding:16px;"></div>
+              <div class="onboarding-card" style="left:32px; right:32px; bottom:28px; padding:18px; border-radius:26px;">
+                <span class="pill">引导 2 / 3</span>
+                <h4 style="margin-top:12px;">云存档与跨端同步</h4>
+                <p>手机、平板与未来多端统一账号，换设备也能无缝接着玩。</p>
+              </div>
+            </div>
+            <div class="pager-dots"><span></span><span class="active"></span><span></span></div>
+            <div class="cta-row">
+              <button class="cta">下一步</button>
+              <button class="cta ghost">跳过</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>04 引导页 3</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 96%</span>
+            </div>
+            <div class="onboarding-visual" style="background:radial-gradient(circle at 50% 18%, rgba(251, 113, 133, 0.18), transparent 24%), radial-gradient(circle at 20% 70%, rgba(94, 234, 212, 0.18), transparent 28%), linear-gradient(160deg, rgba(10, 20, 36, 0.95), rgba(6, 12, 20, 0.98));">
+              <div class="onboarding-orb" style="left:auto; right:32px; top:28px; background:radial-gradient(circle at 35% 35%, #fbbf24, #ef4444 72%);"></div>
+              <div class="onboarding-card" style="left:26px; right:26px; bottom:26px; padding:18px;">
+                <span class="pill">引导 3 / 3</span>
+                <h4 style="margin-top:12px;">官方活动和会员权益</h4>
+                <p>限时活动、签到奖励、会员礼包与运营内容都会在首页及时提醒。</p>
+              </div>
+            </div>
+            <div class="pager-dots"><span></span><span></span><span class="active"></span></div>
+            <div class="cta-row">
+              <button class="cta">开始使用</button>
+              <button class="cta ghost">返回上一步</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>05 登录</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 92%</span>
+            </div>
+            <div class="stack" style="gap:12px;">
+              <span class="pill">仅支持邮箱登录</span>
+              <div class="nav-title">欢迎回来</div>
+              <div class="muted">你可以选择邮箱验证码登录，或者使用邮箱 + 密码登录。</div>
+            </div>
+            <div class="auth-tabs">
+              <span class="auth-tab active">邮箱验证码登录</span>
+              <span class="auth-tab">邮箱 + 密码登录</span>
+            </div>
+            <div class="section stack">
+              <strong>方式 A: 邮箱验证码登录</strong>
+              <div class="auth-field">
+                <strong>邮箱地址</strong>
+                <p>请输入你注册时使用的邮箱地址</p>
+              </div>
+              <div class="auth-code-row">
+                <div class="auth-field">
+                  <strong>邮箱验证码</strong>
+                  <p>验证码 6 位，10 分钟内有效</p>
+                </div>
+                <div class="auth-field" style="display:grid; place-items:center;">
+                  <strong style="margin:0;">获取验证码</strong>
+                </div>
+              </div>
+              <button class="cta">验证码登录</button>
+            </div>
+            <div class="section stack">
+              <strong>方式 B: 邮箱 + 密码登录</strong>
+              <div class="auth-field">
+                <strong>邮箱地址</strong>
+                <p>输入邮箱账号</p>
+              </div>
+              <div class="auth-field">
+                <strong>登录密码</strong>
+                <p>输入你的账号密码完成登录</p>
+              </div>
+              <button class="cta ghost">邮箱 + 密码登录</button>
+              <div class="auth-helper">
+                <span>没有账号？去注册</span>
+                <span>忘记密码</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>06 注册</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 91%</span>
+            </div>
+            <div class="stack" style="gap:12px;">
+              <span class="pill">邮箱创建账号</span>
+              <div class="nav-title">创建你的 Nexus 账号</div>
+              <div class="muted">注册后即可同步收藏、云存档和会员权益。</div>
+            </div>
+            <div class="section stack">
+              <div class="auth-field">
+                <strong>邮箱地址</strong>
+                <p>用于登录、找回密码和接收安全通知</p>
+              </div>
+              <div class="auth-code-row">
+                <div class="auth-field">
+                  <strong>邮箱验证码</strong>
+                  <p>完成邮箱验证后激活账号</p>
+                </div>
+                <div class="auth-field" style="display:grid; place-items:center;">
+                  <strong style="margin:0;">发送验证码</strong>
+                </div>
+              </div>
+              <div class="auth-field">
+                <strong>登录密码</strong>
+                <p>8 位以上，建议包含大小写字母和数字</p>
+              </div>
+              <div class="auth-field">
+                <strong>确认密码</strong>
+                <p>再次输入密码完成确认</p>
+              </div>
+              <div class="cta-row">
+                <button class="cta">注册并进入 App</button>
+                <button class="cta ghost">返回登录</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>07 忘记密码</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 90%</span>
+            </div>
+            <div class="stack" style="gap:12px;">
+              <span class="pill">邮箱重置密码</span>
+              <div class="nav-title">找回你的账号</div>
+              <div class="muted">通过邮箱验证码验证身份，然后设置新的登录密码。</div>
+            </div>
+            <div class="section stack">
+              <div class="auth-field">
+                <strong>注册邮箱</strong>
+                <p>请输入需要重置密码的邮箱地址</p>
+              </div>
+              <div class="auth-code-row">
+                <div class="auth-field">
+                  <strong>邮箱验证码</strong>
+                  <p>点击发送后去邮箱完成验证</p>
+                </div>
+                <div class="auth-field" style="display:grid; place-items:center;">
+                  <strong style="margin:0;">发送验证码</strong>
+                </div>
+              </div>
+              <div class="auth-field">
+                <strong>新密码</strong>
+                <p>设置新的登录密码</p>
+              </div>
+              <div class="auth-field">
+                <strong>确认新密码</strong>
+                <p>请再次输入确保一致</p>
+              </div>
+              <div class="cta-row">
+                <button class="cta">重置密码</button>
+                <button class="cta ghost">返回登录</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>08 首页</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>5G · 88%</span>
+            </div>
+            <div class="nav">
+              <div>
+                <div class="muted">晚上好，Mika</div>
+                <div class="nav-title">先玩你收藏的</div>
+              </div>
+              <div class="avatar">MK</div>
+            </div>
+            <div class="search">搜索收藏、历史、活动、好友房间</div>
+            <div class="section stack" style="background:linear-gradient(135deg, rgba(96, 165, 250, 0.16), rgba(94, 234, 212, 0.08)), rgba(255,255,255,0.04);">
+              <div class="row" style="justify-content:space-between; align-items:center;">
+                <strong>我的收藏</strong>
+                <span class="pill">按最近玩过排序</span>
+              </div>
+              <div class="favorite-strip">
+                <div class="favorite-card">
+                  <div>
+                    <strong>Starfall Arena</strong>
+                    <p>上次打到钻石晋级赛，点开即可回到上次房间。</p>
+                  </div>
+                  <div class="favorite-meta">
+                    <span>2 分钟开玩</span>
+                    <span>云存档已同步</span>
+                  </div>
+                </div>
+                <div class="favorite-card">
+                  <div>
+                    <strong>Kingdom Merge</strong>
+                    <p>离线收益可领取，适合碎片时间快速回坑。</p>
+                  </div>
+                  <div class="favorite-meta">
+                    <span>轻松经营</span>
+                    <span>支持离线</span>
+                  </div>
+                </div>
+              </div>
+              <div class="quick-favorite">
+                <div>
+                  <strong>一键进入收藏夹</strong>
+                  <p>支持长按置顶、拖动排序、最近打开优先展示。</p>
+                </div>
+                <span class="badge">收藏夹 12</span>
+              </div>
+            </div>
+            <div class="section stack">
+              <div class="row" style="justify-content:space-between; align-items:center;">
+                <strong>收藏不够看？继续推荐</strong>
+                <span class="muted">根据收藏偏好生成</span>
+              </div>
+              <div class="empty-state">
+                <strong style="display:block; margin-bottom:6px;">当收藏少于 3 个或为空时</strong>
+                <p>首页自动补齐“你可能会收藏”的推荐位，避免空首页，也帮助新用户更快建立自己的游戏库。</p>
+              </div>
+              <div class="tile-grid">
+                <div class="tile"><strong>Neon Drift</strong><p>因为你收藏了竞速和派对类游戏</p></div>
+                <div class="tile"><strong>Pixel Strike</strong><p>因为你偏好高帧率竞技体验</p></div>
+                <div class="tile"><strong>好友都在玩</strong><p>6 个房间可以直接加入</p></div>
+                <div class="tile"><strong>下载管理</strong><p>2 个收藏游戏待更新</p></div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span><strong>首页</strong></span>
+              <span>发现</span>
+              <span>库</span>
+              <span>我的</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>09 发现页</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 81%</span>
+            </div>
+            <div class="nav">
+              <div class="nav-title">发现</div>
+              <span class="badge">榜单</span>
+            </div>
+            <div class="chips">
+              <span class="chip">热门推荐</span>
+              <span class="chip">动作竞技</span>
+              <span class="chip">轻社交</span>
+              <span class="chip">新游预约</span>
+            </div>
+            <div class="poster small">
+              <div class="badge">编辑精选</div>
+              <h4 style="font-size:22px;">Neon Drift</h4>
+              <p>极速冲线、派对模式与好友竞速。</p>
+            </div>
+            <div class="stack">
+              <div class="list-item">
+                <strong>Top 1. Project Echo</strong>
+                <p>本周热度 98.6，适合 10 分钟一局的轻竞技体验。</p>
+              </div>
+              <div class="list-item">
+                <strong>Top 2. Kingdom Merge</strong>
+                <p>放置经营 + 联盟玩法，近 24 小时新增 26K 收藏。</p>
+              </div>
+              <div class="list-item">
+                <strong>Top 3. Pixel Strike</strong>
+                <p>像素射击风格升级，支持手柄映射与高帧率模式。</p>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span>首页</span>
+              <span><strong>发现</strong></span>
+              <span>库</span>
+              <span>我的</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>10 游戏详情</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>5G · 77%</span>
+            </div>
+            <div class="nav">
+              <span class="badge">返回</span>
+              <span class="badge">分享</span>
+            </div>
+            <div class="poster" style="min-height:190px;">
+              <span class="pill">S+ 推荐</span>
+              <h4>Starfall Arena</h4>
+              <p>赛季制 3v3 对战，支持云端战绩同步与好友组队语音。</p>
+            </div>
+            <div class="metrics">
+              <div class="mini-card"><strong>4.9</strong><p>评分</p></div>
+              <div class="mini-card"><strong>42MB</strong><p>安装包</p></div>
+              <div class="mini-card"><strong>128K</strong><p>在玩</p></div>
+            </div>
+            <div class="section stack">
+              <div class="row" style="justify-content:space-between;">
+                <strong>版本 2.7.1</strong>
+                <span class="muted">3 小时前更新</span>
+              </div>
+              <p>新增赛季地图“冰脉核心”、公会挑战模式和更稳定的多人连接体验。</p>
+              <div class="cta-row">
+                <button class="cta">立即下载</button>
+                <button class="cta ghost">加入心愿单</button>
+              </div>
+            </div>
+            <div class="section stack">
+              <strong>玩家评价</strong>
+              <p>“像主机派对游戏一样上头，移动端联机做得很顺。”</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>11 搜索结果</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 76%</span>
+            </div>
+            <div class="search">搜索: arena</div>
+            <div class="chips">
+              <span class="chip">全部</span>
+              <span class="chip">游戏</span>
+              <span class="chip">活动</span>
+              <span class="chip">开发者</span>
+            </div>
+            <div class="stack">
+              <div class="list-item">
+                <strong>Starfall Arena</strong>
+                <p>热门竞技 · 赛季更新中 · 评分 4.9</p>
+              </div>
+              <div class="list-item">
+                <strong>Arena Tactics</strong>
+                <p>策略战棋 · 新服开启 · 支持云端存档</p>
+              </div>
+              <div class="list-item">
+                <strong>Cyber Arena Cup</strong>
+                <p>官方活动 · 本周末开赛 · 奖池已开启</p>
+              </div>
+            </div>
+            <div class="section stack">
+              <strong>热门搜索</strong>
+              <div class="chips">
+                <span class="chip">联机派对</span>
+                <span class="chip">像素射击</span>
+                <span class="chip">模拟经营</span>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span>首页</span>
+              <span><strong>发现</strong></span>
+              <span>库</span>
+              <span>我的</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>12 游戏库</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>5G · 72%</span>
+            </div>
+            <div class="nav">
+              <div class="nav-title">我的游戏库</div>
+              <span class="badge">已下载 18</span>
+            </div>
+            <div class="section stack">
+              <div class="row" style="justify-content:space-between;">
+                <strong>继续游玩</strong>
+                <span class="muted">最近打开</span>
+              </div>
+              <div class="list-item">
+                <strong>Project Echo</strong>
+                <p>上次进度: 第 4 章 · 云存档已同步</p>
+                <div class="progress" style="margin-top:10px;"><span style="width:64%;"></span></div>
+              </div>
+            </div>
+            <div class="tile-grid">
+              <div class="tile"><strong>Starfall Arena</strong><p>可更新 2.7.1</p></div>
+              <div class="tile"><strong>Kingdom Merge</strong><p>本地已缓存</p></div>
+              <div class="tile"><strong>Neon Drift</strong><p>支持离线游玩</p></div>
+              <div class="tile"><strong>Pixel Strike</strong><p>云端备份完成</p></div>
+            </div>
+            <div class="section stack">
+              <div class="row" style="justify-content:space-between;">
+                <strong>下载管理</strong>
+                <span class="muted">后台队列 2</span>
+              </div>
+              <p>建议在 Wi-Fi 下自动更新大型资源包。</p>
+            </div>
+            <div class="tabbar">
+              <span>首页</span>
+              <span>发现</span>
+              <span><strong>库</strong></span>
+              <span>我的</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>13 会员 / 钱包</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 68%</span>
+            </div>
+            <div class="nav">
+              <div class="nav-title">会员中心</div>
+              <span class="pill">VIP 3</span>
+            </div>
+            <div class="hero-panel stack" style="background:
+              linear-gradient(135deg, rgba(251, 191, 36, 0.28), rgba(251, 113, 133, 0.18)),
+              linear-gradient(180deg, rgba(17, 24, 39, 0.7), rgba(12, 18, 30, 0.92));">
+              <span class="badge">年度会员</span>
+              <h4>尊享极速下载与专属礼包</h4>
+              <p>每月 10 张加速券、限定皮肤掉落提升、会员专属客服入口。</p>
+              <div class="cta-row">
+                <button class="cta">立即续费</button>
+                <button class="cta ghost">查看权益</button>
+              </div>
+            </div>
+            <div class="metrics">
+              <div class="mini-card"><strong>2860</strong><p>金币</p></div>
+              <div class="mini-card"><strong>18</strong><p>钻石</p></div>
+              <div class="mini-card"><strong>7</strong><p>加速券</p></div>
+            </div>
+            <div class="section stack">
+              <strong>可用权益</strong>
+              <p>会员日 8 折充值、限定头像框、优先体验新游测试、云存档扩容。</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>14 个人中心</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>5G · 64%</span>
+            </div>
+            <div class="section stack" style="background:
+              linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(94, 234, 212, 0.1)),
+              rgba(255, 255, 255, 0.05);">
+              <div class="row" style="align-items:center; gap:14px;">
+                <div class="avatar" style="width:64px;height:64px;">MK</div>
+                <div>
+                  <strong style="font-size:20px; display:block;">Mika Chen</strong>
+                  <p>Nexus ID 008241 · 城市赛季玩家</p>
+                </div>
+              </div>
+              <div class="chips">
+                <span class="chip">VIP 3</span>
+                <span class="chip">创作者候选</span>
+                <span class="chip">实名认证</span>
+              </div>
+            </div>
+            <div class="tile-grid">
+              <div class="tile"><strong>成就</strong><p>142 枚</p></div>
+              <div class="tile"><strong>关注</strong><p>89 个</p></div>
+              <div class="tile"><strong>收藏</strong><p>37 款</p></div>
+              <div class="tile"><strong>工单</strong><p>2 条处理中</p></div>
+            </div>
+            <div class="stack">
+              <div class="list-item"><strong>账号与安全</strong><p>设备管理、隐私授权、登录保护</p></div>
+              <div class="list-item"><strong>通知中心</strong><p>活动提醒、下载完成、好友邀请</p></div>
+              <div class="list-item"><strong>创作者入口</strong><p>申请上架、资源包提交、数据看板</p></div>
+            </div>
+            <div class="tabbar">
+              <span>首页</span>
+              <span>发现</span>
+              <span>库</span>
+              <span><strong>我的</strong></span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>15 下载状态</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 61%</span>
+            </div>
+            <div class="nav">
+              <div class="nav-title">下载与更新</div>
+              <span class="badge">Wi-Fi 自动更新</span>
+            </div>
+            <div class="stack">
+              <div class="list-item">
+                <strong>Starfall Arena</strong>
+                <p>资源包 42MB / 68MB</p>
+                <div class="progress" style="margin-top:10px;"><span style="width:61%;"></span></div>
+              </div>
+              <div class="list-item">
+                <strong>Kingdom Merge</strong>
+                <p>解压校验中，MD5 校验完成</p>
+                <div class="progress" style="margin-top:10px;"><span style="width:92%; background:linear-gradient(135deg,#fbbf24,#4ade80);"></span></div>
+              </div>
+              <div class="list-item">
+                <strong>Pixel Strike</strong>
+                <p>等待队列，预计 2 分钟后开始下载</p>
+              </div>
+            </div>
+            <div class="section stack">
+              <strong>下载策略</strong>
+              <p>建议支持后台下载、断点续传、低电量暂停、大包仅 Wi-Fi 下载。</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card fullbleed-phone">
+        <div class="card-head">
+          <h3>16 运行中游戏</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone phone-fullscreen">
+          <div class="screen game-screen">
+            <div class="game-stage">
+              <div class="boss-orb"></div>
+              <div class="energy-node node-a"></div>
+              <div class="energy-node node-b"></div>
+              <div class="energy-node node-c"></div>
+              <div class="player-core"></div>
+            </div>
+            <div class="game-topbar">
+              <div class="floating-cluster">
+                <span class="floating-pill">返回</span>
+                <span class="floating-pill">Starfall Arena</span>
+              </div>
+              <div class="floating-cluster">
+                <span class="floating-pill">5G</span>
+                <span class="floating-pill">•••</span>
+              </div>
+            </div>
+            <div class="game-bottom">
+              <div class="action-stack">
+                <div class="joystick"></div>
+                <div class="hud-panel">
+                  <strong>第 3 回合</strong>
+                  <p>Boss 狂暴倒计时 18 秒</p>
+                </div>
+              </div>
+              <div class="action-stack">
+                <div class="fire-button small"></div>
+                <div class="fire-button"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h3>17 运营活动页</h3>
+          <span class="platform">Android / iOS</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar">
+              <span>9:41</span>
+              <span>Wi-Fi · 56%</span>
+            </div>
+            <div class="nav">
+              <div class="nav-title">春季狂欢季</div>
+              <span class="pill">限时</span>
+            </div>
+            <div class="poster" style="min-height:220px;">
+              <span class="badge">运营大促</span>
+              <h4>连续 7 天挑战赛</h4>
+              <p>完成任务解锁限定挂件、返钻奖励和主题装扮。</p>
+            </div>
+            <div class="tile-grid">
+              <div class="tile"><strong>任务 1</strong><p>登录即领 100 金币</p></div>
+              <div class="tile"><strong>任务 2</strong><p>完成 3 局匹配赛</p></div>
+              <div class="tile"><strong>任务 3</strong><p>邀请 1 位好友回归</p></div>
+              <div class="tile"><strong>任务 4</strong><p>领取主题头像框</p></div>
+            </div>
+            <div class="cta-row">
+              <button class="cta">立即参与</button>
+              <button class="cta ghost">活动规则</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <p class="footer-note">
+      文件位置: <code>docs/mobile-commercial-ui/index.html</code>。
+      这是一份跨平台展示原型，不改动现有客户端代码；后续如果你愿意，我可以继续把这套视觉拆成 Android 和 iOS 的页面实现清单。
+    </p>
+  </div>
+</body>
+</html>
+
+
+
+
+
