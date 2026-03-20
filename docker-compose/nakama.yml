@@ -1,0 +1,56 @@
+# Nakama Server Configuration
+
+# The name of the server. Used for logging and metrics.
+NAKAMA_NAME = "mygame"
+
+# The server key to use for authentication. Must be a 32-character hex string.
+NAKAMA_SERVER_KEY = "defaultkeychanged"
+
+# The HTTP server key to use for authentication. Must be a 32-character hex string.
+NAKAMA_HTTP_KEY = "defaulthttpkeychanged"
+
+# The admin email address for the server.
+NAKAMA_ADMIN_EMAIL = "admin@example.com"
+
+# The admin password for the server.
+NAKAMA_ADMIN_PASSWORD = "password"
+
+# Database connection settings
+NAKAMA_DATABASE_ADDRESS = "postgres:5432"
+NAKAMA_DATABASE_USERNAME = "nexus"
+NAKAMA_DATABASE_PASSWORD = "nexus_password"
+NAKAMA_DATABASE_NAME = "nexus_platform"
+
+# Logging settings
+NAKAMA_LOG_LEVEL = "INFO"
+NAKAMA_LOG_DB_QUERIES = "false"
+
+# Runtime settings
+NAKAMA_RUNTIME_ENV = "production"
+NAKAMA_RUNTIME_JAVASCRIPT_EMBEDDED = "false"
+
+# Socket settings
+NAKAMA_SOCKET_PORT = 7350
+NAKAMA_SOCKET_PROTOCOL = "tcp"
+
+# API settings
+NAKAMA_API_PORT = 7351
+
+# Session settings
+NAKAMA_SESSION_EXPIRY_TOKEN = "86400"
+
+# Leaderboard settings
+NAKAMA_LEADERBOARD_RESET_SCHEDULE = "0 0 * * *"
+
+# Storage settings
+NAKAMA_STORAGE_PROVIDER = "postgresql"
+
+# Console settings
+NAKAMA_CONSOLE_PORT = 7351
+NAKAMA_CONSOLE_MAX_MESSAGE_SIZE_BYTES = "4096"
+
+# Match settings
+NAKAMA_MATCH_MATCH_EXECUTION_RETRY_MS = "5000"
+NAKAMA_MATCH_MATCH_REJOIN_MS = "10000"
+NAKAMA_MATCH_MINIMUM_SEATS = "2"
+NAKAMA_MATCH_MAXIMUM_SEATS = "64"

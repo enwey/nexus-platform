@@ -1,0 +1,32 @@
+{
+  "analytics": {
+    "enabled": true,
+    "retention_days": 30
+  },
+  "monitoring": {
+    "enabled": true,
+    "alerting": {
+      "enabled": true,
+      "channels": ["email", "slack"]
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "schedule": "0 2 * *",
+    "retention_days": 7
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "outputs": ["file", "elasticsearch"]
+  },
+  "performance": {
+    "enabled": true,
+    "thresholds": {
+      "response_time_ms": 500,
+      "error_rate_percent": 5,
+      "cpu_usage_percent": 80,
+      "memory_usage_percent": 85
+    }
+  }
+}

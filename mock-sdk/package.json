@@ -1,0 +1,33 @@
+{
+  "name": "wx-mock-sdk",
+  "version": "1.0.0",
+  "description": "WeChat Mini Game Mock SDK for Nexus Platform",
+  "type": "module",
+  "main": "dist/wx-mock-sdk.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui"
+  },
+  "keywords": [
+    "wechat",
+    "minigame",
+    "mock",
+    "sdk"
+  ],
+  "author": "Nexus Platform Team",
+  "license": "MIT",
+  "devDependencies": {
+    "terser": "^5.46.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.1",
+    "vitest": "^1.0.4",
+    "@vitest/ui": "^1.0.4",
+    "@vitest/coverage-v8": "^1.0.4"
+  }
+}

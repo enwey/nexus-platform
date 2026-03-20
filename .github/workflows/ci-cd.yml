@@ -1,0 +1,74 @@
+name: Nexus Platform CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies (Mock SDK)
+      working-directory: ./mock-sdk
+      run: npm ci
+    
+    - name: Build Mock SDK
+      working-directory: ./mock-sdk
+      run: npm run build
+    
+    - name: Run tests (Mock SDK)
+      working-directory: ./mock-sdk
+      run: npm test
+    
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Build Backend
+      working-directory: ./backend
+      run: mvn clean package -DskipTests
+    
+    - name: Run tests (Backend)
+      working-directory: ./backend
+      run: mvn test
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mock-sdk
+        path: mock-sdk/dist/
+        retention-days: 7
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend
+        path: backend/target/*.jar
+        retention-days: 7
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production..."
+        # Add deployment commands here
+        # For example: docker-compose up -d
+        # Or: kubectl apply -f k8s/
+        # Or: scp target/*.jar user@server:/path/

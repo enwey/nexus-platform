@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+dist/
+.DS_Store
+*.log
+*.tmp
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# Build
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+.env
+.env.local
+
+# Backup
+backups/
+*.sql
+*.dump
+
+# Test
+coverage/
+.nyc_output/
+
+# Temporary
+*.swp
+*.swo
+.cache/

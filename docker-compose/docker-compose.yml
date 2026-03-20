@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    environment:
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: nexus_password
+      POSTGRES_DB: nexus_platform
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - nexus-network
+
+  nakama:
+    image: heroiclabs/nakama:3.16.0
+    container_name: nexus-nakama
+    environment:
+      NAKAMA_NAME: mygame
+      NAKAMA_SERVER_KEY: defaultkeychanged
+      NAKAMA_DATABASE_ADDRESS: postgres:5432
+      NAKAMA_DATABASE_USERNAME: nexus
+      NAKAMA_DATABASE_PASSWORD: nexus_password
+      NAKAMA_DATABASE_NAME: nexus_platform
+      NAKAMA_LOG_LEVEL: INFO
+      NAKAMA_LOG_DB_QUERIES: false
+    depends_on:
+      - postgres
+    ports:
+      - "7350:7350"
+      - "7351:7351"
+    networks:
+      - nexus-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: nexus-minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio:/data
+    networks:
+      - nexus-network
+
+  backend:
+    build: ../backend
+    container_name: nexus-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexus_platform
+      SPRING_DATASOURCE_USERNAME: nexus
+      SPRING_DATASOURCE_PASSWORD: nexus_password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET_NAME: nexus-games
+    depends_on:
+      - postgres
+      - minio
+      - nakama
+    ports:
+      - "8080:8080"
+    networks:
+      - nexus-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - nexus-network
+
+networks:
+  nexus-network:
+    driver: bridge
+
+volumes:
+  postgres:
+  minio:

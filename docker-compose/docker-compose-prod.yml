@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    environment:
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: nexus_password
+      POSTGRES_DB: nexus_platform
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./postgres/backup:/backup
+    ports:
+      - "5432:5432"
+    networks:
+      - nexus-network
+
+  nakama:
+    image: heroiclabs/nakama:3.16.0
+    container_name: nexus-nakama
+    environment:
+      NAKAMA_NAME: mygame
+      NAKAMA_SERVER_KEY: defaultkeychanged
+      NAKAMA_HTTP_KEY: defaulthttpkeychanged
+      NAKAMA_DATABASE_ADDRESS: postgres:5432
+      NAKAMA_DATABASE_USERNAME: nexus
+      NAKAMA_DATABASE_PASSWORD: nexus_password
+      NAKAMA_DATABASE_NAME: nexus_platform
+      NAKAMA_LOG_LEVEL: INFO
+      NAKAMA_LOG_DB_QUERIES: false
+    depends_on:
+      - postgres
+    ports:
+      - "7350:7350"
+      - "7351:7351"
+    networks:
+      - nexus-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: nexus-minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio:/data
+      - ./minio/backup:/backup
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - nexus-network
+
+  backend:
+    build: ../backend
+    container_name: nexus-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexus_platform
+      SPRING_DATASOURCE_USERNAME: nexus
+      SPRING_DATASOURCE_PASSWORD: nexus_password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET_NAME: nexus-games
+    depends_on:
+      - postgres
+      - minio
+      - nakama
+    ports:
+      - "8080:8080"
+    networks:
+      - nexus-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - nexus-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexus-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus
+    networks:
+      - nexus-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexus-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: 'true'
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana:/var/lib/grafana
+    networks:
+      - nexus-network
+
+networks:
+  nexus-network:
+    driver: bridge
+
+volumes:
+  postgres:
+    driver: local
+  minio:
+    driver: local
+  prometheus:
+    driver: local
+  grafana:
+    driver: local

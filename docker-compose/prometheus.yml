@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'nexus-backend'
+    static_configs:
+      - targets: ['backend:8080/actuator/prometheus']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    scrape_timeout: 10s
+
+  - job_name: 'nexus-postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 30s
+
+  - job_name: 'nexus-redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 30s
+
+  - job_name: 'nexus-nakama'
+    static_configs:
+      - targets: ['nakama:7351']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 30s
