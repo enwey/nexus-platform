@@ -9,6 +9,9 @@ import com.nexus.platform.api.*
 import kotlinx.coroutines.*
 import io.nakama.apiclient.ApiClient
 
+/**
+ * JavaScript桥接类，用于WebView和原生代码之间的通信
+ */
 class NexusBridge(private val context: Context, private val webView: WebView) {
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -24,6 +27,9 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         registerApiHandlers()
     }
 
+    /**
+     * 注册API处理器
+     */
     private fun registerApiHandlers() {
         apiHandlers["wx.login"] = LoginApi(context)
         apiHandlers["wx.request"] = RequestApi(context)
@@ -46,6 +52,10 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         apiHandlers["wx.vibrateLong"] = VibrateApi(context)
     }
 
+    /**
+     * 接收来自JavaScript的消息
+     * @param message JSON格式的消息字符串
+     */
     @JavascriptInterface
     fun postMessage(message: String) {
         try {
@@ -73,6 +83,12 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         }
     }
 
+    /**
+     * 发送回调到JavaScript
+     * @param callbackId 回调ID
+     * @param data 返回数据
+     * @param error 错误信息
+     */
     private fun sendCallback(callbackId: String, data: Any?, error: String?) {
         val response = JsonObject().apply {
             addProperty("callbackId", callbackId)
@@ -93,6 +109,9 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         }
     }
 
+    /**
+     * 清理资源
+     */
     fun cleanup() {
         scope.cancel()
     }

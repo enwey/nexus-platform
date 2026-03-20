@@ -7,6 +7,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.nexus.platform.adapter.GameListAdapter
 import com.nexus.platform.model.Game
 
+/**
+ * 主Activity，显示游戏列表
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var gameListRecyclerView: RecyclerView
@@ -21,6 +24,9 @@ class MainActivity : AppCompatActivity() {
         loadGames()
     }
 
+    /**
+     * 初始化视图组件
+     */
     private fun initViews() {
         gameListRecyclerView = findViewById(R.id.gameListRecyclerView)
         gameListRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -30,6 +36,9 @@ class MainActivity : AppCompatActivity() {
         gameListRecyclerView.adapter = gameListAdapter
     }
 
+    /**
+     * 加载游戏列表数据
+     */
     private fun loadGames() {
         games.clear()
         games.add(Game(

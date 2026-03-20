@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
+/**
+ * 路由配置
+ */
 const routes = [
   {
     path: '/',
@@ -42,11 +45,17 @@ const routes = [
   }
 ]
 
+/**
+ * 创建路由实例
+ */
 const router = createRouter({
   history: createWebHistory(),
   routes
 })
 
+/**
+ * 路由前置守卫，进行权限验证
+ */
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   

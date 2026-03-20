@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # PostgreSQL数据库服务
   postgres:
     image: postgres:15-alpine
     container_name: nexus-postgres
@@ -16,6 +17,7 @@ services:
     networks:
       - nexus-network
 
+  # Nakama游戏服务器
   nakama:
     image: heroiclabs/nakama:3.16.0
     container_name: nexus-nakama
@@ -36,6 +38,7 @@ services:
     networks:
       - nexus-network
 
+  # MinIO对象存储服务
   minio:
     image: minio/minio:latest
     container_name: nexus-minio
@@ -51,6 +54,7 @@ services:
     networks:
       - nexus-network
 
+  # 后端服务
   backend:
     build: ../backend
     container_name: nexus-backend
@@ -73,6 +77,7 @@ services:
     networks:
       - nexus-network
 
+  # Redis缓存服务
   redis:
     image: redis:7-alpine
     container_name: nexus-redis
@@ -81,10 +86,12 @@ services:
     networks:
       - nexus-network
 
+# 网络配置
 networks:
   nexus-network:
     driver: bridge
 
+# 数据卷配置
 volumes:
   postgres:
   minio:

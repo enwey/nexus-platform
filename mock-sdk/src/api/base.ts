@@ -1,6 +1,10 @@
 import { nexusBridge } from '../core/NexusBridge'
 import type { LoginResult, RequestOption, StorageOption, SystemInfo } from '../types'
 
+/**
+ * 用户登录
+ * @param options 登录选项
+ */
 export const login = (options?: {
   timeout?: number
   success?: (res: LoginResult) => void
@@ -20,6 +24,10 @@ export const login = (options?: {
   })
 }
 
+/**
+ * 同步获取系统信息
+ * @return 系统信息
+ */
 export const getSystemInfoSync = (): SystemInfo => {
   if (nexusBridge.isNativeEnvironment()) {
     const result = nexusBridge.invokeNative('wx.getSystemInfoSync', {}) as any
@@ -28,6 +36,10 @@ export const getSystemInfoSync = (): SystemInfo => {
   return nexusBridge['getMockSystemInfo']()
 }
 
+/**
+ * 异步获取系统信息
+ * @param options 选项
+ */
 export const getSystemInfo = (options?: {
   success?: (res: SystemInfo) => void
   fail?: (err: any) => void
@@ -38,6 +50,10 @@ export const getSystemInfo = (options?: {
   options?.complete?.()
 }
 
+/**
+ * 发起网络请求
+ * @param options 请求选项
+ */
 export const request = (options: RequestOption): void => {
   nexusBridge.invokeNative('wx.request', {
     url: options.url,
@@ -59,6 +75,10 @@ export const request = (options: RequestOption): void => {
   })
 }
 
+/**
+ * 异步设置本地存储
+ * @param options 存储选项
+ */
 export const setStorage = (options: StorageOption): void => {
   if (nexusBridge.isNativeEnvironment()) {
     nexusBridge.invokeNative('wx.setStorage', {
@@ -87,6 +107,11 @@ export const setStorage = (options: StorageOption): void => {
   }
 }
 
+/**
+ * 同步设置本地存储
+ * @param key 键名
+ * @param data 数据
+ */
 export const setStorageSync = (key: string, data: any): void => {
   if (nexusBridge.isNativeEnvironment()) {
     nexusBridge.invokeNative('wx.setStorageSync', { key, data })
@@ -95,6 +120,10 @@ export const setStorageSync = (key: string, data: any): void => {
   }
 }
 
+/**
+ * 异步获取本地存储
+ * @param options 存储选项
+ */
 export const getStorage = (options: StorageOption): void => {
   if (nexusBridge.isNativeEnvironment()) {
     nexusBridge.invokeNative('wx.getStorage', {
@@ -122,6 +151,11 @@ export const getStorage = (options: StorageOption): void => {
   }
 }
 
+/**
+ * 同步获取本地存储
+ * @param key 键名
+ * @return 数据
+ */
 export const getStorageSync = (key: string): any => {
   if (nexusBridge.isNativeEnvironment()) {
     const result = nexusBridge.invokeNative('wx.getStorageSync', { key }) as any
@@ -134,6 +168,10 @@ export const getStorageSync = (key: string): any => {
   }
 }
 
+/**
+ * 异步删除本地存储
+ * @param options 存储选项
+ */
 export const removeStorage = (options: StorageOption): void => {
   if (nexusBridge.isNativeEnvironment()) {
     nexusBridge.invokeNative('wx.removeStorage', {
@@ -161,6 +199,10 @@ export const removeStorage = (options: StorageOption): void => {
   }
 }
 
+/**
+ * 同步删除本地存储
+ * @param key 键名
+ */
 export const removeStorageSync = (key: string): void => {
   if (nexusBridge.isNativeEnvironment()) {
     nexusBridge.invokeNative('wx.removeStorageSync', { key })
@@ -169,6 +211,10 @@ export const removeStorageSync = (key: string): void => {
   }
 }
 
+/**
+ * 异步清空本地存储
+ * @param options 选项
+ */
 export const clearStorage = (options?: {
   success?: () => void
   fail?: (err: any) => void
@@ -198,6 +244,9 @@ export const clearStorage = (options?: {
   }
 }
 
+/**
+ * 同步清空本地存储
+ */
 export const clearStorageSync = (): void => {
   if (nexusBridge.isNativeEnvironment()) {
     nexusBridge.invokeNative('wx.clearStorageSync', {})

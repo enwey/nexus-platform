@@ -7,12 +7,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * 用户服务类，处理用户相关的业务逻辑
+ */
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    /**
+     * 用户注册
+     * @param username 用户名
+     * @param password 密码
+     * @param email 邮箱
+     * @return 注册结果
+     */
     public Result<User> register(String username, String password, String email) {
         if (userRepository.existsByUsername(username)) {
             return Result.error("用户名已存在");
@@ -27,6 +37,12 @@ public class UserService {
         return Result.success(savedUser);
     }
 
+    /**
+     * 用户登录
+     * @param username 用户名
+     * @param password 密码
+     * @return 登录结果
+     */
     public Result<User> login(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElse(null);
@@ -42,6 +58,11 @@ public class UserService {
         return Result.success(user);
     }
 
+    /**
+     * 根据ID查找用户
+     * @param id 用户ID
+     * @return 用户信息
+     */
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
     }

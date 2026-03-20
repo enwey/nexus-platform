@@ -8,6 +8,9 @@ import android.content.ClipboardManager
 import com.google.gson.JsonObject
 import android.os.Build
 
+/**
+ * 震动API处理器
+ */
 class VibrateApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -32,6 +35,9 @@ class VibrateApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 剪贴板API处理器
+ */
 class ClipboardApi(private val context: Context) : ApiHandler {
     private val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
@@ -57,6 +63,9 @@ class ClipboardApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 用户信息API处理器
+ */
 class UserInfoApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
@@ -74,12 +83,18 @@ class UserInfoApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 分享API处理器
+ */
 class ShareApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf("errMsg" to "shareAppMessage:ok")
     }
 }
 
+/**
+ * 图片API处理器
+ */
 class ImageApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return when (api) {
@@ -110,6 +125,9 @@ class ImageApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 文件API处理器
+ */
 class FileApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return when (api) {

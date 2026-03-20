@@ -16,6 +16,9 @@ import com.nexus.platform.utils.ZipUtils
 import kotlinx.coroutines.*
 import java.io.File
 
+/**
+ * 游戏运行Activity，通过WebView加载和运行HTML5游戏
+ */
 class GameActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
@@ -26,6 +29,11 @@ class GameActivity : AppCompatActivity() {
     companion object {
         private const val EXTRA_GAME = "game"
         
+        /**
+         * 启动游戏Activity
+         * @param context 上下文
+         * @param game 游戏对象
+         */
         fun start(context: Context, game: Game) {
             val intent = Intent(context, GameActivity::class.java).apply {
                 putExtra(EXTRA_GAME, game)
@@ -50,11 +58,17 @@ class GameActivity : AppCompatActivity() {
         loadGame(game)
     }
 
+    /**
+     * 初始化视图组件
+     */
     private fun initViews() {
         webView = findViewById(R.id.gameWebView)
         gameManager = GameManager(this)
     }
 
+    /**
+     * 配置WebView设置
+     */
     @SuppressLint("SetJavaScriptEnabled")
     private fun initWebView() {
         val settings = webView.settings
@@ -91,11 +105,18 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 初始化JavaScript桥接
+     */
     private fun initBridge() {
         nexusBridge = NexusBridge(this, webView)
         webView.addJavascriptInterface(nexusBridge, "AndroidApp")
     }
 
+    /**
+     * 加载游戏
+     * @param game 游戏对象
+     */
     private fun loadGame(game: Game) {
         scope.launch {
             try {
@@ -135,6 +156,9 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 注入SDK到WebView
+     */
     private fun injectSDK() {
         scope.launch(Dispatchers.IO) {
             try {
@@ -148,10 +172,18 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 显示加载状态
+     * @param show 是否显示
+     */
     private fun showLoading(show: Boolean) {
         
     }
 
+    /**
+     * 显示错误信息
+     * @param message 错误消息
+     */
     private fun showError(message: String) {
         
     }

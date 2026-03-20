@@ -3,6 +3,9 @@ package com.nexus.platform.api
 import android.content.Context
 import com.google.gson.JsonObject
 
+/**
+ * 登录API处理器
+ */
 class LoginApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
@@ -12,6 +15,9 @@ class LoginApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 系统信息API处理器
+ */
 class SystemInfoApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val metrics = context.resources.displayMetrics

@@ -16,6 +16,9 @@ import java.security.MessageDigest;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 游戏服务类，处理游戏相关的业务逻辑
+ */
 @Service
 @RequiredArgsConstructor
 public class GameService {
@@ -25,6 +28,14 @@ public class GameService {
     @Value("${minio.bucket-name}")
     private String bucketName;
 
+    /**
+     * 上传游戏
+     * @param file 游戏文件
+     * @param name 游戏名称
+     * @param description 游戏描述
+     * @param developerId 开发者ID
+     * @return 上传结果
+     */
     public Result<Game> uploadGame(MultipartFile file, String name, String description, Long developerId) {
         try {
             String appId = generateAppId();
@@ -60,11 +71,20 @@ public class GameService {
         }
     }
 
+    /**
+     * 获取游戏列表
+     * @return 游戏列表
+     */
     public Result<List<Game>> getGameList() {
         List<Game> games = gameRepository.findByStatus(Game.GameStatus.APPROVED);
         return Result.success(games);
     }
 
+    /**
+     * 根据应用ID获取游戏
+     * @param appId 应用ID
+     * @return 游戏信息
+     */
     public Result<Game> getGameByAppId(String appId) {
         Game game = gameRepository.findByAppId(appId);
         if (game == null) {
@@ -73,11 +93,21 @@ public class GameService {
         return Result.success(game);
     }
 
+    /**
+     * 获取开发者的游戏列表
+     * @param developerId 开发者ID
+     * @return 游戏列表
+     */
     public Result<List<Game>> getDeveloperGames(Long developerId) {
         List<Game> games = gameRepository.findByDeveloperId(developerId);
         return Result.success(games);
     }
 
+    /**
+     * 审核通过游戏
+     * @param id 游戏ID
+     * @return 操作结果
+     */
     public Result<Void> approveGame(Long id) {
         Game game = gameRepository.findById(id).orElse(null);
         if (game == null) {
@@ -88,6 +118,11 @@ public class GameService {
         return Result.success();
     }
 
+    /**
+     * 拒绝游戏
+     * @param id 游戏ID
+     * @return 操作结果
+     */
     public Result<Void> rejectGame(Long id) {
         Game game = gameRepository.findById(id).orElse(null);
         if (game == null) {
@@ -98,10 +133,20 @@ public class GameService {
         return Result.success();
     }
 
+    /**
+     * 生成应用ID
+     * @return 应用ID
+     */
     private String generateAppId() {
         return "wx" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
 
+    /**
+     * 计算MD5哈希值
+     * @param data 数据
+     * @return MD5哈希值
+     * @throws Exception 计算异常
+     */
     private String calculateMD5(byte[] data) throws Exception {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] hash = md.digest(data);

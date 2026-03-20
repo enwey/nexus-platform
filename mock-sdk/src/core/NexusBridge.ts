@@ -1,5 +1,8 @@
 import type { NativeMessage, NativeResponse, Platform, Callback } from '../types'
 
+/**
+ * NexusBridge类，用于JavaScript与原生代码之间的通信
+ */
 class NexusBridge {
   private callbacks: Map<string, Callback> = new Map()
   private platform: Platform = 'unknown'
@@ -10,6 +13,9 @@ class NexusBridge {
     this.setupMessageListener()
   }
 
+  /**
+   * 检测运行平台
+   */
   private detectPlatform(): void {
     if (typeof window === 'undefined') {
       this.platform = 'unknown'
@@ -32,6 +38,9 @@ class NexusBridge {
     console.log(`[NexusBridge] Platform detected: ${this.platform}, isNative: ${this.isNative}`)
   }
 
+  /**
+   * 设置消息监听器
+   */
   private setupMessageListener(): void {
     if (typeof window === 'undefined') return
 
@@ -48,6 +57,10 @@ class NexusBridge {
     }
   }
 
+  /**
+   * 处理原生响应
+   * @param response 原生响应对象
+   */
   private handleNativeResponse(response: NativeResponse): void {
     const callback = this.callbacks.get(response.callbackId)
     if (!callback) {
@@ -65,10 +78,20 @@ class NexusBridge {
     this.callbacks.delete(response.callbackId)
   }
 
+  /**
+   * 生成回调ID
+   * @return 回调ID
+   */
   private generateCallbackId(): string {
     return `cb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
+  /**
+   * 调用原生API
+   * @param api API名称
+   * @param params 请求参数
+   * @param callback 回调函数
+   */
   public invokeNative(api: string, params: Record<string, any> = {}, callback?: Callback): void {
     const callbackId = this.generateCallbackId()
 
@@ -119,6 +142,12 @@ class NexusBridge {
     }
   }
 
+  /**
+   * 模拟响应（用于Web环境）
+   * @param callbackId 回调ID
+   * @param api API名称
+   * @param params 请求参数
+   */
   private mockResponse(callbackId: string, api: string, params: any): void {
     setTimeout(() => {
       const response: NativeResponse = {
@@ -129,6 +158,12 @@ class NexusBridge {
     }, 100)
   }
 
+  /**
+   * 获取模拟数据
+   * @param api API名称
+   * @param params 请求参数
+   * @return 模拟数据
+   */
   private getMockData(api: string, params: any): any {
     switch (api) {
       case 'wx.login':
@@ -144,6 +179,10 @@ class NexusBridge {
     }
   }
 
+  /**
+   * 获取模拟系统信息
+   * @return 系统信息对象
+   */
   private getMockSystemInfo(): any {
     return {
       brand: 'mock',
@@ -169,13 +208,24 @@ class NexusBridge {
     }
   }
 
+  /**
+   * 获取当前平台
+   * @return 平台类型
+   */
   public getPlatform(): Platform {
     return this.platform
   }
 
+  /**
+   * 是否为原生环境
+   * @return 是否为原生环境
+   */
   public isNativeEnvironment(): boolean {
     return this.isNative
   }
 }
 
+/**
+ * 导出NexusBridge单例
+ */
 export const nexusBridge = new NexusBridge()

@@ -16,6 +16,9 @@ import io.nakama.apiclient.LeaderboardRecord
 import io.nakama.apiclient.StorageObject
 import io.nakama.apiclient.LeaderboardRecord
 
+/**
+ * 社交API处理器，基于Nakama游戏服务器
+ */
 class SocialApi(private val context: Context, private val apiClient: ApiClient) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return when (api) {
@@ -30,6 +33,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 获取好友云存储数据
+     * @param params 包含userId的参数
+     * @return 云存储数据列表
+     */
     private suspend fun getFriendCloudStorage(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -57,6 +65,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 设置用户云存储数据
+     * @param params 包含userId、key和value的参数
+     * @return 操作结果
+     */
     private suspend fun setUserCloudStorage(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -83,6 +96,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 获取好友信息
+     * @param params 包含userId和friendId的参数
+     * @return 好友信息
+     */
     private suspend fun getFriendInfo(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -117,6 +135,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 创建排行榜记录
+     * @param params 包含userId、leaderboardId、score和subscore的参数
+     * @return 操作结果
+     */
     private suspend fun createLeaderboard(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -144,6 +167,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 获取排行榜数据
+     * @param params 包含userId、leaderboardId和limit的参数
+     * @return 排行榜数据列表
+     */
     private suspend fun getLeaderboard(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -179,6 +207,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 获取用户群组列表
+     * @param params 包含userId的参数
+     * @return 群组列表
+     */
     private suspend fun getGroupList(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -213,6 +246,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 获取群组信息
+     * @param params 包含userId和groupId的参数
+     * @return 群组信息
+     */
     private suspend fun getGroupInfo(params: JsonObject): Map<String, Any> {
         return withContext(Dispatchers.IO) {
             try {
@@ -245,6 +283,11 @@ class SocialApi(private val context: Context, private val apiClient: ApiClient) 
         }
     }
 
+    /**
+     * 获取用户会话
+     * @param userId 用户ID
+     * @return 用户会话对象
+     */
     private suspend fun getSession(userId: String): DefaultSession? {
         val prefs = context.getSharedPreferences("nakama", Context.MODE_PRIVATE)
         val token = prefs.getString("nakama_token_$userId", null) ?: return null

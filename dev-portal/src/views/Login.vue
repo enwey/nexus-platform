@@ -37,16 +37,37 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { login } from '../api'
 
+/**
+ * 路由实例
+ */
 const router = useRouter()
+
+/**
+ * 用户状态管理
+ */
 const userStore = useUserStore()
+
+/**
+ * 表单引用
+ */
 const formRef = ref()
+
+/**
+ * 加载状态
+ */
 const loading = ref(false)
 
+/**
+ * 表单数据
+ */
 const form = reactive({
   username: '',
   password: ''
 })
 
+/**
+ * 表单验证规则
+ */
 const rules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' }
@@ -56,6 +77,9 @@ const rules = {
   ]
 }
 
+/**
+ * 处理登录操作
+ */
 const handleLogin = async () => {
   try {
     await formRef.value.validate()

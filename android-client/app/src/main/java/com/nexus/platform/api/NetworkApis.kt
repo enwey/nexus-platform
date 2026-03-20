@@ -11,6 +11,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+/**
+ * 网络请求API处理器
+ */
 class RequestApi(private val context: Context) : ApiHandler {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -65,6 +68,9 @@ class RequestApi(private val context: Context) : ApiHandler {
     private val gson = com.google.gson.Gson()
 }
 
+/**
+ * Toast提示API处理器
+ */
 class ToastApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
@@ -78,6 +84,9 @@ class ToastApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 模态框API处理器
+ */
 class ModalApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
@@ -93,6 +102,9 @@ class ModalApi(private val context: Context) : ApiHandler {
     }
 }
 
+/**
+ * 网络状态API处理器
+ */
 class NetworkApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
