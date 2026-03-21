@@ -14,10 +14,10 @@ class StorageApi(private val context: Context) : ApiHandler {
 
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return when (api) {
-            "wx.setStorage" -> setStorage(params)
-            "wx.getStorage" -> getStorage(params)
-            "wx.removeStorage" -> removeStorage(params)
-            "wx.clearStorage" -> clearStorage()
+            "wx.setStorage", "wx.setStorageSync" -> setStorage(params)
+            "wx.getStorage", "wx.getStorageSync" -> getStorage(params)
+            "wx.removeStorage", "wx.removeStorageSync" -> removeStorage(params)
+            "wx.clearStorage", "wx.clearStorageSync" -> clearStorage()
             else -> null
         }
     }

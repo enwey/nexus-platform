@@ -132,7 +132,7 @@ class GameSchemeHandler: NSObject, WKURLSchemeHandler {
     }
     
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
-        urlSchemeTask.didFailWithError(URLError(.cancelled)
+        urlSchemeTask.didFailWithError(URLError(.cancelled))
     }
     
     private func serveFile(at path: URL, for task: WKURLSchemeTask) {

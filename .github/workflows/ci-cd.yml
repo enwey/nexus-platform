@@ -18,7 +18,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-    
+
+    - name: Check repository contracts
+      run: npm run check:contracts
+
     - name: Install dependencies (Mock SDK)
       working-directory: ./mock-sdk
       run: npm ci
@@ -30,6 +33,14 @@ jobs:
     - name: Run tests (Mock SDK)
       working-directory: ./mock-sdk
       run: npm test
+
+    - name: Install dependencies (Dev Portal)
+      working-directory: ./dev-portal
+      run: npm ci
+
+    - name: Build Dev Portal
+      working-directory: ./dev-portal
+      run: npm run build
     
     - name: Set up Java
       uses: actions/setup-java@v4

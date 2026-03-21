@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus Platform Mobile UI Showcase</title>
+  <title>Nexus Platform V7.0 Aurora Glass Mobile UI</title>
   <style>
     :root {
-      --bg: #07111f;
-      --panel: rgba(10, 20, 36, 0.8);
-      --panel-strong: #0d1a2d;
-      --line: rgba(148, 163, 184, 0.18);
-      --text: #ecf5ff;
+      --bg: #0a0b10;
+      --bg-gradient: radial-gradient(circle at top right, #1b1d31 0%, #0a0b10 58%, #07080d 100%);
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel-strong: rgba(255, 255, 255, 0.09);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
       --muted: #94a3b8;
-      --cyan: #5eead4;
-      --blue: #60a5fa;
-      --gold: #fbbf24;
-      --rose: #fb7185;
-      --green: #4ade80;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      --cyan: #8b5cf6;
+      --blue: #6366f1;
+      --gold: #f59e0b;
+      --rose: #ec4899;
+      --green: #10b981;
+      --shadow: 0 36px 90px rgba(0, 0, 0, 0.62);
+      --glow: 0 0 24px rgba(99, 102, 241, 0.35);
       --radius: 28px;
     }
 
@@ -29,31 +31,33 @@
       margin: 0;
       min-height: 100vh;
       color: var(--text);
-      font-family: "Avenir Next", "SF Pro Display", "Segoe UI Variable", "PingFang SC", "Noto Sans SC", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(96, 165, 250, 0.24), transparent 24%),
-        radial-gradient(circle at top right, rgba(251, 191, 36, 0.14), transparent 28%),
-        linear-gradient(180deg, #081120 0%, #050c17 60%, #03070d 100%);
+      font-family: -apple-system, "SF Pro Display", "PingFang SC", "Segoe UI Variable", sans-serif;
+      background-color: #111827;
+      background-image:
+        radial-gradient(circle at 12% 8%, rgba(99, 102, 241, 0.18), transparent 20%),
+        radial-gradient(circle at 88% 12%, rgba(168, 85, 247, 0.18), transparent 22%),
+        linear-gradient(180deg, #0b1020 0%, #090b12 55%, #07080d 100%);
     }
 
     .shell {
-      width: min(1480px, calc(100% - 40px));
+      width: min(1700px, calc(100% - 44px));
       margin: 0 auto;
-      padding: 42px 0 72px;
+      padding: 46px 0 90px;
     }
 
     .hero {
       display: grid;
       gap: 18px;
-      padding: 34px;
+      padding: 36px;
       border: 1px solid var(--line);
-      border-radius: 34px;
+      border-radius: 36px;
       background:
-        linear-gradient(135deg, rgba(14, 27, 47, 0.96), rgba(8, 16, 29, 0.92)),
-        radial-gradient(circle at 85% 15%, rgba(94, 234, 212, 0.2), transparent 28%);
+        radial-gradient(circle at 84% 18%, rgba(99, 102, 241, 0.22), transparent 26%),
+        linear-gradient(135deg, rgba(22, 24, 38, 0.96), rgba(10, 11, 16, 0.94));
       box-shadow: var(--shadow);
       overflow: hidden;
       position: relative;
+      backdrop-filter: blur(26px);
     }
 
     .hero::after {
@@ -75,9 +79,9 @@
       font-size: 12px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      background: rgba(94, 234, 212, 0.12);
-      color: var(--cyan);
-      border: 1px solid rgba(94, 234, 212, 0.18);
+      background: rgba(99, 102, 241, 0.16);
+      color: #c4b5fd;
+      border: 1px solid rgba(99, 102, 241, 0.22);
     }
 
     h1 {
@@ -135,17 +139,18 @@
 
     .screen-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fit, minmax(393px, 393px));
+      gap: 52px 34px;
+      justify-content: center;
       align-items: start;
     }
 
     .card {
-      padding: 18px;
-      border-radius: 30px;
-      border: 1px solid var(--line);
-      background: rgba(7, 13, 23, 0.82);
-      box-shadow: var(--shadow);
+      padding: 0;
+      border-radius: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     .card-head {
@@ -154,7 +159,8 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+      padding: 0 8px;
     }
 
     .card-head h3 {
@@ -170,13 +176,13 @@
 
     .phone {
       position: relative;
-      height: clamp(580px, 62vw, 700px);
+      width: 393px;
+      height: 852px;
       overflow: hidden;
-      border-radius: 34px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background:
-        linear-gradient(180deg, rgba(13, 26, 45, 0.96), rgba(7, 13, 23, 0.98)),
-        radial-gradient(circle at 10% 0%, rgba(94, 234, 212, 0.16), transparent 30%);
+      border-radius: 54px;
+      border: 8px solid #111111;
+      background: var(--bg-gradient);
+      box-shadow: 0 50px 100px rgba(0,0,0,0.82);
     }
 
     .phone::before {
@@ -185,17 +191,16 @@
       top: 12px;
       left: 50%;
       width: 120px;
-      height: 28px;
+      height: 35px;
       transform: translateX(-50%);
-      border-radius: 999px;
-      background: rgba(2, 6, 14, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      z-index: 3;
+      border-radius: 20px;
+      background: #000000;
+      z-index: 10;
     }
 
     .screen {
       height: 100%;
-      padding: 56px 18px 18px;
+      padding: 58px 24px 24px;
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -203,6 +208,7 @@
       overflow: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      z-index: 2;
     }
 
     .screen::-webkit-scrollbar {
@@ -250,13 +256,15 @@
     .badge {
       padding: 8px 12px;
       background: rgba(255, 255, 255, 0.08);
-      color: #dbeafe;
+      color: #eef2ff;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
     }
 
     .pill {
       padding: 8px 14px;
-      background: rgba(94, 234, 212, 0.12);
-      color: var(--cyan);
+      background: rgba(99, 102, 241, 0.16);
+      color: #c4b5fd;
       border: 1px solid rgba(94, 234, 212, 0.16);
     }
 
@@ -268,11 +276,12 @@
     }
 
     .hero-panel {
-      padding: 18px;
-      border-radius: 26px;
-      background:
-        linear-gradient(135deg, rgba(96, 165, 250, 0.24), rgba(251, 191, 36, 0.18)),
-        linear-gradient(180deg, rgba(17, 24, 39, 0.65), rgba(12, 18, 30, 0.9));
+      padding: 20px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--line);
+      box-shadow: var(--glow);
       min-height: 174px;
     }
 
@@ -316,38 +325,43 @@
 
     .cta {
       flex: 1;
-      padding: 12px 14px;
+      padding: 14px 16px;
       border-radius: 18px;
       border: 0;
-      background: linear-gradient(135deg, #5eead4, #60a5fa);
-      color: #03111d;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: #ffffff;
       font-weight: 700;
       font-size: 13px;
+      box-shadow: var(--glow);
     }
 
     .cta.ghost {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
       color: var(--text);
       border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+      backdrop-filter: blur(18px);
     }
 
     .section {
       padding: 16px;
       border-radius: 24px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
     }
 
     .search {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       border-radius: 18px;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--muted);
       font-size: 13px;
+      backdrop-filter: blur(20px);
     }
 
     .tile-grid {
@@ -362,7 +376,8 @@
       padding: 14px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
     }
 
     .tile strong,
@@ -375,13 +390,15 @@
 
     .poster {
       min-height: 130px;
-      border-radius: 22px;
+      border-radius: 24px;
       background:
-        linear-gradient(160deg, rgba(251, 191, 36, 0.25), rgba(96, 165, 250, 0.18)),
-        linear-gradient(180deg, rgba(9, 13, 24, 0.6), rgba(9, 13, 24, 0.96));
+        linear-gradient(to top, rgba(10, 11, 16, 0.96), transparent),
+        linear-gradient(135deg, rgba(99, 102, 241, 0.24), rgba(168, 85, 247, 0.16));
       position: relative;
       overflow: hidden;
-      padding: 16px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--glow);
     }
 
     .poster::after {
@@ -426,9 +443,11 @@
 
     .tabbar {
       margin-top: auto;
-      padding: 14px 8px 4px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      color: #91a7bc;
+      padding: 14px 8px 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      color: #6b7280;
+      background: rgba(10, 11, 16, 0.82);
+      backdrop-filter: blur(28px);
     }
 
     .tabbar strong {
@@ -481,6 +500,105 @@
       backdrop-filter: blur(12px);
     }
 
+    .kv-image {
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        radial-gradient(circle at 30% 24%, rgba(244, 114, 182, 0.28), transparent 24%),
+        radial-gradient(circle at 72% 18%, rgba(99, 102, 241, 0.28), transparent 24%),
+        linear-gradient(160deg, rgba(18, 24, 38, 0.92), rgba(10, 11, 16, 0.96));
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--glow);
+    }
+
+    .kv-image::before,
+    .kv-image::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(8px);
+    }
+
+    .kv-image::before {
+      width: 180px;
+      height: 180px;
+      right: -22px;
+      top: 16px;
+      background: rgba(99, 102, 241, 0.22);
+    }
+
+    .kv-image::after {
+      width: 140px;
+      height: 140px;
+      left: -20px;
+      bottom: 18px;
+      background: rgba(244, 114, 182, 0.18);
+    }
+
+    .orb-cluster {
+      position: absolute;
+      inset: 0;
+    }
+
+    .orb-cluster span {
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: 0 0 28px rgba(255,255,255,0.14);
+    }
+
+    .visual-icons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .visual-icon {
+      aspect-ratio: 1;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(18px);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      box-shadow: var(--glow);
+    }
+
+    .cover-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cover-card {
+      min-height: 150px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        linear-gradient(to top, rgba(10,11,16,0.94), transparent),
+        linear-gradient(135deg, rgba(99,102,241,0.16), rgba(236,72,153,0.14));
+      position: relative;
+      overflow: hidden;
+      padding: 14px;
+      box-shadow: var(--glow);
+    }
+
+    .cover-card.compact {
+      min-height: 118px;
+    }
+
+    .mini-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      color: white;
+      font-weight: 900;
+      box-shadow: var(--glow);
+    }
     .onboarding-visual {
       min-height: 240px;
       border-radius: 28px;
@@ -568,8 +686,9 @@
     .auth-field {
       padding: 14px;
       border-radius: 18px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
     }
 
     .auth-field strong {
@@ -611,12 +730,14 @@
       border-radius: 22px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background:
-        linear-gradient(160deg, rgba(96, 165, 250, 0.18), rgba(94, 234, 212, 0.12)),
-        linear-gradient(180deg, rgba(11, 18, 32, 0.82), rgba(8, 13, 23, 0.96));
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+        linear-gradient(135deg, rgba(99,102,241,0.16), rgba(168,85,247,0.1));
+      backdrop-filter: blur(20px);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       gap: 10px;
+      box-shadow: var(--glow);
     }
 
     .favorite-card strong {
@@ -919,16 +1040,18 @@
 
       .screen-grid {
         grid-template-columns: 1fr;
+        gap: 34px;
       }
 
       .card {
-        max-width: 430px;
+        max-width: 393px;
         width: 100%;
         margin: 0 auto;
       }
 
       .phone {
-        height: 680px;
+        width: min(393px, 100%);
+        height: 852px;
       }
     }
 
@@ -965,8 +1088,10 @@
       }
 
       .phone {
-        height: min(700px, calc(100vh - 120px));
-        border-radius: 28px;
+        width: min(393px, 100%);
+        height: min(852px, calc(100vh - 120px));
+        border-radius: 32px;
+        border-width: 6px;
       }
 
       .phone::before {
@@ -1031,7 +1156,8 @@
       }
 
       .phone {
-        height: min(680px, calc(100vh - 96px));
+        width: 100%;
+        height: min(820px, calc(100vh - 96px));
       }
 
       .nav-title {
@@ -1081,22 +1207,19 @@
 <body>
   <div class="shell">
     <section class="hero">
-      <span class="eyebrow">Commercial Mobile UI</span>
-      <h1>Nexus Platform 移动端商业化 UI 原型</h1>
-      <p>
-        这份页面集将 Android 和 iOS 统一成一套更成熟的游戏平台体验，强调游戏发现、会员转化、资产沉淀与内容运营。
-        页面以 HTML 平铺展示，适合先做产品讨论、视觉对齐，再拆分到原生实现。
-      </p>
-      <div class="hero-meta">
-        <span>品牌方向: 次世代游戏娱乐平台</span>
-        <span>平台策略: Android / iOS 共用视觉语言</span>
-        <span>页面覆盖: 启动、3 张引导、邮箱登录、注册、忘记密码、首页、详情、会员、运行态</span>
+      <span class="eyebrow">Aurora Glass</span>
+      <h1>NEXUS</h1>
+      <div class="visual-icons" style="max-width:520px;">
+        <div class="visual-icon">N</div>
+        <div class="visual-icon">★</div>
+        <div class="visual-icon">▶</div>
+        <div class="visual-icon">⬢</div>
       </div>
     </section>
 
     <div class="section-title">
-      <h2>核心页面总览</h2>
-      <p>建议先以这套 UI 原型作为移动端产品蓝本，再逐页映射到 Android XML / Compose 与 SwiftUI。</p>
+      <h2>Mobile Screens</h2>
+      <p>Logo / KV / Cover / Icon First</p>
     </div>
 
     <section class="screen-grid">
@@ -1113,13 +1236,11 @@
             </div>
             <div style="flex:1; display:grid; place-items:center;">
               <div style="text-align:center;">
-                <div style="width:92px;height:92px;border-radius:28px;margin:0 auto 20px;background:linear-gradient(135deg,#5eead4,#60a5fa);display:grid;place-items:center;color:#04111d;font-size:34px;font-weight:900;">N</div>
-                <div style="font-size:32px;font-weight:800;letter-spacing:-0.05em;">Nexus Arcade</div>
-                <div class="muted" style="margin-top:10px;">Play everywhere. Progress everywhere.</div>
+                <div style="width:112px;height:112px;border-radius:32px;margin:0 auto 22px;background:linear-gradient(135deg,#6366f1 0%, #a855f7 100%);display:grid;place-items:center;color:#ffffff;font-size:40px;font-weight:900;box-shadow:var(--glow);">N</div>
+                <div style="font-size:36px;font-weight:900;letter-spacing:0.22em;">NEXUS</div>
               </div>
             </div>
             <div class="progress"><span style="width:58%;"></span></div>
-            <div class="muted" style="text-align:center;font-size:12px;">同步云端游戏资产与推荐流</div>
           </div>
         </div>
       </article>
@@ -1138,10 +1259,13 @@
             <div class="onboarding-visual">
               <div class="onboarding-orb"></div>
               <div class="onboarding-ring"></div>
-              <div class="onboarding-card" style="left:26px; right:26px; bottom:26px; padding:18px;">
-                <span class="pill">引导 1 / 3</span>
-                <h4 style="margin-top:12px;">收藏你的常玩游戏</h4>
-                <p>让首页优先展示你最关心的内容，打开 App 就能马上继续玩。</p>
+              <div class="onboarding-card" style="left:26px; right:26px; bottom:26px; padding:18px; display:grid; gap:12px;">
+                <div class="mini-logo">N</div>
+                <div class="visual-icons" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+                  <div class="visual-icon">❤</div>
+                  <div class="visual-icon">🎮</div>
+                  <div class="visual-icon">★</div>
+                </div>
               </div>
             </div>
             <div class="pager-dots"><span class="active"></span><span></span><span></span></div>
@@ -1168,9 +1292,12 @@
               <div class="onboarding-card" style="left:20px; top:28px; width:124px; height:160px; padding:16px;"></div>
               <div class="onboarding-card" style="right:22px; top:48px; width:146px; height:112px; padding:16px;"></div>
               <div class="onboarding-card" style="left:32px; right:32px; bottom:28px; padding:18px; border-radius:26px;">
-                <span class="pill">引导 2 / 3</span>
-                <h4 style="margin-top:12px;">云存档与跨端同步</h4>
-                <p>手机、平板与未来多端统一账号，换设备也能无缝接着玩。</p>
+                <div class="visual-icons" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+                  <div class="visual-icon">☁</div>
+                  <div class="visual-icon">⟲</div>
+                  <div class="visual-icon">✦</div>
+                  <div class="visual-icon">◌</div>
+                </div>
               </div>
             </div>
             <div class="pager-dots"><span></span><span class="active"></span><span></span></div>
@@ -1195,10 +1322,13 @@
             </div>
             <div class="onboarding-visual" style="background:radial-gradient(circle at 50% 18%, rgba(251, 113, 133, 0.18), transparent 24%), radial-gradient(circle at 20% 70%, rgba(94, 234, 212, 0.18), transparent 28%), linear-gradient(160deg, rgba(10, 20, 36, 0.95), rgba(6, 12, 20, 0.98));">
               <div class="onboarding-orb" style="left:auto; right:32px; top:28px; background:radial-gradient(circle at 35% 35%, #fbbf24, #ef4444 72%);"></div>
-              <div class="onboarding-card" style="left:26px; right:26px; bottom:26px; padding:18px;">
-                <span class="pill">引导 3 / 3</span>
-                <h4 style="margin-top:12px;">官方活动和会员权益</h4>
-                <p>限时活动、签到奖励、会员礼包与运营内容都会在首页及时提醒。</p>
+              <div class="onboarding-card" style="left:26px; right:26px; bottom:26px; padding:18px; display:grid; gap:12px;">
+                <div class="visual-icons" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+                  <div class="visual-icon">♦</div>
+                  <div class="visual-icon">♛</div>
+                  <div class="visual-icon">✷</div>
+                  <div class="visual-icon">⚡</div>
+                </div>
               </div>
             </div>
             <div class="pager-dots"><span></span><span></span><span class="active"></span></div>
@@ -1221,10 +1351,9 @@
               <span>9:41</span>
               <span>Wi-Fi · 92%</span>
             </div>
-            <div class="stack" style="gap:12px;">
-              <span class="pill">仅支持邮箱登录</span>
-              <div class="nav-title">欢迎回来</div>
-              <div class="muted">你可以选择邮箱验证码登录，或者使用邮箱 + 密码登录。</div>
+            <div class="stack" style="gap:12px; align-items:center; text-align:center;">
+              <div class="mini-logo" style="width:64px; height:64px;">N</div>
+              <div class="nav-title">NEXUS</div>
             </div>
             <div class="auth-tabs">
               <span class="auth-tab active">邮箱验证码登录</span>
@@ -1278,10 +1407,9 @@
               <span>9:41</span>
               <span>Wi-Fi · 91%</span>
             </div>
-            <div class="stack" style="gap:12px;">
-              <span class="pill">邮箱创建账号</span>
-              <div class="nav-title">创建你的 Nexus 账号</div>
-              <div class="muted">注册后即可同步收藏、云存档和会员权益。</div>
+            <div class="stack" style="gap:12px; align-items:center; text-align:center;">
+              <div class="mini-logo" style="width:64px; height:64px;">N</div>
+              <div class="nav-title">Create</div>
             </div>
             <div class="section stack">
               <div class="auth-field">
@@ -1325,10 +1453,9 @@
               <span>9:41</span>
               <span>Wi-Fi · 90%</span>
             </div>
-            <div class="stack" style="gap:12px;">
-              <span class="pill">邮箱重置密码</span>
-              <div class="nav-title">找回你的账号</div>
-              <div class="muted">通过邮箱验证码验证身份，然后设置新的登录密码。</div>
+            <div class="stack" style="gap:12px; align-items:center; text-align:center;">
+              <div class="mini-logo" style="width:64px; height:64px;">N</div>
+              <div class="nav-title">Reset</div>
             </div>
             <div class="section stack">
               <div class="auth-field">
@@ -1373,63 +1500,36 @@
               <span>5G · 88%</span>
             </div>
             <div class="nav">
-              <div>
-                <div class="muted">晚上好，Mika</div>
-                <div class="nav-title">先玩你收藏的</div>
-              </div>
+              <div class="mini-logo">N</div>
               <div class="avatar">MK</div>
             </div>
-            <div class="search">搜索收藏、历史、活动、好友房间</div>
-            <div class="section stack" style="background:linear-gradient(135deg, rgba(96, 165, 250, 0.16), rgba(94, 234, 212, 0.08)), rgba(255,255,255,0.04);">
-              <div class="row" style="justify-content:space-between; align-items:center;">
-                <strong>我的收藏</strong>
-                <span class="pill">按最近玩过排序</span>
-              </div>
-              <div class="favorite-strip">
-                <div class="favorite-card">
-                  <div>
-                    <strong>Starfall Arena</strong>
-                    <p>上次打到钻石晋级赛，点开即可回到上次房间。</p>
-                  </div>
-                  <div class="favorite-meta">
-                    <span>2 分钟开玩</span>
-                    <span>云存档已同步</span>
-                  </div>
-                </div>
-                <div class="favorite-card">
-                  <div>
-                    <strong>Kingdom Merge</strong>
-                    <p>离线收益可领取，适合碎片时间快速回坑。</p>
-                  </div>
-                  <div class="favorite-meta">
-                    <span>轻松经营</span>
-                    <span>支持离线</span>
-                  </div>
+            <div class="cover-grid">
+              <div class="cover-card">
+                <div class="badge">★</div>
+                <div style="position:absolute; left:14px; right:14px; bottom:14px; display:flex; justify-content:space-between; align-items:end;">
+                  <strong>Starfall</strong>
+                  <span class="pill">▶</span>
                 </div>
               </div>
-              <div class="quick-favorite">
-                <div>
-                  <strong>一键进入收藏夹</strong>
-                  <p>支持长按置顶、拖动排序、最近打开优先展示。</p>
+              <div class="cover-card">
+                <div class="badge">❤</div>
+                <div style="position:absolute; left:14px; right:14px; bottom:14px; display:flex; justify-content:space-between; align-items:end;">
+                  <strong>Kingdom</strong>
+                  <span class="pill">▶</span>
                 </div>
-                <span class="badge">收藏夹 12</span>
               </div>
             </div>
-            <div class="section stack">
-              <div class="row" style="justify-content:space-between; align-items:center;">
-                <strong>收藏不够看？继续推荐</strong>
-                <span class="muted">根据收藏偏好生成</span>
-              </div>
-              <div class="empty-state">
-                <strong style="display:block; margin-bottom:6px;">当收藏少于 3 个或为空时</strong>
-                <p>首页自动补齐“你可能会收藏”的推荐位，避免空首页，也帮助新用户更快建立自己的游戏库。</p>
-              </div>
-              <div class="tile-grid">
-                <div class="tile"><strong>Neon Drift</strong><p>因为你收藏了竞速和派对类游戏</p></div>
-                <div class="tile"><strong>Pixel Strike</strong><p>因为你偏好高帧率竞技体验</p></div>
-                <div class="tile"><strong>好友都在玩</strong><p>6 个房间可以直接加入</p></div>
-                <div class="tile"><strong>下载管理</strong><p>2 个收藏游戏待更新</p></div>
-              </div>
+            <div class="visual-icons">
+              <div class="visual-icon">🔍</div>
+              <div class="visual-icon">❤</div>
+              <div class="visual-icon">☁</div>
+              <div class="visual-icon">🎁</div>
+            </div>
+            <div class="cover-grid">
+              <div class="cover-card compact"><div class="badge">N</div><div style="position:absolute; left:14px; bottom:12px; font-weight:700;">Neon</div></div>
+              <div class="cover-card compact"><div class="badge">P</div><div style="position:absolute; left:14px; bottom:12px; font-weight:700;">Pixel</div></div>
+              <div class="cover-card compact"><div class="badge">F</div><div style="position:absolute; left:14px; bottom:12px; font-weight:700;">Friends</div></div>
+              <div class="cover-card compact"><div class="badge">D</div><div style="position:absolute; left:14px; bottom:12px; font-weight:700;">Downloads</div></div>
             </div>
             <div class="tabbar">
               <span><strong>首页</strong></span>
@@ -1453,33 +1553,26 @@
               <span>Wi-Fi · 81%</span>
             </div>
             <div class="nav">
-              <div class="nav-title">发现</div>
+              <div class="mini-logo">◎</div>
               <span class="badge">榜单</span>
             </div>
-            <div class="chips">
-              <span class="chip">热门推荐</span>
-              <span class="chip">动作竞技</span>
-              <span class="chip">轻社交</span>
-              <span class="chip">新游预约</span>
+            <div class="cover-card" style="min-height:220px;">
+              <div class="badge">Top</div>
+              <div class="orb-cluster">
+                <span style="width:74px;height:74px;left:22px;top:28px;background:linear-gradient(135deg,#6366f1,#a855f7);"></span>
+                <span style="width:54px;height:54px;right:26px;top:46px;background:linear-gradient(135deg,#f59e0b,#ec4899);"></span>
+                <span style="width:38px;height:38px;left:120px;top:120px;background:linear-gradient(135deg,#10b981,#6366f1);"></span>
+              </div>
+              <div style="position:absolute; left:16px; right:16px; bottom:16px; display:flex; justify-content:space-between; align-items:end;">
+                <strong>Neon Drift</strong>
+                <span class="pill">#1</span>
+              </div>
             </div>
-            <div class="poster small">
-              <div class="badge">编辑精选</div>
-              <h4 style="font-size:22px;">Neon Drift</h4>
-              <p>极速冲线、派对模式与好友竞速。</p>
-            </div>
-            <div class="stack">
-              <div class="list-item">
-                <strong>Top 1. Project Echo</strong>
-                <p>本周热度 98.6，适合 10 分钟一局的轻竞技体验。</p>
-              </div>
-              <div class="list-item">
-                <strong>Top 2. Kingdom Merge</strong>
-                <p>放置经营 + 联盟玩法，近 24 小时新增 26K 收藏。</p>
-              </div>
-              <div class="list-item">
-                <strong>Top 3. Pixel Strike</strong>
-                <p>像素射击风格升级，支持手柄映射与高帧率模式。</p>
-              </div>
+            <div class="cover-grid">
+              <div class="cover-card compact"><div class="badge">01</div><div style="position:absolute;left:14px;bottom:12px;font-weight:700;">Echo</div></div>
+              <div class="cover-card compact"><div class="badge">02</div><div style="position:absolute;left:14px;bottom:12px;font-weight:700;">Merge</div></div>
+              <div class="cover-card compact"><div class="badge">03</div><div style="position:absolute;left:14px;bottom:12px;font-weight:700;">Strike</div></div>
+              <div class="cover-card compact"><div class="badge">04</div><div style="position:absolute;left:14px;bottom:12px;font-weight:700;">Arena</div></div>
             </div>
             <div class="tabbar">
               <span>首页</span>
@@ -1843,6 +1936,9 @@
   </div>
 </body>
 </html>
+
+
+
 
 
 

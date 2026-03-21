@@ -5,22 +5,28 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.webkit.*
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
 import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
 import com.nexus.platform.bridge.NexusBridge
+import com.nexus.platform.utils.Game
 import com.nexus.platform.utils.GameManager
-import com.nexus.platform.utils.ZipUtils
-import kotlinx.coroutines.*
-import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-/**
- * 游戏运行Activity，通过WebView加载和运行HTML5游戏
- */
 class GameActivity : AppCompatActivity() {
-
     private lateinit var webView: WebView
     private lateinit var gameManager: GameManager
     private lateinit var nexusBridge: NexusBridge
@@ -28,15 +34,13 @@ class GameActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTRA_GAME = "game"
-        
-        /**
-         * 启动游戏Activity
-         * @param context 上下文
-         * @param game 游戏对象
-         */
+
         fun start(context: Context, game: Game) {
             val intent = Intent(context, GameActivity::class.java).apply {
                 putExtra(EXTRA_GAME, game)
+                if (context !is AppCompatActivity) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
             }
             context.startActivity(intent)
         }
@@ -58,21 +62,14 @@ class GameActivity : AppCompatActivity() {
         loadGame(game)
     }
 
-    /**
-     * 初始化视图组件
-     */
     private fun initViews() {
         webView = findViewById(R.id.gameWebView)
         gameManager = GameManager(this)
     }
 
-    /**
-     * 配置WebView设置
-     */
     @SuppressLint("SetJavaScriptEnabled")
     private fun initWebView() {
         val settings = webView.settings
-        
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.databaseEnabled = true
@@ -80,121 +77,95 @@ class GameActivity : AppCompatActivity() {
         settings.allowFileAccess = false
         settings.allowContentAccess = false
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-        
         settings.setSupportZoom(false)
         settings.builtInZoomControls = false
         settings.displayZoomControls = false
-        
+
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        
         webView.webChromeClient = WebChromeClient()
-        webView.webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                injectSDK()
-            }
-            
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url.toString()
-                return if (url.startsWith("https://game.local/") || url.startsWith("https://appassets.androidplatform.net/")) {
-                    false
-                } else {
-                    true
-                }
-            }
-        }
     }
 
-    /**
-     * 初始化JavaScript桥接
-     */
     private fun initBridge() {
         nexusBridge = NexusBridge(this, webView)
         webView.addJavascriptInterface(nexusBridge, "AndroidApp")
+        webView.addJavascriptInterface(nexusBridge.createSyncBridge(), "AndroidAppSync")
     }
 
-    /**
-     * 加载游戏
-     * @param game 游戏对象
-     */
     private fun loadGame(game: Game) {
         scope.launch {
             try {
                 showLoading(true)
-                
                 val unzipDir = gameManager.getGameDir(game.id)
-                
+
                 if (!gameManager.isGameDownloaded(game.id)) {
                     withContext(Dispatchers.IO) {
                         gameManager.downloadGame(game, unzipDir)
                     }
                 }
-                
+
                 val assetLoader = WebViewAssetLoader.Builder()
                     .addPathHandler("/assets/", InternalStoragePathHandler(this@GameActivity, unzipDir))
                     .addPathHandler("/res/", AssetsPathHandler(this@GameActivity))
                     .build()
-                
-                webView.setWebViewClient(object : WebViewClient() {
-                    override fun shouldInterceptRequest(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): WebResourceResponse? {
+
+                webView.webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                         return assetLoader.shouldInterceptRequest(request?.url)
                     }
-                })
-                
-                val gameUrl = "https://appassets.androidplatform.net/index.html"
-                webView.loadUrl(gameUrl)
-                
+
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        injectSDK()
+                    }
+
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        val url = request?.url?.toString().orEmpty()
+                        return !(url.startsWith("https://game.local/") || url.startsWith("https://appassets.androidplatform.net/"))
+                    }
+                }
+
+                webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
             } catch (e: Exception) {
-                e.printStackTrace()
-                showError("游戏加载失败: ${e.message}")
+                showError("Game load failed: ${e.message}")
             } finally {
                 showLoading(false)
             }
         }
     }
 
-    /**
-     * 注入SDK到WebView
-     */
     private fun injectSDK() {
         scope.launch(Dispatchers.IO) {
-            try {
-                val sdkContent = gameManager.readSDKContent()
-                withContext(Dispatchers.Main) {
-                    webView.evaluateJavascript(sdkContent, null)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            val sdkContent = gameManager.readSDKContent()
+            if (sdkContent.isBlank()) {
+                return@launch
+            }
+            withContext(Dispatchers.Main) {
+                webView.evaluateJavascript(sdkContent, null)
             }
         }
     }
 
-    /**
-     * 显示加载状态
-     * @param show 是否显示
-     */
     private fun showLoading(show: Boolean) {
-        
+        webView.visibility = if (show) View.INVISIBLE else View.VISIBLE
     }
 
-    /**
-     * 显示错误信息
-     * @param message 错误消息
-     */
     private fun showError(message: String) {
-        
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {
+        if (::nexusBridge.isInitialized) {
+            nexusBridge.cleanup()
+        }
+        if (::webView.isInitialized) {
+            webView.destroy()
+        }
         scope.cancel()
         super.onDestroy()
     }
 
     override fun onBackPressed() {
-        if (webView.canGoBack()) {
+        if (::webView.isInitialized && webView.canGoBack()) {
             webView.goBack()
         } else {
             super.onBackPressed()

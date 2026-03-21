@@ -50,7 +50,7 @@ class RequestApi(private val context: Context) : ApiHandler {
                     else -> requestBuilder.get()
                 }
 
-                val response = client.newRequest(requestBuilder.build()).execute()
+                val response = client.newCall(requestBuilder.build()).execute()
                 val responseBody = response.body?.string() ?: ""
 
                 mapOf(

@@ -5,64 +5,25 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.nexus.platform.api.*
-import kotlinx.coroutines.*
-import io.nakama.apiclient.ApiClient
+import com.nexus.platform.api.ApiHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
-/**
- * JavaScript桥接类，用于WebView和原生代码之间的通信
- */
 class NexusBridge(private val context: Context, private val webView: WebView) {
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val apiHandlers = mutableMapOf<String, ApiHandler>()
-    private val nakamaApiClient: ApiClient by lazy {
-        ApiClient.builder()
-            .serverKey("defaultkeychanged")
-            .host("http://localhost:7351")
-            .build()
-    }
+    private val apiHandlers: Map<String, ApiHandler> = createApiHandlers(context)
 
-    init {
-        registerApiHandlers()
-    }
-
-    /**
-     * 注册API处理器
-     */
-    private fun registerApiHandlers() {
-        apiHandlers["wx.login"] = LoginApi(context)
-        apiHandlers["wx.request"] = RequestApi(context)
-        apiHandlers["wx.getSystemInfoSync"] = SystemInfoApi(context)
-        apiHandlers["wx.setStorage"] = StorageApi(context)
-        apiHandlers["wx.getStorage"] = StorageApi(context)
-        apiHandlers["wx.removeStorage"] = StorageApi(context)
-        apiHandlers["wx.clearStorage"] = StorageApi(context)
-        apiHandlers["wx.getUserInfo"] = UserInfoApi(context)
-        apiHandlers["wx.shareAppMessage"] = ShareApi(context)
-        apiHandlers["wx.showToast"] = ToastApi(context)
-        apiHandlers["wx.showModal"] = ModalApi(context)
-        apiHandlers["wx.downloadFile"] = FileApi(context)
-        apiHandlers["wx.uploadFile"] = FileApi(context)
-        apiHandlers["wx.getNetworkType"] = NetworkApi(context)
-        apiHandlers["wx.chooseImage"] = ImageApi(context)
-        apiHandlers["wx.setClipboardData"] = ClipboardApi(context)
-        apiHandlers["wx.getClipboardData"] = ClipboardApi(context)
-        apiHandlers["wx.vibrateShort"] = VibrateApi(context)
-        apiHandlers["wx.vibrateLong"] = VibrateApi(context)
-    }
-
-    /**
-     * 接收来自JavaScript的消息
-     * @param message JSON格式的消息字符串
-     */
     @JavascriptInterface
     fun postMessage(message: String) {
         try {
             val json = gson.fromJson(message, JsonObject::class.java)
             val api = json.get("api")?.asString ?: return
             val callbackId = json.get("callbackId")?.asString ?: return
-            val params = json.getAsJsonObject("params")
+            val params = json.getAsJsonObject("params") ?: JsonObject()
 
             scope.launch {
                 try {
@@ -74,21 +35,13 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
                         sendCallback(callbackId, null, "API not implemented: $api")
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    sendCallback(callbackId, null, e.message)
+                    sendCallback(callbackId, null, e.message ?: "Unknown bridge error")
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
         }
     }
 
-    /**
-     * 发送回调到JavaScript
-     * @param callbackId 回调ID
-     * @param data 返回数据
-     * @param error 错误信息
-     */
     private fun sendCallback(callbackId: String, data: Any?, error: String?) {
         val response = JsonObject().apply {
             addProperty("callbackId", callbackId)
@@ -109,9 +62,10 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         }
     }
 
-    /**
-     * 清理资源
-     */
+    fun createSyncBridge(): NexusSyncBridge {
+        return NexusSyncBridge(gson, apiHandlers)
+    }
+
     fun cleanup() {
         scope.cancel()
     }

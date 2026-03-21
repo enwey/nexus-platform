@@ -1,0 +1,19 @@
+{
+  "name": "nexus-platform-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "check:bridge-contract": "node scripts/check-bridge-contract.mjs",
+    "check:backend-contract": "node scripts/check-backend-contract.mjs",
+    "check:contracts": "npm run check:bridge-contract && npm run check:backend-contract",
+    "check:sdk-types": "cmd /c mock-sdk\\node_modules\\.bin\\tsc --noEmit --project mock-sdk/tsconfig.json",
+    "build:dev-portal": "cmd /c npm run build --prefix dev-portal",
+    "dev:portal": "cmd /c npm run dev --prefix dev-portal",
+    "build:backend": "cmd /c mvn -f backend/pom.xml clean package -DskipTests",
+    "test:backend": "cmd /c mvn -f backend/pom.xml test",
+    "infra:up": "cmd /c docker compose -f docker-compose/docker-compose.yml up -d",
+    "infra:down": "cmd /c docker compose -f docker-compose/docker-compose.yml down",
+    "infra:logs": "cmd /c docker compose -f docker-compose/docker-compose.yml logs -f",
+    "check:android-setup": "node scripts/check-android-setup.mjs"
+  }
+}
