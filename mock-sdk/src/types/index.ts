@@ -21,10 +21,6 @@ export interface Callback {
   complete?: () => void
 }
 
-export interface SyncNativeBridge {
-  invokeSync(message: string): string
-}
-
 export interface SystemInfo {
   brand: string
   model: string

@@ -1,9 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { getCurrentUser } from '../api'
 import { useUserStore } from '../stores/user'
 
-/**
- * 路由配置
- */
 const routes = [
   {
     path: '/',
@@ -45,27 +44,54 @@ const routes = [
   }
 ]
 
-/**
- * 创建路由实例
- */
 const router = createRouter({
   history: createWebHistory(),
   routes
 })
 
-/**
- * 路由前置守卫，进行权限验证
- */
-router.beforeEach((to, from, next) => {
-  const userStore = useUserStore()
-  
-  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
-    next('/login')
-  } else if ((to.path === '/login' || to.path === '/register') && userStore.isLoggedIn) {
-    next('/dashboard')
-  } else {
-    next()
+let restoringSession = null
+
+async function ensureSession(userStore) {
+  if (userStore.user || !userStore.token) {
+    return Boolean(userStore.user)
   }
+
+  if (!restoringSession) {
+    restoringSession = getCurrentUser()
+      .then((res) => {
+        userStore.setUser(res.data)
+        return true
+      })
+      .catch(() => {
+        userStore.logout()
+        return false
+      })
+      .finally(() => {
+        restoringSession = null
+      })
+  }
+
+  return restoringSession
+}
+
+router.beforeEach(async (to) => {
+  const userStore = useUserStore()
+  const hasSession = await ensureSession(userStore)
+
+  if (to.meta.requiresAuth && !hasSession) {
+    return '/login'
+  }
+
+  if ((to.path === '/login' || to.path === '/register') && hasSession) {
+    return '/dashboard'
+  }
+
+  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    ElMessage.warning('当前账号没有管理员权限')
+    return '/dashboard'
+  }
+
+  return true
 })
 
 export default router

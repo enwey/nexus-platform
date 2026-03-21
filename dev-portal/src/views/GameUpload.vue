@@ -1,47 +1,44 @@
-<template>
-  <div class="upload-container">
+﻿<template>
+  <div class="page-shell">
+    <header class="page-header">
+      <div>
+        <h1>上传游戏</h1>
+        <p>上传 ZIP 包并补充基础信息，提交后进入审核流程。</p>
+      </div>
+    </header>
+
     <el-card>
-      <template #header>
-        <h2>上传游戏</h2>
-      </template>
-      
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="游戏名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入游戏名称" />
         </el-form-item>
-        
+
         <el-form-item label="游戏描述" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入游戏描述"
-          />
+          <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入游戏描述" />
         </el-form-item>
-        
-        <el-form-item label="游戏文件" prop="file">
+
+        <el-form-item label="游戏压缩包" prop="file">
           <el-upload
             ref="uploadRef"
             :auto-upload="false"
-            :on-change="handleFileChange"
+            :show-file-list="true"
             :limit="1"
             accept=".zip"
-            drag
+            :on-change="handleFileChange"
+            :on-remove="handleFileRemove"
           >
-            <el-button type="primary">
-              <el-icon><Upload /></el-icon>
-              选择 ZIP 文件
-            </el-button>
+            <template #trigger>
+              <el-button type="primary">选择 ZIP 文件</el-button>
+            </template>
+            <template #tip>
+              <div class="upload-tip">仅支持 `.zip` 文件，请确保入口文件为 `index.html`。</div>
+            </template>
           </el-upload>
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button type="primary" @click="handleUpload" :loading="uploading" style="width: 100%">
-            上传
-          </el-button>
-          <el-button @click="$router.back()">
-            取消
-          </el-button>
+          <el-button type="primary" :loading="uploading" @click="handleUpload">提交审核</el-button>
+          <el-button @click="$router.push('/games')">返回列表</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -49,18 +46,15 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '../stores/user'
 import { uploadGame } from '../api'
 
 const router = useRouter()
-const userStore = useUserStore()
 const formRef = ref()
 const uploadRef = ref()
 const uploading = ref(false)
-const fileList = ref([])
 
 const form = reactive({
   name: '',
@@ -69,50 +63,46 @@ const form = reactive({
 })
 
 const rules = {
-  name: [
-    { required: true, message: '请输入游戏名称', trigger: 'blur' }
-  ],
-  description: [
-    { required: true, message: '请输入游戏描述', trigger: 'blur' }
-  ]
+  name: [{ required: true, message: '请输入游戏名称', trigger: 'blur' }],
+  description: [{ required: true, message: '请输入游戏描述', trigger: 'blur' }],
+  file: [{ required: true, message: '请上传游戏压缩包', trigger: 'change' }]
 }
 
-const handleFileChange = (file) => {
-  if (file && file.length > 0) {
-    const selectedFile = file[0].raw
-    if (!selectedFile.name.endsWith('.zip')) {
-      ElMessage.error('请选择 ZIP 格式的文件')
-      return
-    }
-    form.file = selectedFile
+const handleFileChange = (uploadFile) => {
+  const file = uploadFile?.raw
+  if (!file) {
+    form.file = null
+    return
   }
+
+  if (!file.name.endsWith('.zip')) {
+    ElMessage.error('请上传 ZIP 格式文件')
+    uploadRef.value?.clearFiles()
+    form.file = null
+    return
+  }
+
+  form.file = file
+}
+
+const handleFileRemove = () => {
+  form.file = null
 }
 
 const handleUpload = async () => {
   try {
     await formRef.value.validate()
-    
-    if (!form.file) {
-      ElMessage.error('请选择游戏文件')
-      return
-    }
-    
     uploading.value = true
-    
+
     const formData = new FormData()
     formData.append('file', form.file)
     formData.append('name', form.name)
     formData.append('description', form.description)
-    formData.append('developerId', userStore.user?.id)
-    
-    const res = await uploadGame(formData)
-    
-    if (res.code === 0) {
-      ElMessage.success('上传成功，等待审核')
-      router.push('/games')
-    } else {
-      ElMessage.error(res.message || '上传失败')
-    }
+
+    await uploadGame(formData)
+
+    ElMessage.success('上传成功，已提交审核')
+    router.push('/games')
   } catch (error) {
     ElMessage.error(error.message || '上传失败')
   } finally {
@@ -122,9 +112,24 @@ const handleUpload = async () => {
 </script>
 
 <style scoped>
-.upload-container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
+.page-shell {
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px;
+}
+
+.page-header p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.upload-tip {
+  color: #6b7280;
 }
 </style>

@@ -2,10 +2,23 @@ package com.nexus.platform.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Background = Color(0xFF101418)
-val Surface = Color(0xFF182028)
-val SurfaceAlt = Color(0xFF22303B)
-val Primary = Color(0xFF4DA3FF)
-val OnPrimary = Color.White
-val TextPrimary = Color(0xFFF5F7FA)
-val TextSecondary = Color(0xFF9AA7B2)
+val Primary = Color(0xFF5C67FF)
+val PrimaryStart = Color(0xFF5C67FF)
+val PrimaryEnd = Color(0xFFCB63FF)
+
+val AccentGreen = Color(0xFF00E599)
+val AccentRed = Color(0xFFFF4D4F)
+
+val BackgroundBase = Color(0xFF090A0F)
+val BackgroundSurface = Color(0xFF15161D)
+val BackgroundSurfaceElevated = Color(0xFF222433)
+
+val TextMain = Color(0xFFFFFFFF)
+val TextMuted = Color(0xFF8B8D99)
+
+val BorderLight = Color(0x14FFFFFF)
+val GlassBackground = Color(0xB315161D)
+
+val Transparent = Color.Transparent
+val White = Color.White
+val Black = Color.Black

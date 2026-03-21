@@ -1,12 +1,18 @@
 package com.nexus.platform.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import lombok.Data;
 
-/**
- * 游戏实体类
- */
 @Data
 @Entity
 @Table(name = "games")
@@ -42,26 +48,17 @@ public class Game {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * 创建前回调，设置创建时间和更新时间
-     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * 更新前回调，设置更新时间
-     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * 游戏状态枚举
-     */
     public enum GameStatus {
         DRAFT,
         PENDING,

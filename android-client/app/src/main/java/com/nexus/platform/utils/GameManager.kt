@@ -1,4 +1,4 @@
-package com.nexus.platform.utils
+﻿package com.nexus.platform.utils
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
@@ -34,14 +34,13 @@ class GameManager(private val context: Context) {
 
     suspend fun downloadGame(game: Game, targetDir: File) {
         withContext(Dispatchers.IO) {
-            try {
-                val request = Request.Builder()
-                    .url(game.downloadUrl)
-                    .build()
+            val request = Request.Builder()
+                .url(normalizeDownloadUrl(game.downloadUrl))
+                .build()
 
-                val response = client.newCall(request).execute()
+            client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw IOException("下载失败: ${response.code}")
+                    throw IOException("游戏下载失败: ${response.code}")
                 }
 
                 val zipFile = File(context.cacheDir, "${game.id}.zip")
@@ -54,14 +53,11 @@ class GameManager(private val context: Context) {
                 val actualMd5 = calculateMD5(zipFile)
                 if (game.md5.isNotEmpty() && actualMd5 != game.md5) {
                     zipFile.delete()
-                    throw IOException("MD5 校验失败")
+                    throw IOException("游戏包校验失败")
                 }
 
                 ZipUtils.unzip(zipFile, targetDir)
                 zipFile.delete()
-
-            } catch (e: Exception) {
-                throw e
             }
         }
     }
@@ -69,16 +65,29 @@ class GameManager(private val context: Context) {
     suspend fun readSDKContent(): String {
         return withContext(Dispatchers.IO) {
             try {
-                val sdkFile = File(context.filesDir, "wx-mock-sdk.js")
-                if (sdkFile.exists()) {
-                    sdkFile.readText()
-                } else {
-                    ""
+                val directFile = File(context.filesDir, "wx-mock-sdk.js")
+                if (directFile.exists()) {
+                    return@withContext directFile.readText()
                 }
-            } catch (e: Exception) {
+
+                val bundleFile = File(context.filesDir, "wx-mock-sdk.iife.js")
+                if (bundleFile.exists()) {
+                    return@withContext bundleFile.readText()
+                }
+
+                context.assets.open("wx-mock-sdk.iife.js").bufferedReader().use { it.readText() }
+            } catch (_: Exception) {
                 ""
             }
         }
+    }
+
+    private fun normalizeDownloadUrl(rawUrl: String): String {
+        return rawUrl
+            .replace("http://localhost", "http://10.0.2.2")
+            .replace("https://localhost", "https://10.0.2.2")
+            .replace("http://127.0.0.1", "http://10.0.2.2")
+            .replace("https://127.0.0.1", "https://10.0.2.2")
     }
 
     private fun calculateMD5(file: File): String {

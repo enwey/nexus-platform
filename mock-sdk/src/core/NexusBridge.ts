@@ -1,4 +1,4 @@
-import type { NativeMessage, NativeResponse, Platform, Callback, SyncNativeBridge } from '../types'
+import type { NativeMessage, NativeResponse, Platform, Callback } from '../types'
 
 /**
  * NexusBridge类，用于JavaScript与原生代码之间的通信
@@ -7,7 +7,6 @@ class NexusBridge {
   private callbacks: Map<string, Callback> = new Map()
   private platform: Platform = 'unknown'
   private isNative: boolean = false
-  private syncBridge: SyncNativeBridge | null = null
 
   constructor() {
     this.detectPlatform()
@@ -28,15 +27,12 @@ class NexusBridge {
     if (win.AndroidApp) {
       this.platform = 'android'
       this.isNative = true
-      this.syncBridge = win.AndroidAppSync ?? null
     } else if (win.webkit && win.webkit.messageHandlers && win.webkit.messageHandlers.NexusBridge) {
       this.platform = 'ios'
       this.isNative = true
-      this.syncBridge = win.NexusBridgeSync ?? null
     } else {
       this.platform = 'web'
       this.isNative = false
-      this.syncBridge = null
     }
 
     console.log(`[NexusBridge] Platform detected: ${this.platform}, isNative: ${this.isNative}`)
@@ -90,14 +86,6 @@ class NexusBridge {
     return `cb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
-  private createMessage(api: string, params: Record<string, any> = {}): NativeMessage {
-    return {
-      api,
-      callbackId: this.generateCallbackId(),
-      params
-    }
-  }
-
   /**
    * 调用原生API
    * @param api API名称
@@ -105,11 +93,16 @@ class NexusBridge {
    * @param callback 回调函数
    */
   public invokeNative(api: string, params: Record<string, any> = {}, callback?: Callback): void {
-    const message = this.createMessage(api, params)
-    const { callbackId } = message
+    const callbackId = this.generateCallbackId()
 
     if (callback) {
       this.callbacks.set(callbackId, callback)
+    }
+
+    const message: NativeMessage = {
+      api,
+      callbackId,
+      params
     }
 
     if (!this.isNative) {
@@ -147,25 +140,6 @@ class NexusBridge {
         })
       }
     }
-  }
-
-  public invokeNativeSync(api: string, params: Record<string, any> = {}): any {
-    if (!this.isNative) {
-      return this.getMockData(api, params)
-    }
-
-    if (!this.syncBridge) {
-      throw new Error(`Synchronous native bridge is unavailable for ${api} on ${this.platform}`)
-    }
-
-    const rawResponse = this.syncBridge.invokeSync(JSON.stringify(this.createMessage(api, params)))
-    const response = JSON.parse(rawResponse) as NativeResponse
-
-    if (response.error) {
-      throw new Error(response.error.errMsg)
-    }
-
-    return response.data
   }
 
   /**

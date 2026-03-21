@@ -1,29 +1,22 @@
 package com.nexus.platform.service;
 
+import com.nexus.platform.dto.AuthResponse;
 import com.nexus.platform.dto.Result;
+import com.nexus.platform.dto.UserProfileDto;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-/**
- * 用户服务类，处理用户相关的业务逻辑
- */
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final AuthTokenService authTokenService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    /**
-     * 用户注册
-     * @param username 用户名
-     * @param password 密码
-     * @param email 邮箱
-     * @return 注册结果
-     */
-    public Result<User> register(String username, String password, String email) {
+    public Result<AuthResponse> register(String username, String password, String email) {
         if (userRepository.existsByUsername(username)) {
             return Result.error("用户名已存在");
         }
@@ -34,18 +27,12 @@ public class UserService {
         user.setEmail(email);
 
         User savedUser = userRepository.save(user);
-        return Result.success(savedUser);
+        String token = authTokenService.issueToken(savedUser);
+        return Result.success(new AuthResponse(token, UserProfileDto.from(savedUser)));
     }
 
-    /**
-     * 用户登录
-     * @param username 用户名
-     * @param password 密码
-     * @return 登录结果
-     */
-    public Result<User> login(String username, String password) {
-        User user = userRepository.findByUsername(username)
-                .orElse(null);
+    public Result<AuthResponse> login(String username, String password) {
+        User user = userRepository.findByUsername(username).orElse(null);
 
         if (user == null) {
             return Result.error("用户不存在");
@@ -55,15 +42,12 @@ public class UserService {
             return Result.error("密码错误");
         }
 
-        return Result.success(user);
+        String token = authTokenService.issueToken(user);
+        return Result.success(new AuthResponse(token, UserProfileDto.from(user)));
     }
 
-    /**
-     * 根据ID查找用户
-     * @param id 用户ID
-     * @return 用户信息
-     */
-    public User findById(Long id) {
-        return userRepository.findById(id).orElse(null);
+    public UserProfileDto findById(Long id) {
+        User user = userRepository.findById(id).orElse(null);
+        return user == null ? null : UserProfileDto.from(user);
     }
 }

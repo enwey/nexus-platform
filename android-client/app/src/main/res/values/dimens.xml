@@ -1,4 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 圆角尺寸 -->
+    <dimen name="radius_xl">32dp</dimen>
+    <dimen name="radius_lg">20dp</dimen>
+    <dimen name="radius_md">12dp</dimen>
+    <dimen name="radius_sm">8dp</dimen>
+    
+    <!-- 按钮尺寸 -->
+    <dimen name="btn_height">56dp</dimen>
+    <dimen name="btn_height_sm">48dp</dimen>
+    <dimen name="btn_height_lg">64dp</dimen>
+    
+    <!-- 间距 -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
     <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">40dp</dimen>
+    
+    <!-- 文字大小 -->
+    <dimen name="text_xs">11sp</dimen>
+    <dimen name="text_sm">12sp</dimen>
+    <dimen name="text_md">13sp</dimen>
+    <dimen name="text_base">14sp</dimen>
+    <dimen name="text_lg">15sp</dimen>
+    <dimen name="text_xl">16sp</dimen>
+    <dimen name="text_2xl">17sp</dimen>
+    <dimen name="text_3xl">18sp</dimen>
+    <dimen name="text_4xl">20sp</dimen>
+    <dimen name="text_5xl">24sp</dimen>
+    <dimen name="text_6xl">28sp</dimen>
+    <dimen name="text_7xl">32sp</dimen>
+    
+    <!-- 图标尺寸 -->
+    <dimen name="icon_sm">16dp</dimen>
+    <dimen name="icon_md">24dp</dimen>
+    <dimen name="icon_lg">36dp</dimen>
+    <dimen name="icon_xl">48dp</dimen>
+    
+    <!-- 卡片尺寸 -->
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_elevation">4dp</dimen>
+    
+    <!-- 导航栏 -->
+    <dimen name="nav_height">90dp</dimen>
+    
+    <!-- 输入框 -->
+    <dimen name="input_height">56dp</dimen>
+    
+    <!-- 头像 -->
+    <dimen name="avatar_md">48dp</dimen>
+    <dimen name="avatar_lg">80dp</dimen>
+    
+    <!-- 游戏图标 -->
+    <dimen name="game_icon">60dp</dimen>
 </resources>

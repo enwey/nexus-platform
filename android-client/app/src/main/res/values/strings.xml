@@ -1,4 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nexus Platform</string>
+    <string name="loading_games">正在加载游戏列表</string>
+    <string name="load_games_failed">加载游戏失败</string>
+    <string name="no_games_available">当前还没有可体验的游戏</string>
+    <string name="community_coming_soon">社区功能开发中...</string>
+    <string name="play_now">开始体验</string>
+    <string name="go_back">返回</string>
 </resources>

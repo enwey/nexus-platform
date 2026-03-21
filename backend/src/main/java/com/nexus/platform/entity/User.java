@@ -1,12 +1,18 @@
 package com.nexus.platform.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import lombok.Data;
 
-/**
- * 用户实体类
- */
 @Data
 @Entity
 @Table(name = "users")
@@ -24,26 +30,32 @@ public class User {
     private String email;
     private String phone;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * 创建前回调，设置创建时间和更新时间
-     */
     @PrePersist
     protected void onCreate() {
+        if (role == null) {
+            role = UserRole.DEVELOPER;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * 更新前回调，设置更新时间
-     */
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public enum UserRole {
+        ADMIN,
+        DEVELOPER
     }
 }

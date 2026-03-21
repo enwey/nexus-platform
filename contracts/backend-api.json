@@ -3,6 +3,7 @@
   "endpoints": [
     { "method": "POST", "path": "/user/register", "consumers": ["dev-portal"] },
     { "method": "POST", "path": "/user/login", "consumers": ["dev-portal"] },
+    { "method": "GET", "path": "/user/me", "consumers": ["dev-portal"] },
     { "method": "GET", "path": "/user/{id}", "consumers": [] },
     { "method": "POST", "path": "/game/upload", "consumers": ["dev-portal"] },
     { "method": "GET", "path": "/game/list", "consumers": ["dev-portal"] },

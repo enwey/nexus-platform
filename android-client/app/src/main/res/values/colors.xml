@@ -1,5 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <!-- 基础背景色 -->
+    <color name="bg_base">#090a0f</color>
+    <color name="bg_surface">#15161d</color>
+    <color name="bg_surface_elevated">#222433</color>
+    
+    <!-- 主色调 -->
+    <color name="primary">#5c67ff</color>
+    <color name="primary_start">#5c67ff</color>
+    <color name="primary_end">#cb63ff</color>
+    
+    <!-- 强调色 -->
+    <color name="accent_green">#00e599</color>
+    <color name="accent_red">#ff4d4f</color>
+    
+    <!-- 文字颜色 -->
+    <color name="text_main">#ffffff</color>
+    <color name="text_muted">#8b8d99</color>
+    
+    <!-- 边框颜色 -->
+    <color name="border_light">#14ffffff</color>
+    
+    <!-- 玻璃态背景 -->
+    <color name="glass_bg">#b315161d</color>
+    
+    <!-- 常用颜色 -->
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="transparent">#00000000</color>
+    
+    <!-- 阴影颜色 -->
+    <color name="shadow_glow">#4d5c67ff</color>
 </resources>

@@ -1,100 +1,69 @@
 <template>
-  <div class="login-container">
-    <el-card class="login-card">
+  <div class="auth-page">
+    <el-card class="auth-card">
       <template #header>
-        <h2>开发者登录</h2>
+        <div class="auth-header">
+          <h2>开发者登录</h2>
+          <p>登录后可查看游戏、上传版本和进入运营工作台。</p>
+        </div>
       </template>
-      
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
+
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名" />
         </el-form-item>
-        
+
         <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
+          <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%">
+          <el-button type="primary" :loading="loading" class="full-width" @click="handleLogin">
             登录
           </el-button>
         </el-form-item>
-        
-        <el-form-item>
-          <el-link type="primary" @click="$router.push('/register')">
-            还没有账号？立即注册
-          </el-link>
-        </el-form-item>
+
+        <div class="auth-footer">
+          <span>还没有账号？</span>
+          <el-link type="primary" @click="$router.push('/register')">立即注册</el-link>
+        </div>
       </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '../stores/user'
 import { login } from '../api'
+import { useUserStore } from '../stores/user'
 
-/**
- * 路由实例
- */
 const router = useRouter()
-
-/**
- * 用户状态管理
- */
 const userStore = useUserStore()
-
-/**
- * 表单引用
- */
 const formRef = ref()
-
-/**
- * 加载状态
- */
 const loading = ref(false)
 
-/**
- * 表单数据
- */
 const form = reactive({
   username: '',
   password: ''
 })
 
-/**
- * 表单验证规则
- */
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-/**
- * 处理登录操作
- */
 const handleLogin = async () => {
   try {
     await formRef.value.validate()
     loading.value = true
-    
+
     const res = await login(form)
-    
-    if (res.code === 0) {
-      userStore.setUser(res.data)
-      userStore.setToken(res.data.token || 'mock_token')
-      ElMessage.success('登录成功')
-      router.push('/dashboard')
-    } else {
-      ElMessage.error(res.message || '登录失败')
-    }
+    userStore.setSession(res.data.user, res.data.token)
+
+    ElMessage.success('登录成功')
+    router.push('/dashboard')
   } catch (error) {
     ElMessage.error(error.message || '登录失败')
   } finally {
@@ -104,22 +73,36 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f4f7fb 0%, #dfe9f3 100%);
+}
+
+.auth-card {
+  width: min(420px, 100%);
+}
+
+.auth-header h2 {
+  margin: 0 0 8px;
+}
+
+.auth-header p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.auth-footer {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.login-card {
-  width: 400px;
-  padding: 20px;
-}
-
-.login-card h2 {
-  text-align: center;
-  margin: 0 0 20px 0;
-  color: #333;
+  gap: 8px;
+  color: #6b7280;
 }
 </style>

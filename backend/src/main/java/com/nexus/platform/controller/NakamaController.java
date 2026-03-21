@@ -4,7 +4,12 @@ import com.nexus.platform.dto.Result;
 import com.nexus.platform.service.NakamaService;
 import io.nakama.core.DefaultSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/social")
@@ -14,17 +19,17 @@ public class NakamaController {
 
     @PostMapping("/authenticate")
     public Result<DefaultSession> authenticate(@RequestBody AuthenticateRequest request) {
-        return nakamaService.authenticate(request.getUserId(), request.getToken());
+        return nakamaService.authenticate(request.userId(), request.token());
     }
 
     @PostMapping("/register")
     public Result<String> register(@RequestBody RegisterRequest request) {
-        return nakamaService.register(request.getUsername(), request.getPassword());
+        return nakamaService.register(request.username(), request.password());
     }
 
     @PostMapping("/storage/write")
     public Result<Void> writeStorage(@RequestBody StorageWriteRequest request) {
-        return nakamaService.writeStorage(request.getUserId(), request.getKey(), request.getValue());
+        return nakamaService.writeStorage(request.userId(), request.key(), request.value());
     }
 
     @GetMapping("/storage/read")
@@ -35,10 +40,10 @@ public class NakamaController {
     @PostMapping("/leaderboard/write")
     public Result<Void> writeLeaderboardRecord(@RequestBody LeaderboardRequest request) {
         return nakamaService.writeLeaderboardRecord(
-            request.getUserId(),
-            request.getLeaderboardId(),
-            request.getScore(),
-            request.getSubscore()
+                request.userId(),
+                request.leaderboardId(),
+                request.score(),
+                request.subscore()
         );
     }
 
@@ -46,8 +51,7 @@ public class NakamaController {
     public Result<java.util.List<io.nakama.api.LeaderboardRecord>> getLeaderboardRecords(
             @RequestParam String userId,
             @RequestParam String leaderboardId,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
+            @RequestParam(defaultValue = "10") int limit) {
         return nakamaService.getLeaderboardRecords(userId, leaderboardId, limit);
     }
 

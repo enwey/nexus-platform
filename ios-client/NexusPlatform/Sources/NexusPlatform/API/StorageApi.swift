@@ -5,13 +5,13 @@ class StorageApi: ApiHandler {
     
     func handle(api: String, params: [String: Any]) async throws -> Any {
         switch api {
-        case "wx.setStorage", "wx.setStorageSync":
+        case "wx.setStorage":
             return try setStorage(params)
-        case "wx.getStorage", "wx.getStorageSync":
+        case "wx.getStorage":
             return try getStorage(params)
-        case "wx.removeStorage", "wx.removeStorageSync":
+        case "wx.removeStorage":
             return try removeStorage(params)
-        case "wx.clearStorage", "wx.clearStorageSync":
+        case "wx.clearStorage":
             return clearStorage()
         default:
             throw ApiError.notImplemented

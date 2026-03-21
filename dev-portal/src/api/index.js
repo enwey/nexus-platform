@@ -16,6 +16,13 @@ export const register = (data) => {
   })
 }
 
+export const getCurrentUser = () => {
+  return request({
+    url: '/user/me',
+    method: 'get'
+  })
+}
+
 export const getGameList = () => {
   return request({
     url: '/game/list',
