@@ -35,20 +35,19 @@ class BackendAuthApi {
         client.newCall(request).execute().use { response ->
             val bodyText = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
-                throw IOException("登录失败: ${response.code}")
+                throw IOException("Login failed: ${response.code}")
             }
 
             val root = gson.fromJson(bodyText, JsonObject::class.java)
             val code = root.get("code")?.asInt ?: -1
             if (code != 0) {
-                throw IOException(root.get("message")?.asString ?: "登录失败")
+                throw IOException(root.get("message")?.asString ?: "Login failed")
             }
 
-            val data = root.getAsJsonObject("data") ?: throw IOException("登录响应缺少 data")
-            val accessToken = data.get("token")?.asString ?: throw IOException("登录响应缺少 token")
-            val refreshToken = data.get("refreshToken")?.asString ?: throw IOException("登录响应缺少 refreshToken")
+            val data = root.getAsJsonObject("data") ?: throw IOException("Login response missing data")
+            val accessToken = data.get("token")?.asString ?: throw IOException("Login response missing token")
+            val refreshToken = data.get("refreshToken")?.asString ?: throw IOException("Login response missing refreshToken")
             AuthSession(accessToken, refreshToken)
         }
     }
-
 }

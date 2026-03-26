@@ -16,6 +16,9 @@ data class LoginUiState(
     val errorMessage: String? = null
 )
 
+private const val ERROR_EMPTY_CREDENTIALS = "__error_empty_credentials__"
+private const val ERROR_LOGIN_FAILED = "__error_login_failed__"
+
 class LoginViewModel(
     private val loginUseCase: LoginUseCase
 ) : ViewModel() {
@@ -36,7 +39,7 @@ class LoginViewModel(
         val password = snapshot.password
 
         if (username.isBlank() || password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "请输入账号和密码") }
+            _uiState.update { it.copy(errorMessage = ERROR_EMPTY_CREDENTIALS) }
             return
         }
 
@@ -47,7 +50,7 @@ class LoginViewModel(
             }.onSuccess {
                 onSuccess()
             }.onFailure { e ->
-                _uiState.update { it.copy(errorMessage = e.message ?: "登录失败") }
+                _uiState.update { it.copy(errorMessage = e.message ?: ERROR_LOGIN_FAILED) }
             }
             _uiState.update { it.copy(isLoading = false) }
         }

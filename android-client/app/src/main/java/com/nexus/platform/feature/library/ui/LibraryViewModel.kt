@@ -16,6 +16,8 @@ data class LibraryUiState(
     val games: List<GameItem> = emptyList()
 )
 
+private const val ERROR_LOAD_GAMES_FAILED = "__error_load_games_failed__"
+
 class LibraryViewModel(
     private val getApprovedGamesUseCase: GetApprovedGamesUseCase
 ) : ViewModel() {
@@ -33,7 +35,7 @@ class LibraryViewModel(
                     _uiState.update {
                         it.copy(
                             loading = false,
-                            errorMessage = e.message ?: "加载游戏失败"
+                            errorMessage = e.message ?: ERROR_LOAD_GAMES_FAILED
                         )
                     }
                 }

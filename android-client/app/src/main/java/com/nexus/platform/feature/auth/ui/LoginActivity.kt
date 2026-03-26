@@ -1,6 +1,7 @@
 ﻿package com.nexus.platform.feature.auth.ui
 
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,32 +27,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.nexus.platform.data.repository.AuthRepository
+import com.nexus.platform.NexusApplication
+import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.domain.usecase.LoginUseCase
 import com.nexus.platform.feature.main.ui.MainActivity
+import com.nexus.platform.R
 import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
 
 class LoginActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val container = (application as NexusApplication).container
 
-        val authRepository = AuthRepository(this)
+        val authRepository = container.authRepository
         if (authRepository.currentSession() != null) {
             startActivity(Intent(this, MainActivity::class.java))
+            overridePendingTransition(0, 0)
             finish()
             return
         }
 
-        val factory = LoginViewModelFactory(LoginUseCase(authRepository))
+        val factory = LoginViewModelFactory(container.loginUseCase)
         val viewModel = ViewModelProvider(this, factory)[LoginViewModel::class.java]
 
         setContent {
@@ -64,6 +74,7 @@ class LoginActivity : ComponentActivity() {
                     onLoginClick = {
                         viewModel.login {
                             startActivity(Intent(this, MainActivity::class.java))
+                            overridePendingTransition(0, 0)
                             finish()
                         }
                     }
@@ -87,7 +98,7 @@ private fun LoginScreen(
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit
-) {
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -95,15 +106,15 @@ private fun LoginScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(modifier = Modifier.height(72.dp))
-        Text("欢迎回来", style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Black)
+        Text(stringResource(R.string.login_welcome), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("登录你的 Nexus 账号，同步资产与存档。", color = TextMuted)
+        Text(stringResource(R.string.login_subtitle), color = TextMuted)
         Spacer(modifier = Modifier.height(36.dp))
 
         OutlinedTextField(
             value = uiState.username,
             onValueChange = onUsernameChange,
-            label = { Text("手机号 / 邮箱") },
+            label = { Text(stringResource(R.string.login_account_label)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -111,18 +122,23 @@ private fun LoginScreen(
         OutlinedTextField(
             value = uiState.password,
             onValueChange = onPasswordChange,
-            label = { Text("输入密码") },
+            label = { Text(stringResource(R.string.login_password_label)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = {}) { Text("忘记密码？", color = Primary) }
+            TextButton(onClick = {}) { Text(stringResource(R.string.login_forgot_password), color = Primary) }
         }
 
         if (!uiState.errorMessage.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(6.dp))
-            Text(uiState.errorMessage.orEmpty(), color = MaterialTheme.colorScheme.error)
+            val resolvedError = when (uiState.errorMessage) {
+                "__error_empty_credentials__" -> stringResource(R.string.login_error_empty_credentials)
+                "__error_login_failed__" -> stringResource(R.string.login_error_failed)
+                else -> uiState.errorMessage.orEmpty()
+            }
+            Text(resolvedError, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -130,7 +146,7 @@ private fun LoginScreen(
             CircularProgressIndicator()
         } else {
             ActionButton(
-                text = "安全登录",
+                text = stringResource(R.string.login_action),
                 onClick = onLoginClick,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -140,8 +156,8 @@ private fun LoginScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Text("新用户？", color = TextMuted)
-            Text("注册账号", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.login_new_user), color = TextMuted)
+            Text(stringResource(R.string.login_signup), color = Color.White, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(36.dp))
@@ -152,7 +168,7 @@ private fun LoginScreen(
                     .height(1.dp)
                     .background(TextMuted.copy(alpha = 0.2f))
             )
-            Text("  快捷登录  ", color = TextMuted)
+            Text("  ${stringResource(R.string.login_quick)}  ", color = TextMuted)
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -163,8 +179,8 @@ private fun LoginScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            QuickLoginBox("G", Modifier.weight(1f))
-            QuickLoginBox("微", Modifier.weight(1f))
+            QuickLoginBox(stringResource(R.string.login_quick_google), Modifier.weight(1f))
+            QuickLoginBox(stringResource(R.string.login_quick_wechat), Modifier.weight(1f))
         }
     }
 }

@@ -1,157 +1,374 @@
-﻿package com.nexus.platform.feature.library.ui
+package com.nexus.platform.feature.library.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.nexus.platform.R
 import com.nexus.platform.domain.model.GameItem
-import com.nexus.platform.ui.theme.BackgroundSurface
+import com.nexus.platform.ui.components.GameLogo
+import com.nexus.platform.ui.theme.AccentGreen
+import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
+import com.nexus.platform.ui.theme.BorderLight
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
+import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import kotlin.math.min
+
+private val TopLevelBottomPadding = 96.dp
 
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
     onLoad: () -> Unit,
-    onGameClick: (GameItem) -> Unit
+    onGameClick: (GameItem) -> Unit,
+    onMoreClick: (LibrarySection) -> Unit
 ) {
-    LaunchedEffect(Unit) { onLoad() }
+    var hasRequested by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(uiState.games.isEmpty(), hasRequested) {
+        if (uiState.games.isEmpty() && !hasRequested) {
+            hasRequested = true
+            onLoad()
+        }
+    }
 
     when {
         uiState.loading -> LoadingState()
         !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
         uiState.games.isEmpty() -> EmptyState()
-        else -> ContentState(uiState.games, onGameClick)
+        else -> ContentState(uiState.games, onGameClick, onMoreClick)
     }
 }
 
 @Composable
-private fun ContentState(games: List<GameItem>, onGameClick: (GameItem) -> Unit) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-        item { ResumeCard() }
-        item { SectionHeader("My Collection", "Manage") }
-        items(games.take(8)) { game -> LibraryItem(game, onGameClick) }
-        item { SectionHeader("Recent", null) }
-        items(games.take(4)) { game -> LibraryItem(game, onGameClick) }
-        item { Spacer(modifier = Modifier.height(110.dp)) }
-    }
-}
-
-@Composable
-private fun ResumeCard() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(230.dp)
-            .clip(RoundedCornerShape(30.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        PrimaryStart.copy(alpha = 0.6f),
-                        BackgroundSurface
-                    )
-                )
-            )
-            .padding(22.dp)
-    ) {
-        Column(modifier = Modifier.align(Alignment.BottomStart)) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Primary.copy(alpha = 0.2f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text("Running in Background", color = Primary, style = MaterialTheme.typography.labelMedium)
+private fun ContentState(
+    games: List<GameItem>,
+    onGameClick: (GameItem) -> Unit,
+    onMoreClick: (LibrarySection) -> Unit
+) {
+    val recentGames = remember(games) {
+        if (games.isEmpty()) {
+            emptyList()
+        } else {
+            List(8) { index ->
+                val base = games[index % games.size]
+                if (games.size >= 8) {
+                    base
+                } else {
+                    base.copy(id = "recent_${index}_${base.id}")
+                }
             }
-            Spacer(modifier = Modifier.height(10.dp))
-            Text("Cyber Blade: Origin", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-            Text("Stage 4 complete | 2h played", color = TextMuted)
+        }
+    }
+    val myGameSource = remember(games) {
+        if (games.isEmpty()) {
+            emptyList()
+        } else {
+            val total = maxOf(games.size, 160)
+            List(total) { index ->
+                val base = games[index % games.size]
+                base.copy(
+                    id = "my_${index}_${base.id}",
+                    name = "${base.name} ${index + 1}"
+                )
+            }
+        }
+    }
+    var myLoadedCount by remember(myGameSource) {
+        mutableIntStateOf(min(40, myGameSource.size))
+    }
+    val myRows = remember(myLoadedCount) { (0 until myLoadedCount).chunked(4) }
+    val listState = rememberLazyListState()
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            if (myLoadedCount >= myGameSource.size) return@derivedStateOf false
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisibleIndex >= listState.layoutInfo.totalItemsCount - 2
+        }
+    }
+    LaunchedEffect(shouldLoadMore, myLoadedCount, myGameSource.size) {
+        if (shouldLoadMore) {
+            myLoadedCount = min(myLoadedCount + 40, myGameSource.size)
+        }
+    }
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 24.dp,
+            end = 24.dp,
+            top = 24.dp,
+            bottom = TopLevelBottomPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item { Spacer(modifier = Modifier.height(10.dp)) }
+        item {
+            ResumeCard(
+                featuredGame = recentGames.firstOrNull(),
+                onGameClick = onGameClick
+            )
+        }
+        item {
+            SectionHeader(
+                title = stringResource(R.string.library_section_recent),
+                action = stringResource(R.string.library_more_with_arrow),
+                onActionClick = { onMoreClick(LibrarySection.RECENT) }
+            )
+        }
+        item { RecentGameGrid(recentGames, onGameClick) }
+        item {
+            SectionHeader(
+                title = stringResource(R.string.library_section_my_games)
+            )
+        }
+        itemsIndexed(
+            items = myRows,
+            key = { index, _ -> "my_row_$index" },
+            contentType = { _, _ -> "home_game_row" }
+        ) { _, row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                row.forEach { sourceIndex ->
+                    val game = myGameSource[sourceIndex]
+                    GameItemCard(game, onGameClick)
+                }
+                repeat((4 - row.size).coerceAtLeast(0)) { EmptyGridCell() }
+            }
+        }
+        item {
+            if (myLoadedCount < myGameSource.size) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                }
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.library_load_end),
+                        color = TextMuted,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun SectionHeader(title: String, action: String?) {
+private fun ResumeCard(
+    featuredGame: GameItem?,
+    onGameClick: (GameItem) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(260.dp)
+            .clip(RoundedCornerShape(32.dp))
+            .border(1.dp, BorderLight)
+            .then(
+                if (featuredGame != null) {
+                    Modifier.clickable { onGameClick(featuredGame) }
+                } else {
+                    Modifier
+                }
+            )
+            .background(
+                Brush.linearGradient(listOf(PrimaryStart, PrimaryEnd))
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .size(130.dp)
+                .align(Alignment.TopStart)
+                .background(Color.White.copy(alpha = 0.14f), RoundedCornerShape(bottomEnd = 88.dp))
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.30f)
+                        ),
+                        startY = 0f,
+                        endY = 260f
+                    )
+                )
+                .padding(24.dp),
+            contentAlignment = Alignment.BottomStart
+        ) {
+            Column {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(AccentGreen.copy(alpha = 0.2f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(stringResource(R.string.library_running), color = AccentGreen, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(stringResource(R.string.library_resume_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                Text(stringResource(R.string.library_resume_subtitle), color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Brush.linearGradient(listOf(PrimaryStart, PrimaryEnd)))
+                        .then(
+                            if (featuredGame != null) {
+                                Modifier.clickable { onGameClick(featuredGame) }
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
+                    Text(stringResource(R.string.library_resume_action), color = TextMain, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String, action: String? = null, onActionClick: (() -> Unit)? = null) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-        if (!action.isNullOrBlank()) {
-            Text(action, color = Primary, style = MaterialTheme.typography.labelLarge)
+        if (!action.isNullOrBlank() && onActionClick != null) {
+            Text(
+                action,
+                color = Primary,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable { onActionClick() }
+            )
         }
     }
 }
 
 @Composable
-private fun LibraryItem(game: GameItem, onGameClick: (GameItem) -> Unit) {
-    Row(
+private fun RecentGameGrid(games: List<GameItem>, onGameClick: (GameItem) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            val firstRow = games.take(4)
+            firstRow.forEach { GameItemCard(it, onGameClick) }
+            repeat((4 - firstRow.size).coerceAtLeast(0)) { EmptyGridCell() }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            val secondRow = games.drop(4).take(4)
+            secondRow.forEach { GameItemCard(it, onGameClick) }
+            repeat((4 - secondRow.size).coerceAtLeast(0)) { EmptyGridCell() }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.EmptyGridCell() {
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .weight(1f)
+            .aspectRatio(1f)
             .clip(RoundedCornerShape(18.dp))
-            .background(BackgroundSurface)
-            .clickable { onGameClick(game) }
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
+            .background(BackgroundSurfaceElevated)
+    )
+}
+
+@Composable
+private fun RowScope.GameItemCard(game: GameItem, onGameClick: (GameItem) -> Unit) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clickable { onGameClick(game) },
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            BackgroundSurfaceElevated,
-                            PrimaryEnd.copy(alpha = 0.4f)
-                        )
-                    )
-                )
-        )
-        Spacer(modifier = Modifier.size(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(game.name, fontWeight = FontWeight.Bold)
-            Text("v${game.version} | ${game.description}", color = TextMuted, style = MaterialTheme.typography.bodySmall)
-        }
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(18.dp))
+                .border(1.dp, BorderLight)
                 .background(BackgroundSurfaceElevated)
-                .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
-            Text("Play", color = MaterialTheme.colorScheme.onSurface)
+            GameLogo(
+                iconUrl = game.iconUrl,
+                seed = "${game.id}_${game.name}",
+                modifier = Modifier
+                    .fillMaxSize()
+            )
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = game.name,
+            color = TextMuted,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -164,12 +381,17 @@ private fun LoadingState() {
     ) {
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(14.dp))
-        Text("Loading game list")
+        Text(stringResource(R.string.loading_games))
     }
 }
 
 @Composable
 private fun ErrorState(message: String) {
+    val resolvedMessage = if (message == "__error_load_games_failed__") {
+        stringResource(R.string.load_games_failed)
+    } else {
+        message
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -177,7 +399,7 @@ private fun ErrorState(message: String) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(message, color = MaterialTheme.colorScheme.error)
+        Text(resolvedMessage, color = MaterialTheme.colorScheme.error)
     }
 }
 
@@ -188,6 +410,6 @@ private fun EmptyState() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("No games available")
+        Text(stringResource(R.string.no_games_available))
     }
 }

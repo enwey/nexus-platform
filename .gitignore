@@ -15,6 +15,7 @@ dist/
 target/
 *.class
 *.jar
+!android-client/gradle/wrapper/gradle-wrapper.jar
 *.war
 *.ear
 build/

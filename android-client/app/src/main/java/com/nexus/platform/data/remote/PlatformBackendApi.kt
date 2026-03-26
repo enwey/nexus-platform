@@ -32,14 +32,14 @@ class PlatformBackendApi(context: Context) {
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IOException("加载游戏列表失败: ${response.code}")
+                throw IOException("Failed to load game list: ${response.code}")
             }
 
             val body = response.body?.string().orEmpty()
             val payload = gson.fromJson(body, JsonObject::class.java)
             val code = payload.get("code")?.asInt ?: -1
             if (code != 0) {
-                throw IOException(payload.get("message")?.asString ?: "游戏列表请求失败")
+                throw IOException(payload.get("message")?.asString ?: "Game list request failed")
             }
 
             val data = payload.getAsJsonArray("data") ?: JsonArray()
@@ -51,8 +51,8 @@ class PlatformBackendApi(context: Context) {
         val appId = get("appId")?.asString.orEmpty()
         return GameItem(
             id = appId,
-            name = get("name")?.asString ?: "未命名游戏",
-            description = get("description")?.asString ?: "暂无描述",
+            name = get("name")?.asString ?: "Unnamed game",
+            description = get("description")?.asString ?: "No description",
             iconUrl = get("iconUrl")?.asString.orEmpty(),
             downloadUrl = normalizeDownloadUrl(get("downloadUrl")?.asString.orEmpty()),
             version = get("version")?.asString ?: "1.0.0",

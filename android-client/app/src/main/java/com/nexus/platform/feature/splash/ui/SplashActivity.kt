@@ -1,6 +1,7 @@
 package com.nexus.platform.feature.splash.ui
 
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,24 +16,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.nexus.platform.feature.onboarding.ui.OnboardingActivity
+import com.nexus.platform.R
+import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.feature.main.ui.MainActivity
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMuted
 
 class SplashActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLanguageManager.ensureInitialized(this)
         setContent {
             NexusPlatformTheme {
                 SplashScreen()
             }
         }
         window.decorView.postDelayed({
-            startActivity(Intent(this, OnboardingActivity::class.java))
+            startActivity(Intent(this, MainActivity::class.java))
+            overridePendingTransition(0, 0)
             finish()
         }, 1200)
     }
@@ -70,7 +80,7 @@ private fun SplashScreen() {
             }
             androidx.compose.foundation.layout.Spacer(Modifier.size(24.dp))
             Text("NEXUS", fontWeight = FontWeight.Black)
-            Text("NEXT-GEN RUNTIME", color = TextMuted)
+            Text(stringResource(R.string.splash_runtime), color = TextMuted)
         }
     }
 }

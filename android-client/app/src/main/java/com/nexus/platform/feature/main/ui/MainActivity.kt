@@ -1,5 +1,6 @@
 package com.nexus.platform.feature.main.ui
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,39 +9,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.material3.Scaffold
-import com.nexus.platform.data.repository.AuthRepository
-import com.nexus.platform.data.repository.GameRepository
+import com.nexus.platform.NexusApplication
+import com.nexus.platform.core.i18n.AppLanguage
+import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.usecase.GetApprovedGamesUseCase
-import com.nexus.platform.domain.usecase.LogoutUseCase
 import com.nexus.platform.feature.auth.ui.LoginActivity
 import com.nexus.platform.feature.game.runtime.GameRuntimeActivity
-import com.nexus.platform.feature.game.ui.GameDetailScreen
 import com.nexus.platform.feature.library.ui.LibraryViewModel
-import com.nexus.platform.ui.components.MainBottomBar
-import com.nexus.platform.ui.navigation.MainDestination
 import com.nexus.platform.ui.navigation.MainNavGraph
+import com.nexus.platform.ui.navigation.MainRoutes
+import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.NexusPlatformTheme
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLanguageManager.ensureInitialized(this)
+        val container = (application as NexusApplication).container
 
-        val authRepository = AuthRepository(this)
-        val logoutUseCase = LogoutUseCase(authRepository)
-        val gameRepository = GameRepository(this)
-        val libraryFactory = LibraryViewModelFactory(GetApprovedGamesUseCase(gameRepository))
+        val logoutUseCase = container.logoutUseCase
+        val libraryFactory = LibraryViewModelFactory(container.getApprovedGamesUseCase)
         val libraryViewModel = ViewModelProvider(this, libraryFactory)[LibraryViewModel::class.java]
 
         setContent {
@@ -50,9 +50,17 @@ class MainActivity : ComponentActivity() {
                     libraryState = libraryState,
                     onLoadLibrary = { libraryViewModel.load() },
                     onPlayGame = { game -> GameRuntimeActivity.start(this, game) },
+                    currentLanguage = AppLanguageManager.currentLanguage(this),
+                    onChangeLanguage = { selectedLanguage ->
+                        if (selectedLanguage != AppLanguageManager.currentLanguage(this)) {
+                            AppLanguageManager.setLanguage(this, selectedLanguage)
+                            recreate()
+                        }
+                    },
                     onLogout = {
                         logoutUseCase()
                         startActivity(Intent(this, LoginActivity::class.java))
+                        overridePendingTransition(0, 0)
                         finish()
                     }
                 )
@@ -74,45 +82,32 @@ private fun MainScreen(
     libraryState: com.nexus.platform.feature.library.ui.LibraryUiState,
     onLoadLibrary: () -> Unit,
     onPlayGame: (GameItem) -> Unit,
+    currentLanguage: AppLanguage,
+    onChangeLanguage: (AppLanguage) -> Unit,
     onLogout: () -> Unit
 ) {
-    var selectedGame by rememberSaveable { mutableStateOf<GameItem?>(null) }
     val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val currentTab = MainDestination.entries.firstOrNull { it.route == currentRoute } ?: MainDestination.Library
-
-    if (selectedGame != null) {
-        GameDetailScreen(
-            game = selectedGame!!,
-            onBackClick = { selectedGame = null },
-            onPlayClick = { onPlayGame(selectedGame!!) }
-        )
-        return
-    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            MainBottomBar(
-                selected = currentTab,
-                onSelect = { tab ->
-                    navController.navigate(tab.route) {
-                        popUpTo(MainDestination.Library.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
-        }
+        containerColor = BackgroundBase,
+        bottomBar = {}
     ) { innerPadding ->
         MainNavGraph(
             navController = navController,
             libraryState = libraryState,
             onLoadLibrary = onLoadLibrary,
-            onLibraryGameClick = { selectedGame = it },
+            onLibraryGameClick = onPlayGame,
+            onLibraryMoreClick = { section ->
+                navController.navigate(MainRoutes.librarySectionRoute(section.routeValue))
+            },
+            onPlayGame = onPlayGame,
+            currentLanguage = currentLanguage,
+            onChangeLanguage = onChangeLanguage,
             onLogout = onLogout,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         )
     }
 }
