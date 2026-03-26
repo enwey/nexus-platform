@@ -10,12 +10,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "games")
+@Table(name = "games", indexes = {
+        @Index(name = "idx_games_status_created_at", columnList = "status, created_at"),
+        @Index(name = "idx_games_developer_created_at", columnList = "developer_id, created_at")
+})
 public class Game {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +36,9 @@ public class Game {
 
     @Column(name = "download_url")
     private String downloadUrl;
+
+    @Column(name = "storage_key")
+    private String storageKey;
 
     private String version;
     private String md5;
@@ -60,6 +67,7 @@ public class Game {
     }
 
     public enum GameStatus {
+        PROCESSING,
         DRAFT,
         PENDING,
         APPROVED,

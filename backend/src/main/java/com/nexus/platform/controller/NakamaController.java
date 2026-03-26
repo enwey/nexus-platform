@@ -1,8 +1,10 @@
 package com.nexus.platform.controller;
 
+import com.nexus.platform.dto.NakamaTypes.FriendInfo;
+import com.nexus.platform.dto.NakamaTypes.LeaderboardRecordInfo;
+import com.nexus.platform.dto.NakamaTypes.SessionInfo;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.service.NakamaService;
-import io.nakama.core.DefaultSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,12 +20,12 @@ public class NakamaController {
     private final NakamaService nakamaService;
 
     @PostMapping("/authenticate")
-    public Result<DefaultSession> authenticate(@RequestBody AuthenticateRequest request) {
+    public Result<SessionInfo> authenticate(@RequestBody AuthenticateRequest request) {
         return nakamaService.authenticate(request.userId(), request.token());
     }
 
     @PostMapping("/register")
-    public Result<String> register(@RequestBody RegisterRequest request) {
+    public Result<String> register(@RequestBody SocialRegisterRequest request) {
         return nakamaService.register(request.username(), request.password());
     }
 
@@ -48,7 +50,7 @@ public class NakamaController {
     }
 
     @GetMapping("/leaderboard/list")
-    public Result<java.util.List<io.nakama.api.LeaderboardRecord>> getLeaderboardRecords(
+    public Result<java.util.List<LeaderboardRecordInfo>> getLeaderboardRecords(
             @RequestParam String userId,
             @RequestParam String leaderboardId,
             @RequestParam(defaultValue = "10") int limit) {
@@ -56,7 +58,7 @@ public class NakamaController {
     }
 
     @GetMapping("/friends/list")
-    public Result<java.util.List<io.nakama.core.User>> getFriends(@RequestParam String userId) {
+    public Result<java.util.List<FriendInfo>> getFriends(@RequestParam String userId) {
         return nakamaService.getFriends(userId);
     }
 
@@ -67,6 +69,6 @@ public class NakamaController {
 }
 
 record AuthenticateRequest(String userId, String token) {}
-record RegisterRequest(String username, String password) {}
+record SocialRegisterRequest(String username, String password) {}
 record StorageWriteRequest(String userId, String key, String value) {}
 record LeaderboardRequest(String userId, String leaderboardId, long score, long subscore) {}

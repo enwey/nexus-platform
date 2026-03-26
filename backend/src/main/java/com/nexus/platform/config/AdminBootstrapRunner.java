@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.config;
+package com.nexus.platform.config;
 
 import com.nexus.platform.entity.User;
 import com.nexus.platform.repository.UserRepository;

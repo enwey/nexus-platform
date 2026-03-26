@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-shell">
     <header class="page-header">
       <div>

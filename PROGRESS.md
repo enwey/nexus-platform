@@ -1,69 +1,57 @@
-﻿# 项目进展记录
+﻿# 项目进展记录（更新于 2026-03-26）
 
 ## 当前状态
+项目已完成“开发者后台/运营后台拆分 + 认证与分发链路安全升级”的 P0 改造，后端与双前端均可构建通过。
 
-仓库已经完成两轮关键收口：
+## 今日完成
 
-- 第一轮：修复 `backend` 与 `dev-portal` 的源码损坏和编译阻塞
-- 第二轮：打通登录、上传、审核、下载这条最小业务链路，并让 Android 接上真实游戏列表与运行入口
-
-## 已完成事项
-
-### 仓库层
-
-- 建立根级合同与检查脚本
-- 建立根级文档与统一命令入口
-- 统一子项目 README 模板
+### 部署与环境
+- 增加本地环境脚本：`scripts/env-local.ps1`、`scripts/check-env.ps1`、`scripts/start-local.ps1`
+- 增加本机一键部署脚本：`scripts/deploy-local-user.ps1`
+- 新增 `infra:up:core`，支持受限网络环境只启动核心基础设施
+- 补齐 `backend/Dockerfile`
 
 ### backend
-
-- 修复主要编译阻塞
-- 清理部分乱码和坏字符串
-- 登录/注册改为安全 DTO 返回
-- 增加 `/user/me`
-- 增加最小 token 会话服务
-- 增加管理员初始化方案
-- 上传接口改为以后端登录用户为准
-- 游戏下载地址改为绝对 URL
-- 管理员可查看全部游戏，普通用户只看已通过游戏
+- 清理多处源码编码问题（BOM/乱码）
+- 修复编译阻塞并恢复 Maven 可构建
+- 接入 JWT 访问令牌 + Refresh Token 机制，支持 `/user/refresh` 与 `/user/logout`
+- 接入 Redis：访问令牌 denylist、刷新令牌轮换与失效控制
+- 落地权限模型（RBAC）并补齐审核相关鉴权
+- 审核通过/拒绝引入原因字段与审计日志（`/audit/logs`）
+- 游戏分发升级为“上传后异步处理 + 预签名下载 URL”
+- 审核状态机收敛：仅允许 `PENDING -> APPROVED/REJECTED`
+- 增加分页查询接口与 `PageResult`，避免大列表全量返回
+- 引入 Flyway，新增基线迁移脚本（`db/migration/V1__baseline_schema.sql`）
+- 修复 CORS（支持 `5173`、`5174`）
 
 ### dev-portal
+- 修复路由与 API 层编码损坏问题
+- 增加登录失效统一处理（提示 + 跳转登录）
+- 从 `dev-portal` 移除审核职责，收敛为开发者侧能力
 
-- 修复登录、注册、仪表盘、游戏列表、上传、审核页面源码
-- 构建恢复通过
-- 前端对接真实 token 和用户信息
-- 支持会话恢复和管理员权限守卫
-- 上传页适配新的后端权限模型
+### ops-portal（新增）
+- 新增独立项目 `ops-portal`
+- 独立端口 `5174`
+- 实现管理员登录、审核列表、通过/拒绝
+- 新增审核原因录入与审计日志页面
 
-### Android
+## 当前可用链路
+- 开发者后台：`http://localhost:5173`
+- 运营后台：`http://localhost:5174`
+- 后端：`http://localhost:8080/api/v1`
+- 审核链路：登录 -> 查看待审 -> 通过/拒绝（需管理员）
 
-- 整理最小运行骨架
-- 接入后端真实游戏列表
-- 接入游戏详情页和运行入口
-- 下载地址兼容 `10.0.2.2`
-- 清理部分会阻塞编译的坏资源与坏页面文件
-
-## 已验证结果
-
-- `npm run check:backend-contract`：通过
+## 构建验证
+- `mvn -U -f backend/pom.xml clean package -DskipTests`：通过
 - `npm run build:dev-portal`：通过
+- `npm run build:ops-portal`：通过
 
-## 当前剩余风险
+## 剩余风险
+- CDN 目前为可选配置，生产仍需接入真实 CDN 域名与回源策略
+- 异步处理已落地，但上传文件的杀毒/内容安全扫描尚未接入
+- Android/iOS 端仍未完成完整真机链路回归
 
-- Android 仍缺 `gradle-wrapper.jar`
-- backend 未做真实 Maven 构建验证
-- Android 未做真实 Gradle 构建验证
-- Android 真下载与运行未做完整联调
-- iOS bridge 与根级合同仍未完全对齐
-- token 仍是内存会话，不适合生产
-
-## 下一步重点
-
-1. 修 iOS bridge 和根级合同检查
-2. 补 Android / backend 的真实构建验证
-3. 做一轮完整联调：上传 -> 审核 -> 下载 -> 运行
-4. 再补测试与 CI
-
-## 备注
-
-当前项目已经从“明显不可交付”推进到“主链路可继续推进”。下一阶段的重点是把真实构建和多端一致性补齐。
+## 下一步建议
+1. 为 `dev-portal` 和 `ops-portal` 增加独立 CI/CD 发布流水线
+2. 为 Refresh Token 增加设备维度会话管理（多端登出、会话查看）
+3. 补齐“上传 -> 审核 -> Android/iOS 下载运行”全链路自动化回归

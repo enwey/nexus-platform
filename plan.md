@@ -1039,3 +1039,11 @@ func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
 - 项目负责人: [待填写]
 - 技术支持: [待填写]
 - 问题反馈: [待填写]
+
+## 2026-03-26 迭代更新
+- 新增独立运营后台 `ops-portal`（端口 5174）
+- `dev-portal` 移除审核职责，作为开发者后台继续迭代
+- 新增部署入口：`npm run dev:ops`、`npm run build:ops-portal`、`npm run infra:up:core`
+- 后端完成双端口 CORS 放行与 MinIO 自动建桶
+- 前端统一处理登录态失效并自动跳转登录页
+- 详细部署步骤见 `DEPLOYMENT.md`

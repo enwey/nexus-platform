@@ -9,9 +9,12 @@
     "check:sdk-types": "cmd /c mock-sdk\\node_modules\\.bin\\tsc --noEmit --project mock-sdk/tsconfig.json",
     "build:dev-portal": "cmd /c npm run build --prefix dev-portal",
     "dev:portal": "cmd /c npm run dev --prefix dev-portal",
+    "build:ops-portal": "cmd /c npm run build --prefix ops-portal",
+    "dev:ops": "cmd /c npm run dev --prefix ops-portal",
     "build:backend": "cmd /c mvn -f backend/pom.xml clean package -DskipTests",
     "test:backend": "cmd /c mvn -f backend/pom.xml test",
     "infra:up": "cmd /c docker compose -f docker-compose/docker-compose.yml up -d",
+    "infra:up:core": "cmd /c docker compose -f docker-compose/docker-compose.yml up -d postgres redis minio nakama",
     "infra:down": "cmd /c docker compose -f docker-compose/docker-compose.yml down",
     "infra:logs": "cmd /c docker compose -f docker-compose/docker-compose.yml logs -f",
     "check:android-setup": "node scripts/check-android-setup.mjs"

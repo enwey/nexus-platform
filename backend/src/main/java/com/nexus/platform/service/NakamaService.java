@@ -1,7 +1,9 @@
 package com.nexus.platform.service;
 
+import com.nexus.platform.dto.NakamaTypes.FriendInfo;
+import com.nexus.platform.dto.NakamaTypes.LeaderboardRecordInfo;
+import com.nexus.platform.dto.NakamaTypes.SessionInfo;
 import com.nexus.platform.dto.Result;
-import io.nakama.core.DefaultSession;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -10,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class NakamaService {
 
-    public Result<DefaultSession> authenticate(String userId, String token) {
+    public Result<SessionInfo> authenticate(String userId, String token) {
         log.warn("Nakama authenticate called before social integration is implemented. userId={}", userId);
         return Result.error("社交能力暂未接入");
     }
@@ -35,12 +37,12 @@ public class NakamaService {
         return Result.error("社交能力暂未接入");
     }
 
-    public Result<java.util.List<io.nakama.api.LeaderboardRecord>> getLeaderboardRecords(String userId, String leaderboardId, int limit) {
+    public Result<java.util.List<LeaderboardRecordInfo>> getLeaderboardRecords(String userId, String leaderboardId, int limit) {
         log.warn("Nakama getLeaderboardRecords called before social integration is implemented. userId={}, leaderboardId={}", userId, leaderboardId);
         return Result.success(Collections.emptyList());
     }
 
-    public Result<java.util.List<io.nakama.core.User>> getFriends(String userId) {
+    public Result<java.util.List<FriendInfo>> getFriends(String userId) {
         log.warn("Nakama getFriends called before social integration is implemented. userId={}", userId);
         return Result.success(Collections.emptyList());
     }
@@ -50,3 +52,4 @@ public class NakamaService {
         return Result.error("社交能力暂未接入");
     }
 }
+

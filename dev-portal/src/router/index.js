@@ -1,47 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { getCurrentUser } from '../api'
 import { useUserStore } from '../stores/user'
 
 const routes = [
-  {
-    path: '/',
-    redirect: '/login'
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('../views/Login.vue')
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('../views/Register.vue')
-  },
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('../views/Dashboard.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/games',
-    name: 'Games',
-    component: () => import('../views/Games.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/games/upload',
-    name: 'GameUpload',
-    component: () => import('../views/GameUpload.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/audit',
-    name: 'Audit',
-    component: () => import('../views/Audit.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
-  }
+  { path: '/', redirect: '/login' },
+  { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
+  { path: '/register', name: 'Register', component: () => import('../views/Register.vue') },
+  { path: '/dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue'), meta: { requiresAuth: true } },
+  { path: '/games', name: 'Games', component: () => import('../views/Games.vue'), meta: { requiresAuth: true } },
+  { path: '/games/upload', name: 'GameUpload', component: () => import('../views/GameUpload.vue'), meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({
@@ -86,12 +53,8 @@ router.beforeEach(async (to) => {
     return '/dashboard'
   }
 
-  if (to.meta.requiresAdmin && !userStore.isAdmin) {
-    ElMessage.warning('当前账号没有管理员权限')
-    return '/dashboard'
-  }
-
   return true
 })
 
 export default router
+

@@ -1,23 +1,19 @@
-﻿package com.nexus.platform.controller;
+package com.nexus.platform.controller;
 
 import com.nexus.platform.config.AuthInterceptor;
+import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.service.GameService;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,10 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class GameController {
     private final GameService gameService;
-    private final MinioClient minioClient;
-
-    @Value("${minio.bucket-name}")
-    private String bucketName;
 
     @PostMapping("/upload")
     public Result<Game> uploadGame(
@@ -48,6 +40,14 @@ public class GameController {
         return gameService.getGameList(currentUser);
     }
 
+    @GetMapping("/list/page")
+    public Result<PageResult<Game>> getGameListPaged(
+            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return gameService.getGameListPaged(currentUser, page, size);
+    }
+
     @GetMapping("/{appId}")
     public Result<Game> getGame(@PathVariable String appId) {
         return gameService.getGameByAppId(appId);
@@ -60,36 +60,53 @@ public class GameController {
         return gameService.getDeveloperGames(developerId, currentUser);
     }
 
+    @GetMapping("/developer/{developerId}/page")
+    public Result<PageResult<Game>> getDeveloperGamesPaged(
+            @PathVariable Long developerId,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return gameService.getDeveloperGamesPaged(developerId, currentUser, page, size);
+    }
+
+    @GetMapping("/download-url/{appId}")
+    public Result<String> getDownloadUrl(
+            @PathVariable String appId,
+            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
+        return gameService.getPresignedDownloadUrl(appId, currentUser);
+    }
+
     @GetMapping("/download/{appId}")
-    public ResponseEntity<InputStreamResource> downloadGame(@PathVariable String appId) {
-        try {
-            String fileName = appId + ".zip";
-            InputStream stream = minioClient.getObject(
-                    GetObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(fileName)
-                            .build()
-            );
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", fileName);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(new InputStreamResource(stream));
-        } catch (Exception e) {
+    public ResponseEntity<Void> downloadGame(@PathVariable String appId,
+                                             @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
+        Result<String> result = gameService.getPresignedDownloadUrl(appId, currentUser);
+        if (result.getCode() != 0 || result.getData() == null) {
             return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.status(302).header(HttpHeaders.LOCATION, result.getData()).build();
     }
 
     @PostMapping("/approve/{id}")
-    public Result<Void> approveGame(@PathVariable Long id) {
-        return gameService.approveGame(id);
+    public Result<Void> approveGame(
+            @PathVariable Long id,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestBody(required = false) AuditDecisionRequest decision) {
+        String reason = decision == null ? null : decision.reason();
+        return gameService.approveGame(id, currentUser, request.getRequestURI(), reason);
     }
 
     @PostMapping("/reject/{id}")
-    public Result<Void> rejectGame(@PathVariable Long id) {
-        return gameService.rejectGame(id);
+    public Result<Void> rejectGame(
+            @PathVariable Long id,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestBody(required = false) AuditDecisionRequest decision) {
+        String reason = decision == null ? null : decision.reason();
+        return gameService.rejectGame(id, currentUser, request.getRequestURI(), reason);
     }
 }
+
+record AuditDecisionRequest(String reason) {
+}
+

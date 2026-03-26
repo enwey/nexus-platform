@@ -1,88 +1,33 @@
 ﻿# Backend
 
-## 背景
+## 说明
+`backend` 是 Nexus Platform 的核心业务后端，负责用户认证、游戏上传下载、审核流程与基础服务集成。
 
-`backend` 是 Nexus Platform 的 Java 后端服务，负责平台核心业务接口与外部服务集成。
-
-## 功能
-
-主要提供以下能力：
-
-- 用户注册与登录
-- 游戏上传、查询、审核
-- MinIO 文件存储接入
-- Nakama 能力接入
-- PostgreSQL / Redis 配置与数据访问
-
-## 目录
-
-```text
-backend/
-├─ src/main/java/com/nexus/platform/
-│  ├─ controller/   控制器
-│  ├─ service/      业务服务
-│  ├─ repository/   数据访问
-│  ├─ entity/       实体定义
-│  ├─ config/       配置类
-│  └─ dto/          数据传输对象
-├─ src/main/resources/
-│  └─ application.yml
-├─ src/test/
-└─ pom.xml
-```
-
-## 依赖
-
-- Java 17+
-- Maven 3.8+
-- PostgreSQL
-- Redis
-- MinIO
-- Nakama（如启用社交能力）
+## 关键能力
+- 用户注册/登录/刷新/登出
+- 认证机制：JWT Access Token + Refresh Token + Redis 失效控制
+- 管理员初始化（默认 `admin/admin123456`）
+- 游戏上传、列表、审核、下载
+- 上传后异步处理，审核通过后生成预签名下载 URL
+- MinIO 对象存储接入（上传时自动创建 bucket）
+- 审核日志记录与查询（`/audit/logs`）
+- CORS 放行开发/运营双前端（5173/5174）
+- Flyway 数据库迁移
 
 ## 启动
-
 ```bash
 mvn -f backend/pom.xml spring-boot:run
 ```
 
 ## 构建
-
-### 构建
-
 ```bash
-npm run build:backend
+mvn -f backend/pom.xml clean package -DskipTests
 ```
 
-### 测试
+## 配置
+主要配置在 `src/main/resources/application.yml`。
 
-```bash
-npm run test:backend
-```
-
-## 联调
-
-后端联调推荐搭配以下服务一起启动：
-
-- PostgreSQL
-- Redis
-- MinIO
-- Nakama
-
-如果使用仓库自带基础设施：
-
-```bash
-npm run infra:up
-mvn -f backend/pom.xml spring-boot:run
-```
-
-如果修改后端接口，且开发者后台会调用，必须同步更新：
-
-- `contracts/backend-api.json`
-
-## 已知问题
-
-- 当前默认配置偏向本地开发环境，不适合直接用于生产。
-- 社交相关接口目前是稳定 stub，尚未接回真实 Nakama 行为。
-- 默认会自动创建管理员账号，可通过 `PLATFORM_BOOTSTRAP_ADMIN_*` 环境变量覆盖。
-- 仓库正在做平台收束，接口路径变更必须同步更新契约。
+## 注意事项
+- 生产环境请修改 JWT 密钥、管理员初始密码和 MinIO/数据库凭据
+- 建议生产启用 HTTPS 与 CDN 下载域名
+- 社交相关 Nakama 接口目前为稳定占位实现

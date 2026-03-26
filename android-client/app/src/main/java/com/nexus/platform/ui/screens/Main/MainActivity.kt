@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.ui.screens
+﻿﻿﻿﻿﻿﻿﻿﻿package com.nexus.platform.ui.screens
 
 import android.content.Intent
 import android.os.Bundle
