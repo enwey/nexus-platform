@@ -17,6 +17,9 @@ target/
 *.jar
 *.war
 *.ear
+build/
+.gradle/
+local.properties
 
 # OS
 .DS_Store

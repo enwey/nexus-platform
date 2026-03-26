@@ -2,11 +2,75 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#111111">
+    android:background="#000000">
 
     <WebView
         android:id="@+id/gameWebView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/capsuleMenu"
+        android:layout_width="88dp"
+        android:layout_height="34dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="20dp"
+        android:background="#80000000"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="•••"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="1dp"
+            android:layout_height="16dp"
+            android:layout_marginHorizontal="8dp"
+            android:background="#33FFFFFF" />
+
+        <TextView
+            android:id="@+id/capsuleClose"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:gravity="center"
+            android:text="×"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/runtimeLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:background="#222433" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="环境初始化中..."
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:layout_width="220dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="24dp"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:indeterminate="true" />
+    </LinearLayout>
 
 </FrameLayout>

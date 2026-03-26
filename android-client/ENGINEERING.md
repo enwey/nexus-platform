@@ -1,38 +1,33 @@
-# Android Engineering Notes
+﻿# Android Engineering Notes
 
-## Build Target
+## Current Status
 
-The Android client is expected to build as a standalone Gradle project under `android-client`.
+- Architecture migrated to feature-oriented + layered structure.
+- Legacy screen packages removed.
+- Android build wrapper repaired (`gradle-wrapper.jar` restored).
+- `:app:assembleDebug` passes.
 
-## Required Wrapper Files
+## Key Technical Decisions
 
-The project should contain:
+1. UI logic moved behind ViewModel for key flows (`auth`, `library`).
+2. Backend calls are now behind repositories + use cases.
+3. JS bridge APIs live under `core/bridge/api` to avoid confusion with backend remote APIs.
+4. Main screen routing is centralized in `ui/navigation/MainNavGraph.kt`.
 
-- `gradlew`
-- `gradlew.bat`
-- `gradle/wrapper/gradle-wrapper.properties`
-- `gradle/wrapper/gradle-wrapper.jar`
-
-## Required App Files
-
-- `app/build.gradle.kts`
-- `app/proguard-rules.pro`
-- `app/src/main/AndroidManifest.xml`
-- `app/src/main/res/layout/activity_game.xml`
-- `app/src/main/res/values/themes.xml`
-- `app/src/main/res/xml/backup_rules.xml`
-- `app/src/main/res/xml/data_extraction_rules.xml`
-
-## Current Build Status
-
-- Project structure has been normalized for Gradle.
-- Runtime bridge and minimum resources are present.
-- Wrapper scripts and properties can be checked with:
+## Build Commands
 
 ```bash
 npm run check:android-setup
 ```
 
-## Remaining Requirement
+```bash
+cd android-client
+./gradlew --no-daemon :app:assembleDebug
+```
 
-`gradle-wrapper.jar` still needs to be provided before the project can be built with `./gradlew`.
+## Follow-up Recommendations
+
+- Add DI framework (Hilt/Koin) to replace manual ViewModel factory wiring.
+- Introduce `Result` sealed types for repository/usecase return consistency.
+- Add UI tests for login and library loading states.
+- Add token refresh flow in Android client for long sessions.
