@@ -44,10 +44,6 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         apiHandlers["wx.vibrateLong"] = VibrateApi(context)
     }
 
-    fun createSyncBridge(): NexusSyncBridge {
-        return NexusSyncBridge(gson, apiHandlers)
-    }
-
     /**
      * 鎺ユ敹鏉ヨ嚜JavaScript鐨勬秷鎭?     * @param message JSON鏍煎紡鐨勬秷鎭瓧绗︿覆
      */

@@ -72,7 +72,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
-    implementation("com.heroiclabs.nakama:nakama-java-sdk:2.16.0") {
+    implementation("com.github.heroiclabs.nakama-java:nakama-java:1aa70a0d9664a09206b5558151c9785721e050d5") {
         exclude(group = "com.google.api.grpc", module = "proto-google-common-protos")
     }
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
