@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nexus Platform</string>
+
+    <string name="tab_library">Library</string>
+    <string name="tab_discover">Discover</string>
+    <string name="tab_community">Community</string>
+    <string name="tab_profile">Profile</string>
+
+    <string name="splash_runtime">NEXT-GEN RUNTIME</string>
+
+    <string name="onboarding_title">Skip Downloads, Play Instantly</string>
+    <string name="onboarding_subtitle">Get a stable and smooth mini-game experience through Nexus Runtime.</string>
+    <string name="onboarding_start">Start Now</string>
+
+    <string name="login_welcome">Welcome Back</string>
+    <string name="login_subtitle">Sign in to your Nexus account and sync your assets and saves.</string>
+    <string name="login_account_label">Phone / Email</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="login_action">Secure Sign In</string>
+    <string name="login_new_user">New here?</string>
+    <string name="login_signup">Create account</string>
+    <string name="login_quick">Quick Login</string>
+    <string name="login_quick_google">Google</string>
+    <string name="login_quick_wechat">WeChat</string>
+    <string name="login_error_empty_credentials">Please enter username and password</string>
+    <string name="login_error_failed">Login failed</string>
+
+    <string name="discover_title">Discover New Games</string>
+    <string name="discover_section_rank">Top Ranked</string>
+    <string name="discover_view_more">View Ranking</string>
+    <string name="discover_banner_hot">Weekly Hit</string>
+    <string name="discover_banner_title">Dark Tower Defense: Awakening</string>
+    <string name="discover_category_all">All</string>
+    <string name="discover_category_action">Action Shooter</string>
+    <string name="discover_category_casual">Casual Puzzle</string>
+    <string name="discover_category_rpg">Role Playing</string>
+    <string name="discover_rank_1_title">Merge Watermelon</string>
+    <string name="discover_rank_1_subtitle">Casual · 2.3M players online</string>
+    <string name="discover_rank_2_title">Strongest Defense</string>
+    <string name="discover_rank_2_subtitle">Tower Defense · Rating 4.9</string>
+    <string name="discover_quick_play">Instant Play</string>
+
+    <string name="library_section_favorites">Favorites</string>
+    <string name="library_section_my_games">My Games</string>
+    <string name="library_section_recent">Recently Played</string>
+    <string name="library_more_with_arrow">More ></string>
+    <string name="library_manage">Manage</string>
+    <string name="library_running">Running (Background)</string>
+    <string name="library_resume_title">Cyber Blade: Origin</string>
+    <string name="library_resume_subtitle">Checkpoint 4 · Playtime 2h</string>
+    <string name="library_resume_action">Continue</string>
+    <string name="loading_games">Loading game list</string>
+    <string name="load_games_failed">Failed to load game list</string>
+    <string name="no_games_available">No games available</string>
+    <string name="library_empty_section">No games in this section</string>
+    <string name="library_prev_page">Previous</string>
+    <string name="library_next_page">Next</string>
+    <string name="library_page_info">Page %1$d/%2$d</string>
+    <string name="library_load_end">No more games</string>
+
+    <string name="runtime_status_preparing">Initializing runtime...</string>
+    <string name="runtime_status_loading_resource">Preparing game resources...</string>
+    <string name="runtime_status_starting">Starting game...</string>
+    <string name="runtime_status_cache">Cache hit, starting...</string>
+    <string name="runtime_error_checksum">Game resource validation failed. Please try again.</string>
+    <string name="runtime_error_download">Game download failed. Check your network and try again.</string>
+    <string name="runtime_error_entry_missing">Game entry file is missing. Please try again.</string>
+    <string name="runtime_error_webview">Game page failed to load. Please try again.</string>
+    <string name="runtime_error_startup">Game failed to start. Please try again.</string>
+    <string name="runtime_retry">Retry</string>
+    <string name="runtime_capsule_menu">···</string>
+    <string name="runtime_capsule_close">×</string>
+    <string name="runtime_capsule_close_desc">Close game</string>
+    <string name="runtime_capsule_more_desc">More actions</string>
+    <string name="runtime_capsule_more_todo">More actions coming soon</string>
+
+    <string name="profile_header_title">Pro Player 007</string>
+    <string name="profile_account_id">Nexus ID: 88293041</string>
+    <string name="profile_security">Account &amp; Security</string>
+    <string name="profile_cloud_sync">Cloud Save Sync</string>
+    <string name="profile_clear_cache">Clear Local Game Cache</string>
+    <string name="profile_language">Language</string>
+    <string name="profile_language_dialog_title">Choose Language</string>
+    <string name="profile_sync_enabled">Enabled</string>
+    <string name="profile_cache_size">1.4 GB</string>
+    <string name="profile_logout">Log Out</string>
+    <string name="profile_system_hint">Account System</string>
+    <string name="profile_wallet_title">Wallet Balance (Platform Coin)</string>
+    <string name="profile_wallet_value">¥ 1,250.00</string>
+    <string name="profile_charge">Top Up</string>
+    <string name="profile_bill">Bills</string>
+
+    <string name="game_back">Back</string>
+    <string name="game_editor_pick">Nexus Official Pick</string>
+    <string name="game_intro_title">Game Introduction</string>
+    <string name="game_intro_fallback">Fast startup, stable frame rate, and cloud-native asset delivery for quality lightweight gaming.</string>
+    <string name="game_play_now">Play Now</string>
+    <string name="game_score_label">Score</string>
+    <string name="game_rank_label">Action Rank</string>
+    <string name="game_version_label">Version</string>
+
+    <string name="community_coming_soon">Community features are coming soon</string>
+    <string name="language_traditional_chinese">Traditional Chinese</string>
+    <string name="language_simplified_chinese">Simplified Chinese</string>
+    <string name="language_english">English</string>
+    <string name="common_cancel">Cancel</string>
+</resources>

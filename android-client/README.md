@@ -1,87 +1,66 @@
-# Android Client
+﻿# Android Client
 
-## 背景
+## Overview
 
-`android-client` 是 Nexus Platform 的 Android 原生宿主工程，用来承载 WebView、桥接 SDK 注入和小游戏资源加载。
+`android-client` is the Android host app for Nexus Platform. It provides:
 
-## 功能
+- Native shell and UI (Compose)
+- WebView runtime container for game packages
+- JS bridge (`AndroidApp` / `AndroidAppSync`)
+- Backend integration for auth and approved game list
 
-当前 Android 工程承担以下职责：
+## Architecture
 
-- 加载游戏 ZIP 解压后的静态资源
-- 在 WebView 中注入 `mock-sdk`
-- 暴露 Android 异步桥接：`AndroidApp`
-- 暴露 Android 同步桥接：`AndroidAppSync`
-- 为后续 Android 原生运行时功能提供扩展入口
+The project now uses layered + feature-oriented structure:
 
-## 目录
+- `core/`
+  - `bridge/`: JS bridge and bridge API adapters
+  - `network/`: backend endpoint configuration
+- `data/`
+  - `local/`: local session storage
+  - `remote/`: backend API clients
+  - `repository/`: repository implementations
+- `domain/`
+  - `model/`: domain models
+  - `usecase/`: business use cases
+- `feature/`
+  - `auth/`, `main/`, `library/`, `discover/`, `profile/`, `community/`, `game/`
+- `ui/`
+  - `components/`: reusable UI components
+  - `navigation/`: centralized navigation graph
+  - `theme/`: app theme
 
-```text
-android-client/
-├─ app/
-│  ├─ src/main/java/   Android 代码
-│  ├─ src/main/res/    资源文件
-│  └─ build.gradle.kts
-├─ gradle/wrapper/     Gradle wrapper 配置
-├─ gradlew
-├─ gradlew.bat
-├─ ENGINEERING.md      工程说明
-└─ README.md
-```
+## Build Requirements
 
-## 依赖
-
-- Android Studio Hedgehog 或更高
+- Android Studio Hedgehog+
 - JDK 17
 - Android SDK 34
-- Gradle 8.2 对应运行环境
+- Gradle 8.2 (wrapper)
 
-## 启动
+## Quick Start
 
-建议直接使用 Android Studio 打开 `android-client/` 目录。
-
-## 构建
-
-### 工程完整性检查
-
-在仓库根目录执行：
+1. Check required Android files:
 
 ```bash
 npm run check:android-setup
 ```
 
-### 构建 Debug 包
-
-如果 wrapper 文件完整，可执行：
+2. Build debug APK:
 
 ```bash
+cd android-client
 ./gradlew assembleDebug
 ```
 
-Windows 下：
+Windows:
 
 ```bat
 gradlew.bat assembleDebug
 ```
 
-默认情况下，wrapper 使用官方 Gradle 分发地址，适合直接提交到 GitHub。
-如果本机需要无外网构建，可以临时改为 `D:\tools\ai_install` 下的本地分发包，但不要把这种机器专用配置提交到仓库。
+## Runtime Notes
 
-## 联调
-
-Android 联调建议顺序：
-
-1. 先在仓库根目录执行 `npm run check:contracts`
-2. 确认 `mock-sdk` 产物可被注入
-3. 确认 backend 和基础设施已启动
-4. 再运行 Android 客户端加载游戏资源
-
-桥接联调时：
-
-- 异步 API 通过 `window.AndroidApp.postMessage(...)`
-- 同步 API 通过 `window.AndroidAppSync.invokeSync(...)`
-
-## 已知问题
-
-- 依赖 `Nakama Java SDK` 需要通过 `JitPack` 拉取。
-- 当前 UI 仍是最小可运行骨架，不是完整产品界面。
+- Local backend is accessed through emulator host `10.0.2.2`.
+- Auth uses backend login and stores `token + refreshToken` in local session store.
+- Main tabs are managed by a centralized nav graph.
+- Game runtime is handled by `feature/game/runtime/GameRuntimeActivity`.

@@ -18,8 +18,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "USE_MOCK_DATA", "true")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("boolean", "USE_MOCK_DATA", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -38,6 +42,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -63,11 +68,14 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.8.0")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
-    implementation("com.github.heroiclabs.nakama-java:nakama-java:1aa70a0d9664a09206b5558151c9785721e050d5") {
+    implementation("com.heroiclabs.nakama:nakama-java-sdk:2.16.0") {
         exclude(group = "com.google.api.grpc", module = "proto-google-common-protos")
     }
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

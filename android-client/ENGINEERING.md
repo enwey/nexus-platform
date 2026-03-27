@@ -1,40 +1,59 @@
 # Android Engineering Notes
 
-## Build Target
+## Current Status
 
-The Android client builds as a standalone Gradle project under `android-client`.
+- Architecture migrated to feature-oriented + layered structure.
+- Legacy screen packages removed.
+- Android build wrapper repaired (`gradle-wrapper.jar` restored).
+- `:app:assembleDebug` passes.
 
-## Required Wrapper Files
+## Key Technical Decisions
 
-The project should contain:
+1. UI logic moved behind ViewModel for key flows (`auth`, `library`).
+2. Backend calls are now behind repositories + use cases.
+3. JS bridge APIs live under `core/bridge/api` to avoid confusion with backend remote APIs.
+4. Main screen routing is centralized in `ui/navigation/MainNavGraph.kt`.
+5. Typography is aligned to Material 3 official type scale in `ui/theme/Type.kt`.
 
-- `gradlew`
-- `gradlew.bat`
-- `gradle/wrapper/gradle-wrapper.properties`
-- `gradle/wrapper/gradle-wrapper.jar`
+## Typography Standard
 
-## Required App Files
+- Source of truth: `app/src/main/java/com/nexus/platform/ui/theme/Type.kt`.
+- Base scale: Material 3 (`display/headline/title/body/label`) with official size, line-height, and letter-spacing tokens.
+- Usage convention:
+  - Page hero title: `headlineLarge`
+  - Section title: `titleLarge`
+  - Body text: `bodyMedium` / `bodyLarge`
+  - Secondary hint: `bodySmall`
+  - Buttons and interactive labels: `labelLarge`
 
-- `app/build.gradle.kts`
-- `app/proguard-rules.pro`
-- `app/src/main/AndroidManifest.xml`
-- `app/src/main/res/layout/activity_game.xml`
-- `app/src/main/res/values/themes.xml`
-- `app/src/main/res/xml/backup_rules.xml`
-- `app/src/main/res/xml/data_extraction_rules.xml`
+## Interaction Standard
 
-## Current Build Status
+- Back behavior:
+  - System back and UI back must map to the same destination.
+  - Predictive back is enabled via `android:enableOnBackInvokedCallback="true"`.
+- Motion:
+  - Navigation transitions use one consistent duration family (enter ~220ms, exit ~180ms) and `FastOutSlowInEasing`.
+  - Forward transition direction: left; back transition direction: right.
+- No white flash policy:
+  - `windowBackground` and Compose root background must be the same base color.
+  - `Scaffold` container color is fixed to `BackgroundBase`.
+- Touch targets:
+  - Interactive controls should keep a minimum visual/touch size near 48dp.
 
-- Project structure has been normalized for Gradle.
-- Runtime bridge and minimum resources are present.
-- Wrapper scripts and properties can be checked with:
+## Build Commands
 
 ```bash
 npm run check:android-setup
 ```
 
-## Wrapper Status
+```bash
+cd android-client
+./gradlew --no-daemon :app:assembleDebug
+```
 
-- `gradle-wrapper.jar` is present and should be committed.
-- Repository `gradle-wrapper.properties` should remain portable and use the official Gradle distribution URL.
-- If a local offline build is needed, you can temporarily point the wrapper to a file under `D:\tools\ai_install`, but that machine-specific change should not be committed.
+## Follow-up Recommendations
+
+- Add DI framework (Hilt/Koin) to replace manual ViewModel factory wiring.
+- Introduce `Result` sealed types for repository/usecase return consistency.
+- Add UI tests for login and library loading states.
+- Add token refresh flow in Android client for long sessions.

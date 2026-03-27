@@ -55,4 +55,9 @@
     
     <!-- 游戏图标 -->
     <dimen name="game_icon">60dp</dimen>
+    <dimen name="runtime_capsule_width">88dp</dimen>
+    <dimen name="runtime_capsule_height">32dp</dimen>
+    <dimen name="runtime_capsule_margin_top">8dp</dimen>
+    <dimen name="runtime_capsule_margin_end">12dp</dimen>
+    <dimen name="runtime_capsule_divider_width">0.5dp</dimen>
 </resources>

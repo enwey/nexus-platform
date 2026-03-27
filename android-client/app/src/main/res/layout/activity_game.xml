@@ -1,12 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/runtimeRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#111111">
+    android:background="#000000">
 
     <WebView
         android:id="@+id/gameWebView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/capsuleMenu"
+        android:layout_width="@dimen/runtime_capsule_width"
+        android:layout_height="@dimen/runtime_capsule_height"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="@dimen/runtime_capsule_margin_top"
+        android:layout_marginEnd="@dimen/runtime_capsule_margin_end"
+        android:background="@drawable/bg_runtime_capsule"
+        android:clipToOutline="true"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/capsuleMore"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:contentDescription="@string/runtime_capsule_more_desc"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_capsule_more"
+                android:tint="#F2FFFFFF" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="@dimen/runtime_capsule_divider_width"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:background="#52FFFFFF" />
+
+        <FrameLayout
+            android:id="@+id/capsuleClose"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:contentDescription="@string/runtime_capsule_close_desc"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_capsule_close"
+                android:tint="#F2FFFFFF" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/runtimeLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC090A0F"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp">
+
+        <View
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:background="#222433" />
+
+        <TextView
+            android:id="@+id/runtimeStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/runtime_status_preparing"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="220dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="24dp"
+            android:indeterminate="true" />
+
+        <TextView
+            android:id="@+id/runtimeRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="#335C67FF"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp"
+            android:text="@string/runtime_retry"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
 
 </FrameLayout>
