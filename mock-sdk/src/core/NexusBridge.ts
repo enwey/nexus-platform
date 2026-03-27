@@ -142,6 +142,32 @@ class NexusBridge {
     }
   }
 
+  public invokeNativeSync(api: string, params: Record<string, any> = {}): any {
+    const message: NativeMessage = {
+      api,
+      callbackId: this.generateCallbackId(),
+      params
+    }
+
+    if (!this.isNative) {
+      return this.getMockData(api, params)
+    }
+
+    const win = window as any
+
+    if (this.platform === 'android' && win.AndroidAppSync?.invokeSync) {
+      const raw = win.AndroidAppSync.invokeSync(JSON.stringify(message))
+      const response = JSON.parse(raw) as NativeResponse
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    }
+
+    console.warn(`[NexusBridge] Sync bridge unavailable for platform: ${this.platform}`)
+    return this.getMockData(api, params)
+  }
+
   /**
    * 模拟响应（用于Web环境）
    * @param callbackId 回调ID

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# Android Client
+# Android Client
 
 ## 背景
 
@@ -64,6 +64,9 @@ Windows 下：
 gradlew.bat assembleDebug
 ```
 
+默认情况下，wrapper 使用官方 Gradle 分发地址，适合直接提交到 GitHub。
+如果本机需要无外网构建，可以临时改为 `D:\tools\ai_install` 下的本地分发包，但不要把这种机器专用配置提交到仓库。
+
 ## 联调
 
 Android 联调建议顺序：
@@ -80,6 +83,5 @@ Android 联调建议顺序：
 
 ## 已知问题
 
-- 当前仍缺少 `gradle/wrapper/gradle-wrapper.jar`。
-- 由于缺少官方 wrapper jar，无法直接完成本地 Gradle 构建验证。
-- UI 目前是最小可运行骨架，不是完整产品界面。
+- 依赖 `Nakama Java SDK` 需要通过 `JitPack` 拉取。
+- 当前 UI 仍是最小可运行骨架，不是完整产品界面。

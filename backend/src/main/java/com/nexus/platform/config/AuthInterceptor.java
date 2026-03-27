@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
@@ -48,28 +49,31 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private Permission resolveRequiredPermission(HttpServletRequest request) {
-        String uri = request.getRequestURI();
+        String uri = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (uri == null || uri.isBlank()) {
+            uri = request.getRequestURI();
+        }
         String method = request.getMethod();
 
-        if (uri.contains("/user/me")) {
+        if ("/user/me".equals(uri)) {
             return Permission.USER_PROFILE_READ;
         }
-        if ("POST".equalsIgnoreCase(method) && uri.contains("/user/logout")) {
+        if ("POST".equalsIgnoreCase(method) && "/user/logout".equals(uri)) {
             return Permission.USER_LOGOUT;
         }
-        if ("POST".equalsIgnoreCase(method) && uri.contains("/game/upload")) {
+        if ("POST".equalsIgnoreCase(method) && "/game/upload".equals(uri)) {
             return Permission.GAME_UPLOAD;
         }
-        if (uri.contains("/game/developer/")) {
+        if (uri.startsWith("/game/developer/")) {
             return Permission.GAME_DEVELOPER_READ;
         }
-        if ("POST".equalsIgnoreCase(method) && uri.contains("/game/approve/")) {
+        if ("POST".equalsIgnoreCase(method) && uri.startsWith("/game/approve/")) {
             return Permission.GAME_AUDIT_APPROVE;
         }
-        if ("POST".equalsIgnoreCase(method) && uri.contains("/game/reject/")) {
+        if ("POST".equalsIgnoreCase(method) && uri.startsWith("/game/reject/")) {
             return Permission.GAME_AUDIT_REJECT;
         }
-        if ("GET".equalsIgnoreCase(method) && uri.contains("/audit/logs")) {
+        if ("GET".equalsIgnoreCase(method) && uri.startsWith("/audit/logs")) {
             return Permission.AUDIT_LOG_READ;
         }
         return null;

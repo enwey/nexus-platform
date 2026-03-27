@@ -7,7 +7,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.nexus.platform.api.*
 import kotlinx.coroutines.*
-import io.nakama.apiclient.ApiClient
 
 /**
  * JavaScript桥接类，用于WebView和原生代码之间的通信
@@ -16,12 +15,6 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val apiHandlers = mutableMapOf<String, ApiHandler>()
-    private val nakamaApiClient: ApiClient by lazy {
-        ApiClient.builder()
-            .serverKey("defaultkeychanged")
-            .host("http://localhost:7351")
-            .build()
-    }
 
     init {
         registerApiHandlers()
@@ -50,6 +43,10 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
         apiHandlers["wx.getClipboardData"] = ClipboardApi(context)
         apiHandlers["wx.vibrateShort"] = VibrateApi(context)
         apiHandlers["wx.vibrateLong"] = VibrateApi(context)
+    }
+
+    fun createSyncBridge(): NexusSyncBridge {
+        return NexusSyncBridge(gson, apiHandlers)
     }
 
     /**

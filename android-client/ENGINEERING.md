@@ -2,7 +2,7 @@
 
 ## Build Target
 
-The Android client is expected to build as a standalone Gradle project under `android-client`.
+The Android client builds as a standalone Gradle project under `android-client`.
 
 ## Required Wrapper Files
 
@@ -33,6 +33,8 @@ The project should contain:
 npm run check:android-setup
 ```
 
-## Remaining Requirement
+## Wrapper Status
 
-`gradle-wrapper.jar` still needs to be provided before the project can be built with `./gradlew`.
+- `gradle-wrapper.jar` is present and should be committed.
+- Repository `gradle-wrapper.properties` should remain portable and use the official Gradle distribution URL.
+- If a local offline build is needed, you can temporarily point the wrapper to a file under `D:\tools\ai_install`, but that machine-specific change should not be committed.

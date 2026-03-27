@@ -30,7 +30,7 @@ export const login = (options?: {
  */
 export const getSystemInfoSync = (): SystemInfo => {
   if (nexusBridge.isNativeEnvironment()) {
-    const result = nexusBridge.invokeNative('wx.getSystemInfoSync', {}) as any
+    const result = nexusBridge.invokeNativeSync('wx.getSystemInfoSync', {}) as any
     return result
   }
   return nexusBridge['getMockSystemInfo']()
@@ -114,7 +114,7 @@ export const setStorage = (options: StorageOption): void => {
  */
 export const setStorageSync = (key: string, data: any): void => {
   if (nexusBridge.isNativeEnvironment()) {
-    nexusBridge.invokeNative('wx.setStorageSync', { key, data })
+    nexusBridge.invokeNativeSync('wx.setStorageSync', { key, data })
   } else {
     localStorage.setItem(key, JSON.stringify(data))
   }
@@ -158,7 +158,7 @@ export const getStorage = (options: StorageOption): void => {
  */
 export const getStorageSync = (key: string): any => {
   if (nexusBridge.isNativeEnvironment()) {
-    const result = nexusBridge.invokeNative('wx.getStorageSync', { key }) as any
+    const result = nexusBridge.invokeNativeSync('wx.getStorageSync', { key }) as any
     return result.data
   }
   try {
@@ -205,7 +205,7 @@ export const removeStorage = (options: StorageOption): void => {
  */
 export const removeStorageSync = (key: string): void => {
   if (nexusBridge.isNativeEnvironment()) {
-    nexusBridge.invokeNative('wx.removeStorageSync', { key })
+    nexusBridge.invokeNativeSync('wx.removeStorageSync', { key })
   } else {
     localStorage.removeItem(key)
   }
@@ -249,7 +249,7 @@ export const clearStorage = (options?: {
  */
 export const clearStorageSync = (): void => {
   if (nexusBridge.isNativeEnvironment()) {
-    nexusBridge.invokeNative('wx.clearStorageSync', {})
+    nexusBridge.invokeNativeSync('wx.clearStorageSync', {})
   } else {
     localStorage.clear()
   }

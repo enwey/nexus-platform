@@ -110,7 +110,7 @@ class GameActivity : AppCompatActivity() {
 
                 webView.webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                        return assetLoader.shouldInterceptRequest(request?.url)
+                        return request?.url?.let { assetLoader.shouldInterceptRequest(it) }
                     }
 
                     override fun onPageFinished(view: WebView?, url: String?) {

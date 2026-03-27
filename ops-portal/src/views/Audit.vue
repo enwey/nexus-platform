@@ -41,7 +41,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { approveGame, getGameList, rejectGame } from '../api'
+import { approveGame, getGameList, logoutSession, rejectGame } from '../api'
 import { useUserStore } from '../stores/user'
 
 const router = useRouter()
@@ -116,9 +116,14 @@ const handleReject = async (row) => {
 const getStatusText = (status) => statusTextMap[status] || status || '未知'
 const getStatusType = (status) => statusTypeMap[status] || 'info'
 
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await logoutSession()
+  } catch {
+  } finally {
+    userStore.logout()
+    router.push('/login')
+  }
 }
 
 onMounted(loadGames)

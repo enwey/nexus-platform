@@ -60,7 +60,7 @@ const handleLogin = async () => {
     loading.value = true
 
     const res = await login(form)
-    userStore.setSession(res.data.user, res.data.token)
+    userStore.setSession(res.data.user, res.data.token, res.data.refreshToken)
 
     ElMessage.success('登录成功')
     router.push('/dashboard')

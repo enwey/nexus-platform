@@ -7,6 +7,21 @@ export const login = (data) =>
     data
   })
 
+export const refreshSession = (refreshToken) =>
+  request({
+    url: '/user/refresh',
+    method: 'post',
+    data: { refreshToken },
+    skipAuthRefresh: true
+  })
+
+export const logoutSession = () =>
+  request({
+    url: '/user/logout',
+    method: 'post',
+    skipAuthRefresh: true
+  })
+
 export const getCurrentUser = () =>
   request({
     url: '/user/me',

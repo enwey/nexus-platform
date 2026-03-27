@@ -56,7 +56,7 @@ const handleLogin = async () => {
     loading.value = true
 
     const res = await login(form)
-    userStore.setSession(res.data.user, res.data.token)
+    userStore.setSession(res.data.user, res.data.token, res.data.refreshToken)
 
     if (res.data.user?.role !== 'ADMIN') {
       userStore.logout()

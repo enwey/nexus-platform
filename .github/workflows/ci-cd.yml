@@ -22,9 +22,28 @@ jobs:
     - name: Install dependencies (Mock SDK)
       working-directory: ./mock-sdk
       run: npm ci
-    
+
+    - name: Install dependencies (Dev Portal)
+      working-directory: ./dev-portal
+      run: npm ci
+
+    - name: Install dependencies (Ops Portal)
+      working-directory: ./ops-portal
+      run: npm ci
+
+    - name: Check contracts
+      run: npm run check:contracts
+
     - name: Build Mock SDK
       working-directory: ./mock-sdk
+      run: npm run build
+
+    - name: Build Dev Portal
+      working-directory: ./dev-portal
+      run: npm run build
+
+    - name: Build Ops Portal
+      working-directory: ./ops-portal
       run: npm run build
     
     - name: Run tests (Mock SDK)

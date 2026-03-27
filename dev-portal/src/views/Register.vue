@@ -100,7 +100,7 @@ const handleRegister = async () => {
       email: form.email
     })
 
-    userStore.setSession(res.data.user, res.data.token)
+    userStore.setSession(res.data.user, res.data.token, res.data.refreshToken)
     ElMessage.success('注册成功，已自动登录')
     router.push('/dashboard')
   } catch (error) {

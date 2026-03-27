@@ -19,19 +19,26 @@ function normalizePathParameters(endpoint) {
 
 function parseBackendContract() {
   const contract = JSON.parse(readFile('contracts/backend-api.json'));
+  const consumerEndpoints = new Map();
+
+  for (const entry of contract.endpoints) {
+    for (const consumer of entry.consumers) {
+      if (!consumerEndpoints.has(consumer)) {
+        consumerEndpoints.set(consumer, new Set());
+      }
+      consumerEndpoints.get(consumer).add(
+        normalizeEndpoint(entry.method, normalizePathParameters(entry.path))
+      );
+    }
+  }
+
   return {
     contractEndpoints: new Set(
       contract.endpoints.map((entry) =>
         normalizeEndpoint(entry.method, normalizePathParameters(entry.path))
       )
     ),
-    devPortalEndpoints: new Set(
-      contract.endpoints
-        .filter((entry) => entry.consumers.includes('dev-portal'))
-        .map((entry) =>
-          normalizeEndpoint(entry.method, normalizePathParameters(entry.path))
-        )
-    )
+    consumerEndpoints
   };
 }
 
@@ -56,10 +63,10 @@ function parseControllerEndpoints() {
   return endpoints;
 }
 
-function parseDevPortalEndpoints() {
-  const source = readFile('dev-portal/src/api/index.js');
+function parseApiEndpoints(relativePath) {
+  const source = readFile(relativePath);
   const endpoints = new Set();
-  const regex = /return request\(\{\s+url: (?:`([^`]+)`|'([^']+)'),\s+method: '([^']+)'/gms;
+  const regex = /request\(\{\s+url:\s*(?:`([^`]+)`|'([^']+)'),\s+method:\s*'([^']+)'/gms;
 
   for (const match of source.matchAll(regex)) {
     const rawPath = match[1] ?? match[2];
@@ -93,9 +100,12 @@ function printSection(title, items) {
   }
 }
 
-const { contractEndpoints, devPortalEndpoints } = parseBackendContract();
+const { contractEndpoints, consumerEndpoints } = parseBackendContract();
 const backendEndpoints = parseControllerEndpoints();
-const portalEndpoints = normalizeDynamicEndpoints(parseDevPortalEndpoints());
+const consumerApiFiles = new Map([
+  ['dev-portal', 'dev-portal/src/api/index.js'],
+  ['ops-portal', 'ops-portal/src/api/index.js']
+]);
 
 const failures = [];
 
@@ -109,14 +119,23 @@ if (backendExtras.length > 0) {
   failures.push(['Backend controllers expose endpoints missing from contract:', backendExtras]);
 }
 
-const portalMissing = diff(devPortalEndpoints, portalEndpoints);
-if (portalMissing.length > 0) {
-  failures.push(['Dev portal contract endpoints missing from API layer:', portalMissing]);
-}
+for (const [consumer, expectedEndpoints] of consumerEndpoints.entries()) {
+  const apiFile = consumerApiFiles.get(consumer);
+  if (!apiFile) {
+    failures.push([`No API source configured for consumer: ${consumer}`, []]);
+    continue;
+  }
 
-const portalExtras = extras(devPortalEndpoints, portalEndpoints);
-if (portalExtras.length > 0) {
-  failures.push(['Dev portal API layer calls endpoints missing from contract:', portalExtras]);
+  const actualEndpoints = normalizeDynamicEndpoints(parseApiEndpoints(apiFile));
+  const missing = diff(expectedEndpoints, actualEndpoints);
+  if (missing.length > 0) {
+    failures.push([`${consumer} contract endpoints missing from API layer:`, missing]);
+  }
+
+  const unexpected = extras(expectedEndpoints, actualEndpoints);
+  if (unexpected.length > 0) {
+    failures.push([`${consumer} API layer calls endpoints missing from contract:`, unexpected]);
+  }
 }
 
 if (failures.length > 0) {

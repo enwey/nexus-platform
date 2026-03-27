@@ -1,15 +1,13 @@
-﻿﻿﻿﻿﻿﻿﻿﻿package com.nexus.platform.ui.screens
+﻿package com.nexus.platform.ui.screens
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.GameActivity
-import com.nexus.platform.ui.screens.LoginActivity
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.utils.Game
 
@@ -58,8 +55,12 @@ fun MainScreen(onLogout: () -> Unit) {
                 onPlayClick = { GameActivity.start(context, currentGame!!) }
             )
         } else {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 72.dp)
+                ) {
                     when (selectedTab) {
                         0 -> LibraryScreen(onGameClick = { game -> currentGame = game })
                         1 -> DiscoverScreen()
@@ -71,7 +72,9 @@ fun MainScreen(onLogout: () -> Unit) {
                 BottomNavigationBar(
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(androidx.compose.ui.Alignment.BottomCenter)
                 )
             }
         }

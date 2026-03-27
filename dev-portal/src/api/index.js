@@ -8,6 +8,23 @@ export const login = (data) => {
   })
 }
 
+export const refreshSession = (refreshToken) => {
+  return request({
+    url: '/user/refresh',
+    method: 'post',
+    data: { refreshToken },
+    skipAuthRefresh: true
+  })
+}
+
+export const logoutSession = () => {
+  return request({
+    url: '/user/logout',
+    method: 'post',
+    skipAuthRefresh: true
+  })
+}
+
 export const register = (data) => {
   return request({
     url: '/user/register',
@@ -64,8 +81,8 @@ export const rejectGame = (id) => {
 
 export const downloadGame = (appId) => {
   return request({
-    url: `/game/download/${appId}`,
+    url: `/game/download-url/${appId}`,
     method: 'get',
-    responseType: 'blob'
+    skipAuthRefresh: true
   })
 }

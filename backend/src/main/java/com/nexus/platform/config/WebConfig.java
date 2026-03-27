@@ -57,6 +57,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/user/me",
                         "/user/logout",
                         "/game/list",
+                        "/game/list/**",
                         "/game/upload",
                         "/game/developer/**",
                         "/game/approve/**",

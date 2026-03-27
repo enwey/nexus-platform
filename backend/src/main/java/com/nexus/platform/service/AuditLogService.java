@@ -7,6 +7,8 @@ import com.nexus.platform.repository.GameRepository;
 import com.nexus.platform.repository.AuditLogRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,8 +39,9 @@ public class AuditLogService {
         if (limit <= 0 || limit > 200) {
             limit = 50;
         }
-        List<AuditLog> logs = auditLogRepository.findTop200ByOrderByCreatedAtDesc();
-        return logs.stream().limit(limit).toList();
+        return auditLogRepository.findAllByOrderByCreatedAtDesc(
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
     }
 
     public Game getGameById(Long id) {
