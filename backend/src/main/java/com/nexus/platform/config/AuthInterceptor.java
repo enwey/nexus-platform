@@ -64,6 +64,18 @@ public class AuthInterceptor implements HandlerInterceptor {
         if ("POST".equalsIgnoreCase(method) && "/game/upload".equals(uri)) {
             return Permission.GAME_UPLOAD;
         }
+        if ("POST".equalsIgnoreCase(method) && uri.startsWith("/game/submit/")) {
+            return Permission.GAME_AUDIT_SUBMIT;
+        }
+        if ("POST".equalsIgnoreCase(method) && uri.matches("^/game/\\d+/submit-version/\\d+$")) {
+            return Permission.GAME_AUDIT_SUBMIT;
+        }
+        if ("POST".equalsIgnoreCase(method) && uri.matches("^/game/\\d+/rollback/\\d+$")) {
+            return Permission.GAME_VERSION_ROLLBACK;
+        }
+        if ("GET".equalsIgnoreCase(method) && uri.matches("^/game/\\d+/versions$")) {
+            return Permission.GAME_DEVELOPER_READ;
+        }
         if (uri.startsWith("/game/developer/")) {
             return Permission.GAME_DEVELOPER_READ;
         }

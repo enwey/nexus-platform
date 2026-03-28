@@ -14,7 +14,9 @@ public class RolePermissionService {
                     Permission.USER_PROFILE_READ,
                     Permission.USER_LOGOUT,
                     Permission.GAME_UPLOAD,
-                    Permission.GAME_DEVELOPER_READ
+                    Permission.GAME_DEVELOPER_READ,
+                    Permission.GAME_AUDIT_SUBMIT,
+                    Permission.GAME_VERSION_ROLLBACK
             )
     );
 

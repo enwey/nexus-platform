@@ -1,7 +1,9 @@
 package com.nexus.platform.service;
 
 import com.nexus.platform.entity.Game;
+import com.nexus.platform.entity.GameVersion;
 import com.nexus.platform.repository.GameRepository;
+import com.nexus.platform.repository.GameVersionRepository;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import java.io.InputStream;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class UploadProcessingService {
     private final GameRepository gameRepository;
+    private final GameVersionRepository gameVersionRepository;
     private final MinioClient minioClient;
 
     @Value("${minio.bucket-name}")
@@ -48,9 +51,23 @@ public class UploadProcessingService {
                 sb.append(String.format("%02x", b));
             }
 
-            game.setMd5(sb.toString());
-            game.setVersion("1.0.0");
-            game.setStatus(Game.GameStatus.PENDING);
+            long versionCount = gameVersionRepository.countByGameId(game.getId());
+            String versionName = "1.0." + versionCount;
+            String md5 = sb.toString();
+
+            GameVersion version = new GameVersion();
+            version.setGameId(game.getId());
+            version.setVersionName(versionName);
+            version.setEntryFile("index.html");
+            version.setStorageKey(game.getStorageKey());
+            version.setDownloadUrl(game.getDownloadUrl());
+            version.setMd5(md5);
+            version.setStatus(GameVersion.VersionStatus.DRAFT);
+            gameVersionRepository.save(version);
+
+            game.setMd5(md5);
+            game.setVersion(versionName);
+            game.setStatus(Game.GameStatus.DRAFT);
             gameRepository.save(game);
         } catch (Exception e) {
             log.error("Upload async processing failed, gameId={}", gameId, e);
@@ -59,4 +76,3 @@ public class UploadProcessingService {
         }
     }
 }
-

@@ -79,6 +79,37 @@ export const rejectGame = (id) => {
   })
 }
 
+export const submitGameForAudit = (id, note = '') => {
+  return request({
+    url: `/game/submit/${id}`,
+    method: 'post',
+    data: { note }
+  })
+}
+
+export const getGameVersions = (gameId) => {
+  return request({
+    url: `/game/${gameId}/versions`,
+    method: 'get'
+  })
+}
+
+export const submitGameVersionForAudit = (gameId, versionId, note = '') => {
+  return request({
+    url: `/game/${gameId}/submit-version/${versionId}`,
+    method: 'post',
+    data: { note }
+  })
+}
+
+export const rollbackGameVersion = (gameId, versionId, reason = '') => {
+  return request({
+    url: `/game/${gameId}/rollback/${versionId}`,
+    method: 'post',
+    data: { reason }
+  })
+}
+
 export const downloadGame = (appId) => {
   return request({
     url: `/game/download-url/${appId}`,

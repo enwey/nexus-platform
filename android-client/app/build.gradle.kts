@@ -15,11 +15,15 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val backendBaseUrl = System.getenv("BACKEND_BASE_URL")
+            ?.takeIf { it.isNotBlank() }
+            ?: "http://10.0.2.2:8080/api/v1"
+        buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
     }
 
     buildTypes {
         debug {
-            buildConfigField("boolean", "USE_MOCK_DATA", "true")
+            buildConfigField("boolean", "USE_MOCK_DATA", "false")
         }
         release {
             isMinifyEnabled = false

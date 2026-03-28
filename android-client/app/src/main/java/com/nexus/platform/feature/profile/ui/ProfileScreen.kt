@@ -1,5 +1,7 @@
 package com.nexus.platform.feature.profile.ui
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,6 +57,7 @@ fun ProfileScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     onLogoutClick: () -> Unit
 ) {
+    val context = LocalContext.current
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -64,7 +68,13 @@ fun ProfileScreen(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         UserCard()
-        WalletCard()
+        WalletCard(
+            onBillClick = { context.startActivity(Intent(context, BillingActivity::class.java)) },
+            onHowToEarnClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
+        )
+        ReferralCard(
+            onClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
+        )
         MenuGroup(
             items = listOf(
                 stringResource(R.string.profile_security),
@@ -79,8 +89,15 @@ fun ProfileScreen(
                 stringResource(currentLanguage.labelRes)
             ),
             onItemClick = { index ->
-                if (index == 3) {
-                    showLanguageDialog = true
+                when (index) {
+                    0 -> context.startActivity(Intent(context, AccountSecurityActivity::class.java))
+                    1 -> context.startActivity(Intent(context, DeviceManagementActivity::class.java))
+                    2 -> Toast.makeText(
+                        context,
+                        context.getString(R.string.profile_cache_cleared),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    3 -> showLanguageDialog = true
                 }
             }
         )
@@ -166,7 +183,10 @@ private fun UserCard() {
 }
 
 @Composable
-private fun WalletCard() {
+private fun WalletCard(
+    onBillClick: () -> Unit,
+    onHowToEarnClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,21 +211,99 @@ private fun WalletCard() {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White)
-                        .padding(horizontal = 24.dp, vertical = 8.dp)
-                ) {
-                    Text(stringResource(R.string.profile_charge), color = Primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                }
-                Box(
-                    modifier = Modifier
+                        .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color.White.copy(alpha = 0.2f))
-                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                        .clickable { onBillClick() }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(stringResource(R.string.profile_bill), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .clickable { onHowToEarnClick() }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(stringResource(R.string.profile_how_to_earn), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun ReferralCard(
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        PrimaryStart.copy(alpha = 0.15f),
+                        PrimaryEnd.copy(alpha = 0.15f)
+                    )
+                )
+            )
+            .border(1.dp, Primary, RoundedCornerShape(20.dp))
+            .padding(20.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "🎁",
+                style = MaterialTheme.typography.displaySmall
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.profile_referral_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = TextMain
+                )
+                Text(
+                    text = stringResource(R.string.profile_referral_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Primary)
+                    .clickable { onClick() }
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.profile_referral_button),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextMain
+                )
+            }
+        }
+        
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 10.dp, y = 10.dp)
+        ) {
+            Text(
+                text = "🚀",
+                style = MaterialTheme.typography.displayLarge,
+                color = Color.White.copy(alpha = 0.1f)
+            )
         }
     }
 }

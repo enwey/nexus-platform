@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -93,10 +92,6 @@ fun MainBottomBar(
 
 @Composable
 private fun tabLabel(tab: MainDestination): String {
-    if (tab == MainDestination.Library) {
-        val language = LocalConfiguration.current.locales[0]?.language.orEmpty()
-        return if (language.startsWith("en")) "Games" else "\u6E38\u620F"
-    }
     return stringResource(tab.labelRes)
 }
 

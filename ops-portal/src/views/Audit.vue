@@ -51,6 +51,7 @@ const games = ref([])
 const loading = ref(false)
 
 const statusTextMap = {
+  PROCESSING: '处理中',
   DRAFT: '草稿',
   PENDING: '待审核',
   APPROVED: '已通过',
@@ -58,6 +59,7 @@ const statusTextMap = {
 }
 
 const statusTypeMap = {
+  PROCESSING: 'warning',
   DRAFT: 'info',
   PENDING: 'warning',
   APPROVED: 'success',
@@ -69,7 +71,7 @@ const loadGames = async () => {
   try {
     const res = await getGameList()
     games.value = (res.data || []).filter((game) =>
-      game.status === 'PENDING' || game.status === 'APPROVED' || game.status === 'REJECTED'
+      game.status === 'PROCESSING' || game.status === 'PENDING' || game.status === 'APPROVED' || game.status === 'REJECTED'
     )
   } catch (error) {
     ElMessage.error(error.message || '加载审核列表失败')

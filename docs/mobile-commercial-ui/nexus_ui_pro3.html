@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Platform - 商业级 UI/UX 全链路设计</title>
+    <style>
+        /* ================= 设计系统 (Design System) ================= */
+        :root {
+            --bg-base: #090a0f;
+            --bg-surface: #15161d;
+            --bg-surface-elevated: #222433;
+            --primary: #5c67ff;
+            --primary-gradient: linear-gradient(135deg, #5c67ff 0%, #cb63ff 100%);
+            --accent-green: #00e599;
+            --accent-red: #ff4d4f;
+            --text-main: #ffffff;
+            --text-muted: #8b8d99;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(21, 22, 29, 0.7);
+            --shadow-glow: 0 8px 30px rgba(92, 103, 255, 0.3);
+            --radius-xl: 32px;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #1e1e24;
+            color: var(--text-main);
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 60px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, 393px);
+            gap: 60px 40px;
+            justify-content: center;
+        }
+
+        /* 统一设备外壳 (iPhone 15 Pro Proportions) */
+        .device-mockup {
+            width: 393px;
+            height: 852px;
+            background: var(--bg-base);
+            border-radius: 54px;
+            border: 12px solid #000;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 0 0 2px #2a2a35;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 硬件细节 */
+        .dynamic-island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 125px; height: 35px; background: #000; border-radius: 20px; z-index: 1000; }
+        .status-bar { height: 50px; padding: 0 30px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; z-index: 100; position: relative; }
+        .page-title-label { text-align: center; color: #a1a3b3; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+
+        /* 全局通用组件 */
+        .content-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 120px; position: relative; z-index: 10; }
+        .content-scroll::-webkit-scrollbar { display: none; }
+        
+        .btn-primary { background: var(--primary-gradient); color: #fff; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; width: 100%; border: none; box-shadow: var(--shadow-glow); cursor: pointer; transition: transform 0.2s; }
+        .btn-secondary { background: var(--bg-surface-elevated); color: #fff; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; width: 100%; border: 1px solid var(--border-light); }
+        
+        .input-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 16px; height: 56px; width: 100%; box-sizing: border-box; padding: 0 20px; color: #fff; font-size: 16px; margin-bottom: 16px; outline: none; transition: border-color 0.3s; }
+        .input-box:focus { border-color: var(--primary); background: rgba(92, 103, 255, 0.05); }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; margin-top: 30px; }
+        .section-title { font-size: 20px; font-weight: 800; margin: 0; }
+        .section-more { color: var(--primary); font-size: 14px; font-weight: 600; }
+
+        /* 底部导航栏 (Glassmorphism) */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; height: 90px; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border-light); display: flex; justify-content: space-around; padding-top: 15px; z-index: 100; box-sizing: border-box; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 11px; font-weight: 500; }
+        .nav-item.active { color: #fff; }
+        .nav-icon { width: 24px; height: 24px; border-radius: 8px; background: var(--text-muted); opacity: 0.5; }
+        .nav-item.active .nav-icon { background: var(--primary-gradient); opacity: 1; box-shadow: 0 4px 12px rgba(92, 103, 255, 0.4); }
+
+        /* ================= 页面特定样式 ================= */
+        
+        /* 1. Splash */
+        .splash-bg { background: radial-gradient(circle at top left, rgba(92, 103, 255, 0.2), transparent 50%), radial-gradient(circle at bottom right, rgba(203, 99, 255, 0.1), transparent 50%), var(--bg-base); flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .logo-mark { width: 90px; height: 90px; background: var(--primary-gradient); border-radius: 28px; display: flex; justify-content: center; align-items: center; font-size: 48px; font-weight: 900; box-shadow: var(--shadow-glow); margin-bottom: 24px; position: relative; }
+        
+        /* 2. Onboarding */
+        .hero-img { width: 100%; height: 380px; background: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=800&q=80') center/cover; border-radius: var(--radius-xl); border: 1px solid var(--border-light); position: relative; overflow: hidden; }
+        .hero-img::after { content:''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-base), transparent); }
+        .dots { display: flex; justify-content: center; gap: 8px; margin: 30px 0; }
+        .dot { width: 8px; height: 8px; background: var(--bg-surface-elevated); border-radius: 4px; }
+        .dot.active { width: 24px; background: var(--primary); }
+
+        /* 3. Login */
+        .auth-header { margin: 60px 0 40px; }
+        .social-login { display: flex; gap: 16px; margin-top: 24px; }
+        .social-btn { flex: 1; height: 50px; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; }
+
+        /* 4. Home (Library - 效率优先落地页) */
+        .resume-card { width: 100%; height: 260px; border-radius: var(--radius-xl); background: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80') center/cover; position: relative; overflow: hidden; border: 1px solid var(--border-light); margin-top: 10px;}
+        .resume-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(9,10,15,0.9) 100%); padding: 24px; display: flex; flex-direction: column; justify-content: flex-end; }
+        .tag-playing { background: rgba(0, 229, 153, 0.2); color: var(--accent-green); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; width: fit-content; margin-bottom: 8px; backdrop-filter: blur(10px); }
+        .game-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 12px; }
+        .game-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .game-icon { width: 100%; aspect-ratio: 1; border-radius: 18px; background: var(--bg-surface-elevated); border: 1px solid var(--border-light); background-size: cover; background-position: center; position: relative; }
+        .game-name { font-size: 12px; color: var(--text-muted); font-weight: 500; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+        /* 5. Discover (商业分发页) */
+        .banner-carousel { height: 180px; background: var(--primary-gradient); border-radius: var(--radius-lg); position: relative; overflow: hidden; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end;}
+        .category-row { display: flex; gap: 12px; overflow-x: auto; margin-top: 20px; padding-bottom: 10px; }
+        .category-pill { padding: 10px 20px; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 20px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+        .list-item { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-surface); border-radius: var(--radius-lg); margin-bottom: 12px; border: 1px solid var(--border-light); }
+        .list-icon { width: 60px; height: 60px; border-radius: 14px; background: #333; flex-shrink: 0; background-size: cover;}
+        .btn-get { background: rgba(255,255,255,0.1); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+
+        /* 6. Game Detail (转化页) */
+        .detail-hero { height: 320px; background: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80') center/cover; position: relative; }
+        .detail-content { margin-top: -40px; background: var(--bg-base); border-radius: 32px 32px 0 0; padding: 30px 24px; position: relative; z-index: 10; min-height: 500px;}
+        .detail-header { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 30px; }
+        .detail-icon { width: 90px; height: 90px; border-radius: 22px; background: #444; margin-top: -50px; border: 4px solid var(--bg-base); box-shadow: 0 10px 20px rgba(0,0,0,0.5); background-image: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=200&q=80'); background-size: cover;}
+        .stats-row { display: flex; justify-content: space-between; border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); padding: 16px 0; margin-bottom: 24px;}
+        .stat-box { text-align: center; flex: 1; border-right: 1px solid var(--border-light); }
+        .stat-box:last-child { border: none; }
+        .play-fab { position: absolute; bottom: 30px; left: 24px; right: 24px; z-index: 100; }
+
+        /* 7. Runtime (游戏运行环境) */
+        .runtime-bg { background: #000; flex: 1; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .capsule-menu { position: absolute; top: 60px; right: 20px; width: 88px; height: 34px; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); border: 0.5px solid rgba(255,255,255,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: space-evenly; z-index: 2000; }
+        .cap-dots { display: flex; gap: 4px; }
+        .cap-dot { width: 5px; height: 5px; background: #fff; border-radius: 50%; }
+        .cap-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+        .cap-close { width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+        .loading-progress { width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 40px; overflow: hidden; }
+        .loading-bar { width: 75%; height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+        /* 8. Profile & Settings */
+        .user-card { display: flex; align-items: center; gap: 20px; padding: 20px 0; }
+        .avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary-gradient); border: 2px solid var(--primary); padding: 2px; }
+        .avatar-inner { width: 100%; height: 100%; border-radius: 50%; background: url('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80') center/cover; }
+        .wallet-card { background: var(--primary-gradient); border-radius: var(--radius-lg); padding: 24px; margin-top: 10px; position: relative; overflow: hidden; }
+        .menu-group { background: var(--bg-surface); border-radius: var(--radius-lg); margin-top: 24px; border: 1px solid var(--border-light); overflow: hidden; }
+        .menu-item { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); font-weight: 500; }
+        .menu-item:last-child { border: none; }
+
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 01. 启动页 (Brand Identity) ==================== -->
+    <div>
+        <div class="page-title-label">01. 启动页 / Splash</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="splash-bg">
+                <div class="logo-mark">N</div>
+                <h1 style="font-size: 32px; letter-spacing: 4px; margin: 0 0 8px 0;">NEXUS</h1>
+                <p style="color: var(--text-muted); font-size: 14px; letter-spacing: 1px;">NEXT-GEN RUNTIME</p>
+                <div style="position: absolute; bottom: 50px; font-size: 12px; color: #555;">v2.4.0 Commercial Edition</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 02. 引导页 (Value Proposition) ==================== -->
+    <div>
+        <div class="page-title-label">02. 引导页 / Onboarding</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="content-scroll" style="display: flex; flex-direction: column;">
+                <div class="hero-img" style="margin-top: 40px;"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                    <h2 style="font-size: 32px; margin: 0 0 12px 0;">告别下载，<br>秒开即玩。</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px; margin: 0;">突破设备限制的云原生架构，为您带来满帧 60FPS 的沉浸式小游戏体验。</p>
+                </div>
+                <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+                <button class="btn-primary" style="margin-bottom: 20px;">立即开启之旅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 03. 登录注册 (Authentication) ==================== -->
+    <div>
+        <div class="page-title-label">03. 身份验证 / Login</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                <div class="auth-header">
+                    <h1 style="font-size: 36px; margin: 0 0 8px 0;">欢迎回来</h1>
+                    <p style="color: var(--text-muted); font-size: 15px;">登录您的 Nexus 账号，同步所有资产与存档。</p>
+                </div>
+                
+                <input type="text" class="input-box" placeholder="手机号 / 电子邮箱">
+                <input type="password" class="input-box" placeholder="输入密码">
+                <div style="text-align: right; color: var(--primary); font-size: 14px; font-weight: 600; margin: 8px 0 32px;">忘记密码？</div>
+                
+                <button class="btn-primary">安全登录</button>
+                <div style="text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-muted);">
+                    新玩家？ <span style="color: #fff; font-weight: 700; border-bottom: 1px solid #fff; padding-bottom: 2px;">注册账号</span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 16px; margin-top: 60px;">
+                    <div style="height: 1px; background: var(--border-light); flex: 1;"></div>
+                    <span style="color: #555; font-size: 12px;">快捷登录</span>
+                    <div style="height: 1px; background: var(--border-light); flex: 1;"></div>
+                </div>
+                <div class="social-login">
+                    <div class="social-btn"><span style="font-weight:bold; color:#fff">G</span></div>
+                    <div class="social-btn"><span style="font-weight:bold; color:#fff"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 04. 首页库 (Landing / My Library) ==================== -->
+    <div>
+        <div class="page-title-label">04. 首页 (落地页) / My Library</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                <div class="resume-card">
+                    <div class="resume-overlay">
+                        <div class="tag-playing">🟢 正在运行 (后台)</div>
+                        <h2 style="font-size: 28px; margin: 0 0 4px 0;">赛博之刃：源起</h2>
+                        <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin: 0 0 16px 0;">已完成关卡 4 • 游玩时长 2h</p>
+                        <button class="btn-primary" style="height: 48px; width: 140px; font-size: 15px; border-radius: 24px;">继续游戏</button>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h3 class="section-title">我的收藏</h3>
+                    <span class="section-more">管理</span>
+                </div>
+                <div class="game-grid">
+                    <div class="game-item"><div class="game-icon" style="background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200');"><div style="position:absolute; top:4px; right:4px; font-size:12px;">⭐</div></div><div class="game-name">咸鱼之王</div></div>
+                    <div class="game-item"><div class="game-icon" style="background-image: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=200');"><div style="position:absolute; top:4px; right:4px; font-size:12px;">⭐</div></div><div class="game-name">羊了个羊</div></div>
+                    <div class="game-item"><div class="game-icon" style="background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200');"><div style="position:absolute; top:4px; right:4px; font-size:12px;">⭐</div></div><div class="game-name">极品飞车</div></div>
+                    <div class="game-item"><div class="game-icon" style="display:flex; align-items:center; justify-content:center; border:1px dashed var(--text-muted); background:transparent;"><span style="font-size:24px; color:var(--text-muted)">+</span></div><div class="game-name">添加</div></div>
+                </div>
+
+                <div class="section-header">
+                    <h3 class="section-title">最近游玩</h3>
+                </div>
+                <div class="game-grid">
+                    <div class="game-item"><div class="game-icon" style="background-color: #ff4d4f;"></div><div class="game-name">消消乐</div></div>
+                    <div class="game-item"><div class="game-icon" style="background-color: #00e599;"></div><div class="game-name">动物餐厅</div></div>
+                    <div class="game-item"><div class="game-icon" style="background-color: #1890ff;"></div><div class="game-name">跳一跳</div></div>
+                    <div class="game-item"><div class="game-icon" style="background-color: #faad14;"></div><div class="game-name">欢乐斗地主</div></div>
+                </div>
+            </div>
+            
+            <div class="bottom-nav">
+                <div class="nav-item active"><div class="nav-icon"></div>我的库</div>
+                <div class="nav-item"><div class="nav-icon"></div>发现</div>
+                <div class="nav-item"><div class="nav-icon"></div>社区</div>
+                <div class="nav-item"><div class="nav-icon"></div>账号</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 05. 发现页商店 (Store / Discovery) ==================== -->
+    <div>
+        <div class="page-title-label">05. 发现商店 / Discover</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                <h1 style="font-size: 32px; margin: 0 0 20px 0;">发现新游戏</h1>
+                
+                <div class="banner-carousel">
+                    <div style="background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 8px; font-size: 11px; width: fit-content; margin-bottom: 8px;">🔥 本周爆款</div>
+                    <h2 style="margin: 0; font-size: 24px;">暗黑塔防：觉醒</h2>
+                </div>
+
+                <div class="category-row">
+                    <div class="category-pill" style="background: var(--primary); color: white; border-color: var(--primary);">全部</div>
+                    <div class="category-pill">动作射击</div>
+                    <div class="category-pill">休闲益智</div>
+                    <div class="category-pill">角色扮演</div>
+                </div>
+
+                <div class="section-header">
+                    <h3 class="section-title">热门排行</h3>
+                    <span class="section-more">查看榜单</span>
+                </div>
+                
+                <div class="list-item">
+                    <div class="list-icon" style="background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100');"></div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 16px; font-weight: 700;">合成大西瓜</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">休闲 • 230万人在玩</div>
+                    </div>
+                    <div class="btn-get">秒开</div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon" style="background-color: #ff4d4f;"></div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 16px; font-weight: 700;">最强保卫战</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">塔防 • 评分 4.9</div>
+                    </div>
+                    <div class="btn-get">秒开</div>
+                </div>
+            </div>
+            
+            <div class="bottom-nav">
+                <div class="nav-item"><div class="nav-icon"></div>我的库</div>
+                <div class="nav-item active"><div class="nav-icon"></div>发现</div>
+                <div class="nav-item"><div class="nav-icon"></div>社区</div>
+                <div class="nav-item"><div class="nav-icon"></div>账号</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 06. 游戏详情 (Game Detail) ==================== -->
+    <div>
+        <div class="page-title-label">06. 详情页 / Game Detail</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <!-- 透明状态栏 -->
+            <div class="status-bar" style="position: absolute; width: 100%; box-sizing: border-box;"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <div class="content-scroll" style="padding: 0;">
+                <div class="detail-hero">
+                    <div style="position: absolute; top: 50px; left: 20px; width: 36px; height: 36px; background: rgba(0,0,0,0.5); border-radius: 18px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">‹</div>
+                </div>
+                <div class="detail-content">
+                    <div class="detail-header">
+                        <div class="detail-icon"></div>
+                        <div style="flex: 1; padding-bottom: 5px;">
+                            <h1 style="font-size: 24px; margin: 0 0 6px 0;">赛博之刃</h1>
+                            <div style="font-size: 13px; color: var(--primary); font-weight: 600;">Nexus 官方优选作品</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div style="font-size: 18px; font-weight: 800; color: #fff;">4.9 ★</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">2.4万评分</div>
+                        </div>
+                        <div class="stat-box">
+                            <div style="font-size: 18px; font-weight: 800; color: #fff;">#1</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">动作排行榜</div>
+                        </div>
+                        <div class="stat-box">
+                            <div style="font-size: 18px; font-weight: 800; color: #fff;">18<span style="font-size: 12px;">MB</span></div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">引擎极速包</div>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 16px; margin-bottom: 12px;">游戏简介</h3>
+                    <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin: 0;">在霓虹闪烁的未来都市中，化身为最强武士。这是一款具有 60FPS 极高帧率的动作小游戏，完美适配 Nexus 引擎，打击感拉满...</p>
+                </div>
+            </div>
+
+            <!-- 悬浮播放按钮 -->
+            <div class="play-fab">
+                <button class="btn-primary" style="height: 64px; border-radius: 20px; font-size: 18px;">立即秒开</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 07. 运行环境 (Runtime & Menu) ==================== -->
+    <div>
+        <div class="page-title-label">07. 运行沙箱 / Runtime</div>
+        <div class="device-mockup">
+            <!-- Webview 环境，隐藏了手机默认状态栏 -->
+            
+            <!-- 平台级核心：胶囊按钮 (防遮挡) -->
+            <div class="capsule-menu">
+                <div class="cap-dots">
+                    <div class="cap-dot"></div><div class="cap-dot"></div><div class="cap-dot"></div>
+                </div>
+                <div class="cap-divider"></div>
+                <div class="cap-close">✕</div>
+            </div>
+
+            <!-- 加载态演示 (Loading Screen) -->
+            <div class="runtime-bg">
+                <div style="width: 100px; height: 100px; background: var(--bg-surface-elevated); border-radius: 24px; border: 1px solid var(--border-light); margin-bottom: 30px; box-shadow: 0 0 40px rgba(0,0,0,0.8);"></div>
+                <h2 style="font-size: 24px; margin: 0;">环境初始化中...</h2>
+                <div class="loading-progress">
+                    <div class="loading-bar"></div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 12px; margin-top: 16px;">正在加载游戏资源包 (75%)</p>
+                
+                <div style="position: absolute; bottom: 60px; color: var(--accent-green); font-size: 12px; background: rgba(0,229,153,0.1); padding: 8px 16px; border-radius: 20px;">
+                    💡 点击右上角胶囊可随时存档或退出
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 08. 个人中心与资产 (Profile) ==================== -->
+    <div>
+        <div class="page-title-label">08. 个人中心 / Profile</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                
+                <div class="user-card">
+                    <div class="avatar"><div class="avatar-inner"></div></div>
+                    <div>
+                        <h2 style="margin: 0 0 4px 0; font-size: 24px;">超级玩家 007</h2>
+                        <span style="background: var(--bg-surface-elevated); padding: 4px 10px; border-radius: 8px; font-size: 11px; color: var(--text-muted);">Nexus ID: 88293041</span>
+                    </div>
+                </div>
+
+                <div class="wallet-card">
+                    <!-- 背景装饰 -->
+                    <div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8);">钱包余额 (平台币)</div>
+                    <div style="font-size: 32px; font-weight: 800; margin: 8px 0;">¥ 1,250.00</div>
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button style="background: #fff; color: var(--primary); border: none; padding: 8px 24px; border-radius: 12px; font-weight: 700;">充值</button>
+                        <button style="background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 8px 24px; border-radius: 12px; font-weight: 700;">账单</button>
+                    </div>
+                </div>
+
+                <div class="menu-group">
+                    <div class="menu-item">
+                        <span>🛡️ 账户与安全</span><span style="color: var(--text-muted);">›</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>☁️ 云存档同步</span><span style="color: var(--text-muted);">已开启 ›</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>🧹 清除本地游戏缓存</span><span style="color: var(--text-muted);">1.4 GB ›</span>
+                    </div>
+                </div>
+
+                <div class="menu-group">
+                    <div class="menu-item" style="color: var(--accent-red); justify-content: center;">
+                        退出当前账号
+                    </div>
+                </div>
+                
+                <div style="text-align: center; color: #555; font-size: 12px; margin-top: 24px;">注销账号系统</div>
+            </div>
+
+
+            <div class="bottom-nav">
+                <div class="nav-item"><div class="nav-icon"></div>我的库</div>
+                <div class="nav-item"><div class="nav-icon"></div>发现</div>
+                <div class="nav-item"><div class="nav-icon"></div>社区</div>
+                <div class="nav-item active"><div class="nav-icon" style="background: var(--primary-gradient);"></div>账号</div>
+            </div>
+        </div>
+    </div>
+
+<!-- ==================== 09. 注册账号 (Register) ==================== -->
+    <div>
+        <div class="page-title-label">09. 注册账号 / Register</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                
+                <!-- 顶部返回小控件 -->
+                <div style="margin-top: 10px; font-size: 24px; color: var(--text-muted); cursor: pointer; width: 30px;">‹</div>
+
+                <div class="auth-header" style="margin: 20px 0 30px;">
+                    <h1 style="font-size: 36px; margin: 0 0 8px 0;">创建新账号</h1>
+                    <p style="color: var(--text-muted); font-size: 15px;">加入 Nexus，开启次世代云端游戏体验。</p>
+                </div>
+                
+                <!-- 表单区 -->
+                <input type="text" class="input-box" placeholder="手机号 / 电子邮箱">
+                
+                <!-- 验证码复合输入框 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <input type="text" class="input-box" placeholder="输入验证码" style="flex: 1; margin-bottom: 0;">
+                    <button class="btn-secondary" style="width: 110px; font-size: 14px; padding: 0;">获取验证码</button>
+                </div>
+
+                <input type="password" class="input-box" placeholder="设置密码 (不少于8位字符)">
+                
+                <!-- 用户协议 -->
+                <div style="display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 32px;">
+                    <div style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; margin-top: 2px; background: rgba(92, 103, 255, 0.2);">
+                        <span style="color: var(--primary); font-size: 12px; font-weight: bold;">✓</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; flex: 1;">
+                        我已阅读并同意 Nexus 的 <span style="color: var(--primary);">《用户服务协议》</span> 与 <span style="color: var(--primary);">《隐私政策》</span>
+                    </div>
+                </div>
+                
+                <button class="btn-primary">同意协议并注册</button>
+                
+                <div style="text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-muted);">
+                    已有账号？ <span style="color: #fff; font-weight: 700; border-bottom: 1px solid #fff; padding-bottom: 2px;">直接登录</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 10. 忘记密码 (Forgot Password) ==================== -->
+    <div>
+        <div class="page-title-label">10. 找回密码 / Forgot Password</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                
+                <!-- 顶部返回小控件 -->
+                <div style="margin-top: 10px; font-size: 15px; color: var(--text-muted); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 20px; margin-top: -2px;">‹</span> 返回登录
+                </div>
+
+                <div class="auth-header" style="margin: 30px 0 40px;">
+                    <h1 style="font-size: 36px; margin: 0 0 8px 0;">重置密码</h1>
+                    <p style="color: var(--text-muted); font-size: 15px;">请输入您绑定的手机号或邮箱，我们将发送验证码以验证您的身份。</p>
+                </div>
+                
+                <!-- 表单区 -->
+                <input type="text" class="input-box" placeholder="请输入绑定的手机号 / 邮箱">
+                
+                <!-- 验证码复合输入框 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <input type="text" class="input-box" placeholder="6位验证码" style="flex: 1; margin-bottom: 0;">
+                    <button class="btn-secondary" style="width: 110px; font-size: 14px; padding: 0; color: var(--text-muted);">重新发送(59s)</button>
+                </div>
+
+                <input type="password" class="input-box" placeholder="输入新密码">
+                <input type="password" class="input-box" placeholder="再次确认新密码">
+                
+                <!-- 留白缓冲 -->
+                <div style="height: 20px;"></div>
+                
+                <button class="btn-primary">确认重置</button>
+                
+                <!-- 底部客服入口 -->
+                <div style="text-align: center; margin-top: 40px; font-size: 13px; color: var(--text-muted);">
+                    设备不在身边或无法接收验证码？<br>
+                    <span style="color: var(--primary); font-weight: 600; display: inline-block; margin-top: 8px;">联系人工客服援助</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

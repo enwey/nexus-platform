@@ -1,8 +1,24 @@
 package com.nexus.platform.core.network
 
+import com.nexus.platform.BuildConfig
+import java.net.URI
+
 object BackendConfig {
-    private const val emulatorBaseHost = "http://10.0.2.2"
-    const val apiBaseUrl: String = "$emulatorBaseHost:8080/api/v1"
-    const val emulatorHttpHost: String = "http://10.0.2.2"
-    const val emulatorHttpsHost: String = "https://10.0.2.2"
+    val apiBaseUrl: String = BuildConfig.BACKEND_BASE_URL
+
+    private val apiUri: URI = URI(apiBaseUrl)
+    val localHost: String = apiUri.host ?: "10.0.2.2"
+    val localScheme: String = apiUri.scheme ?: "http"
+    private val hostBase: String = buildString {
+        append(localScheme)
+        append("://")
+        append(localHost)
+        if (apiUri.port > 0) {
+            append(":")
+            append(apiUri.port)
+        }
+    }
+
+    val localHttpHost: String = hostBase
+    val localHttpsHost: String = hostBase.replaceFirst("http://", "https://")
 }

@@ -1,18 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nexus Platform</string>
-
     <string name="tab_library">游戏库</string>
     <string name="tab_discover">发现</string>
     <string name="tab_community">社区</string>
     <string name="tab_profile">账号</string>
-
     <string name="splash_runtime">次世代运行时</string>
-
     <string name="onboarding_title">告别下载，秒开即玩</string>
     <string name="onboarding_subtitle">通过 Nexus 运行时，获得稳定流畅的小程序游戏体验。</string>
+    <string name="onboarding_title_1">告别下载，\n秒开即玩</string>
+    <string name="onboarding_subtitle_1">突破设备限制的云原生架构，为你带来无需等待的沉浸式小游戏体验。</string>
+    <string name="onboarding_title_2">自研引擎，\n满帧表现</string>
+    <string name="onboarding_subtitle_2">自研 Nexus Runtime 渲染技术，动态光影追踪，让每一帧画面都细腻流畅。</string>
+    <string name="onboarding_title_3">多端同步，\n进度跟随</string>
+    <string name="onboarding_subtitle_3">无论是手机、PC 还是小程序，你的游戏存档与成就资产实时云端同步。</string>
+    <string name="onboarding_next">下一步</string>
     <string name="onboarding_start">立即开启旅程</string>
-
     <string name="login_welcome">欢迎回来</string>
     <string name="login_subtitle">登录你的 Nexus 账号，同步资产与存档。</string>
     <string name="login_account_label">手机号 / 邮箱</string>
@@ -26,7 +29,25 @@
     <string name="login_quick_wechat">微信</string>
     <string name="login_error_empty_credentials">请输入账号和密码</string>
     <string name="login_error_failed">登录失败</string>
-
+    <string name="register_title">创建账号</string>
+    <string name="register_subtitle">只需 30 秒，开启你的云游戏之旅。</string>
+    <string name="register_account_label">手机号 / 邮箱</string>
+    <string name="register_password_label">设置密码</string>
+    <string name="register_code_label">验证码</string>
+    <string name="register_get_code">获取验证码</string>
+    <string name="register_action">完成注册</string>
+    <string name="register_terms">我已阅读并同意用户协议与隐私政策</string>
+    <string name="register_existing_user">已有账号？</string>
+    <string name="register_login">立即登录</string>
+    <string name="forgot_title">重置密码</string>
+    <string name="forgot_subtitle">输入你的注册信息，验证后即可设置新密码。</string>
+    <string name="forgot_account_label">手机号 / 邮箱</string>
+    <string name="forgot_code_label">验证码</string>
+    <string name="forgot_get_code">获取验证码</string>
+    <string name="forgot_new_password_label">设置新密码</string>
+    <string name="forgot_action">确认重置</string>
+    <string name="forgot_existing_user">想起密码了？</string>
+    <string name="forgot_login">立即登录</string>
     <string name="discover_title">发现新游戏</string>
     <string name="discover_section_rank">热门排行</string>
     <string name="discover_view_more">查看榜单</string>
@@ -41,7 +62,6 @@
     <string name="discover_rank_2_title">最强保卫战</string>
     <string name="discover_rank_2_subtitle">塔防 · 评分 4.9</string>
     <string name="discover_quick_play">秒开</string>
-
     <string name="library_section_favorites">我的收藏</string>
     <string name="library_section_recent">最近游玩</string>
     <string name="library_manage">管理</string>
@@ -52,7 +72,6 @@
     <string name="loading_games">正在加载游戏列表</string>
     <string name="load_games_failed">加载游戏列表失败</string>
     <string name="no_games_available">当前没有可体验的游戏</string>
-
     <string name="profile_header_title">超级玩家 007</string>
     <string name="profile_account_id">Nexus ID: 88293041</string>
     <string name="profile_security">账户与安全</string>
@@ -68,7 +87,10 @@
     <string name="profile_wallet_value">¥ 1,250.00</string>
     <string name="profile_charge">充值</string>
     <string name="profile_bill">账单</string>
-
+    <string name="profile_how_to_earn">如何赚取</string>
+    <string name="profile_referral_title">邀请好友，各得 🪙500</string>
+    <string name="profile_referral_subtitle">每成功邀请一位新用户，奖励即时到账</string>
+    <string name="profile_referral_button">去邀请</string>
     <string name="game_back">返回</string>
     <string name="game_editor_pick">Nexus 官方精选</string>
     <string name="game_intro_title">游戏介绍</string>
@@ -77,7 +99,6 @@
     <string name="game_score_label">评分</string>
     <string name="game_rank_label">动作榜</string>
     <string name="game_version_label">版本</string>
-
     <string name="community_coming_soon">社区功能即将上线</string>
     <string name="language_traditional_chinese">繁体中文</string>
     <string name="language_simplified_chinese">简体中文</string>
@@ -90,7 +111,6 @@
     <string name="library_next_page">下一页</string>
     <string name="library_page_info">第 %1$d/%2$d 页</string>
     <string name="library_load_end">没有更多游戏了</string>
-
     <string name="runtime_status_preparing">正在初始化运行环境...</string>
     <string name="runtime_status_loading_resource">正在准备游戏资源...</string>
     <string name="runtime_status_starting">正在启动游戏...</string>
@@ -106,4 +126,136 @@
     <string name="runtime_capsule_close_desc">关闭游戏</string>
     <string name="runtime_capsule_more_desc">更多操作</string>
     <string name="runtime_capsule_more_todo">更多功能即将上线</string>
+    <string name="runtime_menu_game_title">赛博之刃：源起</string>
+    <string name="runtime_menu_game_players">👥 240万 玩家</string>
+    <string name="runtime_menu_game_studio">🛠 Nexus Studio</string>
+    <string name="runtime_menu_share_title">分享到</string>
+    <string name="runtime_menu_share_whatsapp">WhatsApp</string>
+    <string name="runtime_menu_share_facebook">Facebook</string>
+    <string name="runtime_menu_share_xiaohongshu">小红书</string>
+    <string name="runtime_menu_share_link">复制链接</string>
+    <string name="runtime_menu_add_favorite">加入我的游戏（收藏）</string>
+    <string name="runtime_menu_restart">重新进入游戏</string>
+    <string name="runtime_menu_feedback">反馈与投诉</string>
+    <string name="billing_title">账单明细</string>
+    <string name="billing_income_title">本月累计收入</string>
+    <string name="billing_income_value">+4,200</string>
+    <string name="billing_expense_title">本月累计支出</string>
+    <string name="billing_expense_value">-1,580</string>
+    <string name="billing_recent_title">最近记录</string>
+    <string name="billing_recent_hint">仅显示最近 30 天记录</string>
+    <string name="billing_item_invite_title">邀请好友注册成功</string>
+    <string name="billing_item_invite_subtitle">来自好友：User_9928</string>
+    <string name="billing_item_invite_amount">+500</string>
+    <string name="billing_item_invite_time">10-24 14:20</string>
+    <string name="billing_item_purchase_title">购买游戏内容</string>
+    <string name="billing_item_purchase_subtitle">《赛博之刃：源起》全 DLC 解锁</string>
+    <string name="billing_item_purchase_amount">-1,200</string>
+    <string name="billing_item_purchase_time">10-23 09:15</string>
+    <string name="billing_item_play_title">邀请好友试玩奖励</string>
+    <string name="billing_item_play_subtitle">试玩项目：羊了个羊</string>
+    <string name="billing_item_play_amount">+50</string>
+    <string name="billing_item_play_time">10-22 18:02</string>
+    <string name="billing_item_item_title">兑换游戏道具</string>
+    <string name="billing_item_item_subtitle">消消乐：无限体力（2h）</string>
+    <string name="billing_item_item_amount">-380</string>
+    <string name="billing_item_item_time">10-22 10:45</string>
+    <string name="transaction_title">账单详情</string>
+    <string name="transaction_complaint">投诉</string>
+    <string name="transaction_amount_label">交易金额</string>
+    <string name="transaction_amount_value">-1,200</string>
+    <string name="transaction_success">交易成功</string>
+    <string name="transaction_type_label">交易类型</string>
+    <string name="transaction_type_value">购买游戏内容</string>
+    <string name="transaction_product_label">商品名称</string>
+    <string name="transaction_product_value">《赛博之刃：源起》全 DLC 永久解锁</string>
+    <string name="transaction_time_label">交易时间</string>
+    <string name="transaction_time_value">2024-10-23 09:15:32</string>
+    <string name="transaction_id_label">交易单号</string>
+    <string name="transaction_id_value">NX88293041...001</string>
+    <string name="transaction_payment_label">支付方式</string>
+    <string name="transaction_payment_value">🪙 平台币余额支付</string>
+    <string name="transaction_balance_label">交易后余额</string>
+    <string name="transaction_balance_value">🪙 23,650</string>
+    <string name="transaction_copy">复制</string>
+    <string name="transaction_download">下载凭证</string>
+    <string name="transaction_question">对此交易有疑问？</string>
+    <string name="transaction_footer">NEXUS RUNTIME SECURED</string>
+    <string name="referral_title">邀请奖励</string>
+    <string name="referral_subtitle">分享专属链接，与好友一起领取平台币奖励</string>
+    <string name="referral_stat_invite_title">成功邀请（人）</string>
+    <string name="referral_stat_invite_value">12</string>
+    <string name="referral_stat_reward_title">累计奖励（🪙）</string>
+    <string name="referral_stat_reward_value">6,000</string>
+    <string name="referral_link_title">你的专属邀请链接</string>
+    <string name="referral_link_value">https://nexus.link/join/user88293041</string>
+    <string name="referral_link_copy">复制</string>
+    <string name="referral_share_title">分享至</string>
+    <string name="referral_share_whatsapp">WhatsApp</string>
+    <string name="referral_share_facebook">Facebook</string>
+    <string name="referral_share_xiaohongshu">小红书</string>
+    <string name="referral_share_more">更多分享</string>
+    <string name="referral_rules_title">奖励规则与说明</string>
+    <string name="referral_rule_1_title">发送邀请链接</string>
+    <string name="referral_rule_1_desc">点击上方分享按钮，将你的专属链接发送给未注册过 Nexus 的好友。</string>
+    <string name="referral_rule_2_title">好友完成注册</string>
+    <string name="referral_rule_2_desc">好友通过你的链接成功注册并完成首次登录后，你将获得邀请奖励。</string>
+    <string name="referral_rule_3_title">奖励发放</string>
+    <string name="referral_rule_3_desc">每成功邀请一位好友，你将获得 500 平台币奖励，好友将获得 200 平台币奖励。</string>
+    <string name="account_security_title">账户与安全</string>
+    <string name="account_security_section_login">登录安全</string>
+    <string name="account_security_change_password">修改密码</string>
+    <string name="account_security_change_password_subtitle">建议定期修改，增强账户安全。</string>
+    <string name="account_security_biometric">生物识别解锁</string>
+    <string name="account_security_biometric_subtitle">指纹 / 面容 ID 快捷登录</string>
+    <string name="account_security_ai_login">AI 辅助登录（BETA）</string>
+    <string name="account_security_ai_login_subtitle">授权 AI Agent 在特定场景下自动登录授权设备</string>
+    <string name="account_security_section_device">设备管理</string>
+    <string name="account_security_current_device">当前设备</string>
+    <string name="account_security_current_device_subtitle">iPhone 15 Pro Max · 本机</string>
+    <string name="account_security_device_count">查看更多设备（2）</string>
+    <string name="account_security_device_count_subtitle">管理所有已登录设备</string>
+    <string name="account_security_logout_all">强制退出其他设备</string>
+    <string name="account_security_logout_all_subtitle">此操作不可撤销，将下线所有非本机设备</string>
+    <string name="change_password_title">修改密码</string>
+    <string name="change_password_current">当前密码</string>
+    <string name="change_password_current_hint">请输入当前密码</string>
+    <string name="change_password_new">新密码</string>
+    <string name="change_password_new_hint">长度不少于 8 位，需包含大小写字母和数字</string>
+    <string name="change_password_confirm">确认新密码</string>
+    <string name="change_password_confirm_hint">请再次输入新密码</string>
+    <string name="change_password_show">显示</string>
+    <string name="change_password_hide">隐藏</string>
+    <string name="change_password_footer">密码长度必须大于 8 位，同时包含大小写字母和数字。</string>
+    <string name="change_password_submit">确认修改</string>
+    <string name="device_management_title">登录设备管理</string>
+    <string name="device_management_current_name">iPhone 15 Pro Max</string>
+    <string name="device_management_current_model">iPhone 15 Pro Max</string>
+    <string name="device_management_current_last_active">上次活跃：刚刚</string>
+    <string name="device_management_current_ip">IP：192.168.1.100</string>
+    <string name="device_management_current_tag">在线</string>
+    <string name="device_management_other_title">其他登录设备（2）</string>
+    <string name="device_management_other_1_name">HUAWEI Mate 60 Pro</string>
+    <string name="device_management_other_1_model">HUAWEI Mate 60 Pro</string>
+    <string name="device_management_other_1_last_active">上次活跃：1天前</string>
+    <string name="device_management_other_1_ip">IP：203.0.113.42</string>
+    <string name="device_management_other_2_name">Xiaomi 14</string>
+    <string name="device_management_other_2_model">Xiaomi 14</string>
+    <string name="device_management_other_2_last_active">上次活跃：3天前</string>
+    <string name="device_management_other_2_ip">IP：198.51.100.15</string>
+    <string name="account_termination_title">注销账号</string>
+    <string name="account_termination_warning_title">此操作不可逆，请谨慎操作</string>
+    <string name="account_termination_warning_desc">账号一经注销将无法恢复，所有数据将被永久删除，包括以下内容：</string>
+    <string name="account_termination_risk_1_title">游戏记录与成就</string>
+    <string name="account_termination_risk_1_desc">你在平台上的所有游戏记录、成就与排行榜数据将被清除。</string>
+    <string name="account_termination_risk_2_title">账户余额与道具</string>
+    <string name="account_termination_risk_2_desc">账户内的平台币、已购虚拟道具、礼包与 DLC 将不予退还。</string>
+    <string name="account_termination_risk_3_title">好友关系</string>
+    <string name="account_termination_risk_3_desc">你的好友列表、聊天记录以及互动数据将被删除。</string>
+    <string name="account_termination_confirm_label">为确认是本人操作，请输入：确认注销</string>
+    <string name="account_termination_confirm_text">确认注销</string>
+    <string name="account_termination_submit">确认注销并删除所有数据</string>
+    <string name="account_termination_footer">NEXUS RUNTIME SECURED</string>
+    <string name="profile_cache_cleared">缓存已清理</string>
 </resources>
+
