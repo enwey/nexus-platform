@@ -62,7 +62,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "/game/developer/**",
                         "/game/approve/**",
                         "/game/reject/**",
-                        "/audit/**"
+                        "/audit/**",
+                        "/admin/android/**"
                 );
     }
 }

@@ -54,3 +54,22 @@ export const getAuditLogs = (limit = 50) =>
     method: 'get',
     params: { limit }
   })
+
+export const getAndroidConsole = () =>
+  request({
+    url: '/admin/android/console',
+    method: 'get'
+  })
+
+export const getAndroidConfig = () =>
+  request({
+    url: '/admin/android/config',
+    method: 'get'
+  })
+
+export const updateAndroidConfig = (data) =>
+  request({
+    url: '/admin/android/config',
+    method: 'put',
+    data
+  })

@@ -76,6 +76,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         if ("GET".equalsIgnoreCase(method) && uri.startsWith("/audit/logs")) {
             return Permission.AUDIT_LOG_READ;
         }
+        if (uri.startsWith("/admin/android/config") && "PUT".equalsIgnoreCase(method)) {
+            return Permission.ANDROID_ADMIN_WRITE;
+        }
+        if (uri.startsWith("/admin/android/")) {
+            return Permission.ANDROID_ADMIN_READ;
+        }
         return null;
     }
 }

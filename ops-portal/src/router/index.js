@@ -7,7 +7,8 @@ const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'OpsLogin', component: () => import('../views/Login.vue') },
   { path: '/audit', name: 'OpsAudit', component: () => import('../views/Audit.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/audit/logs', name: 'OpsAuditLogs', component: () => import('../views/AuditLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } }
+  { path: '/audit/logs', name: 'OpsAuditLogs', component: () => import('../views/AuditLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/android', name: 'OpsAndroid', component: () => import('../views/AndroidConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } }
 ]
 
 const router = createRouter({

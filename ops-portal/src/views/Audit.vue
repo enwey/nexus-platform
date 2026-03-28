@@ -6,6 +6,7 @@
         <p>查看待审核版本，填写审核原因后执行通过或拒绝。</p>
       </div>
       <div class="actions">
+        <el-button type="primary" plain @click="$router.push('/android')">Android Console</el-button>
         <el-button @click="$router.push('/audit/logs')">查看审计日志</el-button>
         <el-button @click="handleLogout">退出登录</el-button>
       </div>
