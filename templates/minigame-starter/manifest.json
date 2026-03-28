@@ -1,0 +1,12 @@
+{
+  "name": "Nexus Mini Game Starter",
+  "appId": "replace-with-generated-app-id",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "entry": "index.html",
+  "permissions": [
+    "storage",
+    "network"
+  ]
+}
+
