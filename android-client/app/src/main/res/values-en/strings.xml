@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nexus Platform</string>
 
@@ -37,9 +37,9 @@
     <string name="discover_category_casual">Casual Puzzle</string>
     <string name="discover_category_rpg">Role Playing</string>
     <string name="discover_rank_1_title">Merge Watermelon</string>
-    <string name="discover_rank_1_subtitle">Casual · 2.3M players online</string>
+    <string name="discover_rank_1_subtitle">Casual 路 2.3M players online</string>
     <string name="discover_rank_2_title">Strongest Defense</string>
-    <string name="discover_rank_2_subtitle">Tower Defense · Rating 4.9</string>
+    <string name="discover_rank_2_subtitle">Tower Defense 路 Rating 4.9</string>
     <string name="discover_quick_play">Instant Play</string>
 
     <string name="library_section_favorites">Favorites</string>
@@ -49,7 +49,7 @@
     <string name="library_manage">Manage</string>
     <string name="library_running">Running (Background)</string>
     <string name="library_resume_title">Cyber Blade: Origin</string>
-    <string name="library_resume_subtitle">Checkpoint 4 · Playtime 2h</string>
+    <string name="library_resume_subtitle">Checkpoint 4 路 Playtime 2h</string>
     <string name="library_resume_action">Continue</string>
     <string name="loading_games">Loading game list</string>
     <string name="load_games_failed">Failed to load game list</string>
@@ -70,8 +70,8 @@
     <string name="runtime_error_webview">Game page failed to load. Please try again.</string>
     <string name="runtime_error_startup">Game failed to start. Please try again.</string>
     <string name="runtime_retry">Retry</string>
-    <string name="runtime_capsule_menu">···</string>
-    <string name="runtime_capsule_close">×</string>
+    <string name="runtime_capsule_menu">路路路</string>
+    <string name="runtime_capsule_close">脳</string>
     <string name="runtime_capsule_close_desc">Close game</string>
     <string name="runtime_capsule_more_desc">More actions</string>
     <string name="runtime_capsule_more_todo">More actions coming soon</string>
@@ -88,7 +88,7 @@
     <string name="profile_logout">Log Out</string>
     <string name="profile_system_hint">Account System</string>
     <string name="profile_wallet_title">Wallet Balance (Platform Coin)</string>
-    <string name="profile_wallet_value">¥ 1,250.00</string>
+    <string name="profile_wallet_value">楼 1,250.00</string>
     <string name="profile_charge">Top Up</string>
     <string name="profile_bill">Bills</string>
 
@@ -106,4 +106,8 @@
     <string name="language_simplified_chinese">Simplified Chinese</string>
     <string name="language_english">English</string>
     <string name="common_cancel">Cancel</string>
+    <string name="profile_cache_cleared">Cache cleared</string>
 </resources>
+
+
+

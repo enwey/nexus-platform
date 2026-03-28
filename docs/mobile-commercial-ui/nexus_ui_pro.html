@@ -159,18 +159,81 @@
         </div>
     </div>
 
-    <!-- ==================== 02. 引导页 (Value Proposition) ==================== -->
+    <!-- ==================== 02a. 引导页 (1/3) - 极速 ==================== -->
     <div>
-        <div class="page-title-label">02. 引导页 / Onboarding</div>
+        <div class="page-title-label">02a. 引导 (1/3) / Onboarding</div>
         <div class="device-mockup">
             <div class="dynamic-island"></div>
+            <!-- 跳过按钮 -->
+            <div style="position: absolute; top: 65px; right: 25px; color: var(--text-muted); font-size: 14px; font-weight: 600; z-index: 100;">跳过</div>
+            
             <div class="content-scroll" style="display: flex; flex-direction: column;">
-                <div class="hero-img" style="margin-top: 40px;"></div>
+                <div class="hero-img" style="margin-top: 40px; background-image: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=800&q=80')"></div>
                 <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;">
                     <h2 style="font-size: 32px; margin: 0 0 12px 0;">告别下载，<br>秒开即玩。</h2>
-                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px; margin: 0;">突破设备限制的云原生架构，为您带来满帧 60FPS 的沉浸式小游戏体验。</p>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px; margin: 0;">突破设备限制的云原生架构，为您带来无需等待的沉浸式小游戏体验。</p>
                 </div>
-                <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+                <div class="dots">
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <button class="btn-primary" style="margin-bottom: 20px;">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 02b. 引导页 (2/3) - 性能 ==================== -->
+    <div>
+        <div class="page-title-label">02b. 引导 (2/3) / Onboarding</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div style="position: absolute; top: 65px; right: 25px; color: var(--text-muted); font-size: 14px; font-weight: 600; z-index: 100;">跳过</div>
+
+            <div class="content-scroll" style="display: flex; flex-direction: column;">
+                <!-- 使用更具技术感/画质感的图片 -->
+                <div class="hero-img" style="margin-top: 40px; background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80')">
+                    <!-- 模拟性能标签 -->
+                    <div style="position: absolute; top: 20px; left: 20px; background: rgba(0,229,153,0.8); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; color: #000;">60 FPS ULTRA</div>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                    <h2 style="font-size: 32px; margin: 0 0 12px 0;">自研引擎，<br>满帧表现。</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px; margin: 0;">自研 Nexus Runtime 渲染技术，动态光影追踪，让每一帧画面都细腻如丝。</p>
+                </div>
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                </div>
+                <button class="btn-primary" style="margin-bottom: 20px;">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 02c. 引导页 (3/3) - 生态 ==================== -->
+    <div>
+        <div class="page-title-label">02c. 引导 (3/3) / Onboarding</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+
+            <div class="content-scroll" style="display: flex; flex-direction: column;">
+                <!-- 使用社区/社交/云端感图片 -->
+                <div class="hero-img" style="margin-top: 40px; background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80')">
+                    <!-- 模拟同步图标 -->
+                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                        <div style="width: 80px; height: 80px; background: rgba(92, 103, 255, 0.4); backdrop-filter: blur(10px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; border: 2px solid var(--primary);">☁️</div>
+                    </div>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                    <h2 style="font-size: 32px; margin: 0 0 12px 0;">多端同步，<br>进度跟随。</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px; margin: 0;">无论是手机、PC 还是小程序，您的游戏存档与成就资产实时云端同步。</p>
+                </div>
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot active"></div>
+                </div>
+                <!-- 最后一个页面按钮文字变化 -->
                 <button class="btn-primary" style="margin-bottom: 20px;">立即开启之旅</button>
             </div>
         </div>
@@ -389,6 +452,105 @@
         </div>
     </div>
 
+<!-- ==================== 07b. 运行菜单弹窗 (Runtime Menu) ==================== -->
+    <div>
+        <div class="page-title-label">07b. 运行菜单 / Runtime Menu</div>
+        <div class="device-mockup">
+            <!-- 模拟底层正在运行的游戏画面 (半透明遮罩) -->
+            <div class="runtime-bg" style="filter: blur(8px); opacity: 0.6;">
+                <div style="width: 100px; height: 100px; background: var(--bg-surface-elevated); border-radius: 24px;"></div>
+            </div>
+
+            <!-- 黑色半透明遮罩层 -->
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 2100;"></div>
+
+            <!-- 底部抽屉菜单 (Bottom Sheet) -->
+            <div style="position: absolute; bottom: 0; width: 100%; background: #1a1b23; border-radius: 24px 24px 0 0; z-index: 2200; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); border-top: 1px solid var(--border-light); animation: slideUp 0.3s ease-out;">
+                
+                <!-- 抽屉顶部装饰条 -->
+                <div style="width: 40px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 12px auto;"></div>
+
+                <div style="padding: 0 24px 40px;">
+                    <!-- 1. 游戏信息头部 -->
+                    <div style="display: flex; align-items: center; gap: 16px; margin-top: 10px;">
+                        <div style="width: 64px; height: 64px; border-radius: 16px; background: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=200') center/cover; border: 1px solid var(--border-light);"></div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 4px 0; font-size: 18px;">赛博之刃：源起</h3>
+                            <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 12px;">
+                                <span>👥 240万+ 玩过</span>
+                                <span>🛠️ Nexus Studio</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <div style="width: 40px; height: 40px; border-radius: 20px; background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-light);">⭐</div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 分享区域 -->
+                    <div style="margin-top: 30px;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; font-weight: 600; letter-spacing: 1px;">分享至</div>
+                        <div style="display: flex; justify-content: space-between; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+                            <!-- WhatsApp -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 65px;">
+                                <div style="width: 50px; height: 50px; border-radius: 15px; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 24px;">💬</div>
+                                <span style="font-size: 11px; color: var(--text-muted);">WhatsApp</span>
+                            </div>
+                            <!-- Facebook -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 65px;">
+                                <div style="width: 50px; height: 50px; border-radius: 15px; background: #1877F2; display: flex; align-items: center; justify-content: center; font-size: 24px;">f</div>
+                                <span style="font-size: 11px; color: var(--text-muted);">Facebook</span>
+                            </div>
+                            <!-- 小红书模拟 -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 65px;">
+                                <div style="width: 50px; height: 50px; border-radius: 15px; background: #ff2442; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold;">📕</div>
+                                <span style="font-size: 11px; color: var(--text-muted);">小红书</span>
+                            </div>
+                            <!-- 复制链接 -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 65px;">
+                                <div style="width: 50px; height: 50px; border-radius: 15px; background: var(--bg-surface-elevated); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 20px;">🔗</div>
+                                <span style="font-size: 11px; color: var(--text-muted);">复制链接</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. 功能操作列表 -->
+                    <div style="margin-top: 24px; background: var(--bg-surface-elevated); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-light);">
+                        <div style="padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-light);">
+                            <span style="font-size: 18px;">➕</span>
+                            <div style="flex: 1; font-size: 15px; font-weight: 500;">加入我的游戏 (收藏)</div>
+                        </div>
+                        <div style="padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-light);">
+                            <span style="font-size: 18px;">🔄</span>
+                            <div style="flex: 1; font-size: 15px; font-weight: 500;">重新进入游戏</div>
+                        </div>
+                        <div style="padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-light);">
+                            <span style="font-size: 18px;">💬</span>
+                            <div style="flex: 1; font-size: 15px; font-weight: 500;">反馈与投诉</div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 取消按钮 -->
+                    <button style="margin-top: 20px; width: 100%; height: 56px; border-radius: 16px; background: rgba(255,255,255,0.05); border: none; color: #fff; font-size: 16px; font-weight: 600;" onclick="this.parentElement.parentElement.style.display='none'">取消</button>
+                </div>
+            </div>
+
+            <!-- 顶部胶囊 (保持显示) -->
+            <div class="capsule-menu" style="z-index: 3000;">
+                <div class="cap-dots"><div class="cap-dot"></div><div class="cap-dot"></div><div class="cap-dot"></div></div>
+                <div class="cap-divider"></div>
+                <div class="cap-close">✕</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加一个简单的进入动画 -->
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+
     <!-- ==================== 08. 个人中心与资产 (Profile) ==================== -->
     <div>
         <div class="page-title-label">08. 个人中心 / Profile</div>
@@ -409,12 +571,27 @@
                     <!-- 背景装饰 -->
                     <div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
                     
-                    <div style="font-size: 13px; color: rgba(255,255,255,0.8);">钱包余额 (平台币)</div>
-                    <div style="font-size: 32px; font-weight: 800; margin: 8px 0;">¥ 1,250.00</div>
-                    <div style="display: flex; gap: 12px; margin-top: 16px;">
-                        <button style="background: #fff; color: var(--primary); border: none; padding: 8px 24px; border-radius: 12px; font-weight: 700;">充值</button>
-                        <button style="background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 8px 24px; border-radius: 12px; font-weight: 700;">账单</button>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8);">可用平台币 (Nexus Coins)</div>
+                    <div style="font-size: 32px; font-weight: 800; margin: 8px 0; display: flex; align-items: center; gap: 10px;">
+                        <span>🪙</span> 24,850
                     </div>
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <!-- 去掉了充值按钮，仅保留账单，并拉长宽度 -->
+                        <button style="background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 10px 0; border-radius: 12px; font-weight: 700; flex: 1; backdrop-filter: blur(10px);">查看账单明细</button>
+                        <button style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 10px 0; border-radius: 12px; font-weight: 700; flex: 1;">如何赚取?</button>
+                    </div>
+                </div>
+                <!-- 新增：邀请好友入口卡片 -->
+                <div style="margin-top: 20px; background: linear-gradient(135deg, rgba(92, 103, 255, 0.15) 0%, rgba(203, 99, 255, 0.15) 100%); border: 1px solid var(--primary); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: center; gap: 16px; position: relative; overflow: hidden;">
+                    <div style="font-size: 40px;">🎁</div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px 0; font-size: 16px; color: #fff;">邀请好友，各得 🪙500</h4>
+                        <p style="margin: 0; font-size: 12px; color: var(--text-muted);">每成功邀请一位新人，奖励立显</p>
+                    </div>
+                    <div style="background: var(--primary); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 700;">去邀请</div>
+                    
+                    <!-- 装饰背景 -->
+                    <div style="position: absolute; right: -10px; bottom: -10px; font-size: 60px; opacity: 0.1; transform: rotate(-15deg);">🚀</div>
                 </div>
 
                 <div class="menu-group">
@@ -438,11 +615,610 @@
                 <div style="text-align: center; color: #555; font-size: 12px; margin-top: 24px;">注销账号系统</div>
             </div>
 
+
             <div class="bottom-nav">
                 <div class="nav-item"><div class="nav-icon"></div>我的库</div>
                 <div class="nav-item"><div class="nav-icon"></div>发现</div>
                 <div class="nav-item"><div class="nav-icon"></div>社区</div>
                 <div class="nav-item active"><div class="nav-icon" style="background: var(--primary-gradient);"></div>账号</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 08b. 账单明细 (Billing History) ==================== -->
+    <div>
+        <div class="page-title-label">08b. 账单明细 / Billing</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <!-- 顶部导航 -->
+            <div style="padding: 20px 24px 10px; display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 24px; color: var(--text-muted);">‹</span>
+                <h2 style="margin: 0; font-size: 20px;">账单明细</h2>
+            </div>
+
+            <div class="content-scroll" style="padding-top: 10px;">
+                <!-- 统计概览 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                    <div style="flex: 1; background: var(--bg-surface); padding: 16px; border-radius: 16px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 12px; color: var(--text-muted);">本月累计收入</div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--accent-green); margin-top: 4px;">+4,200</div>
+                    </div>
+                    <div style="flex: 1; background: var(--bg-surface); padding: 16px; border-radius: 16px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 12px; color: var(--text-muted);">本月累计支出</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #fff; margin-top: 4px;">-1,580</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">最近记录</div>
+
+                <!-- 账单列表项 -->
+                
+                <!-- 收入：邀请朋友注册 -->
+                <div class="list-item" style="background: transparent; border-radius: 0; border: none; border-bottom: 1px solid var(--border-light); padding: 16px 0; margin-bottom: 0;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 229, 153, 0.1); display: flex; align-items: center; justify-content: center; font-size: 20px;">🤝</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">邀请好友注册成功</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">来自好友: User_9928</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 16px; font-weight: 700; color: var(--accent-green);">+500</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">10-24 14:20</div>
+                    </div>
+                </div>
+
+                <!-- 支出：购买游戏 -->
+                <div class="list-item" style="background: transparent; border-radius: 0; border: none; border-bottom: 1px solid var(--border-light); padding: 16px 0; margin-bottom: 0;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(92, 103, 255, 0.1); display: flex; align-items: center; justify-content: center; font-size: 20px;">🎮</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">购买游戏内容</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">《赛博之刃：全DLC解锁》</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 16px; font-weight: 700; color: #fff;">-1,200</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">10-23 09:15</div>
+                    </div>
+                </div>
+
+                <!-- 收入：邀请朋友玩游戏 -->
+                <div class="list-item" style="background: transparent; border-radius: 0; border: none; border-bottom: 1px solid var(--border-light); padding: 16px 0; margin-bottom: 0;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 229, 153, 0.1); display: flex; align-items: center; justify-content: center; font-size: 20px;">🕹️</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">邀请好友试玩奖励</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">试玩项目: 羊了个羊</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 16px; font-weight: 700; color: var(--accent-green);">+50</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">10-22 18:02</div>
+                    </div>
+                </div>
+
+                <!-- 支出：兑换道具 -->
+                <div class="list-item" style="background: transparent; border-radius: 0; border: none; border-bottom: 1px solid var(--border-light); padding: 16px 0; margin-bottom: 0;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 77, 79, 0.1); display: flex; align-items: center; justify-content: center; font-size: 20px;">💎</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">兑换游戏道具</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">消消乐: 无限体力(2h)</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 16px; font-weight: 700; color: #fff;">-380</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">10-22 10:45</div>
+                    </div>
+                </div>
+
+                <!-- 更多加载提示 -->
+                <div style="text-align: center; padding: 30px; color: #444; font-size: 13px;">仅显示最近 30 天记录</div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 08c. 账单详情 (Transaction Detail) ==================== -->
+    <div>
+        <div class="page-title-label">08c. 账单详情 / Detail</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <!-- 顶部导航 -->
+            <div style="padding: 20px 24px 10px; display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 24px; color: var(--text-muted);">‹</span>
+                <span style="font-size: 14px; color: var(--text-muted);">投诉</span>
+            </div>
+
+            <div class="content-scroll" style="padding-top: 10px;">
+                
+                <!-- 核心详情头 -->
+                <div style="text-align: center; padding: 30px 0;">
+                    <div style="width: 72px; height: 72px; background: var(--bg-surface-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px; border: 1px solid var(--border-light);">🎮</div>
+                    <div style="font-size: 15px; color: var(--text-muted);">交易金额</div>
+                    <div style="font-size: 40px; font-weight: 800; margin: 8px 0; color: #fff;">
+                         -1,200
+                    </div>
+                    <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 229, 153, 0.1); color: var(--accent-green); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                        ● 交易成功
+                    </div>
+                </div>
+
+                <!-- 详细参数列表 (模拟电子收据) -->
+                <div style="background: var(--bg-surface); border-radius: 24px; padding: 24px; border: 1px solid var(--border-light); position: relative; overflow: hidden;">
+                    
+                    <!-- 装饰用缺口 (收据质感) -->
+                    <div style="position: absolute; top: 100px; left: -10px; width: 20px; height: 20px; background: var(--bg-base); border-radius: 50%;"></div>
+                    <div style="position: absolute; top: 100px; right: -10px; width: 20px; height: 20px; background: var(--bg-base); border-radius: 50%;"></div>
+
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 14px;">交易类型</span>
+                            <span style="color: #fff; font-size: 14px; font-weight: 500;">购买游戏内容</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 14px;">商品名称</span>
+                            <span style="color: #fff; font-size: 14px; font-weight: 500; text-align: right; max-width: 180px;">《赛博之刃：源起》全DLC永久解锁</span>
+                        </div>
+                        
+                        <!-- 分割线 -->
+                        <div style="height: 1px; border-top: 1px dashed var(--border-light); margin: 10px 0;"></div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 14px;">交易时间</span>
+                            <span style="color: #fff; font-size: 14px; font-weight: 500;">2024-10-23 09:15:32</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 14px;">交易单号</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="color: #fff; font-size: 14px; font-weight: 500;">NX88293041...001</span>
+                                <span style="color: var(--primary); font-size: 11px;">复制</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 14px;">支付方式</span>
+                            <span style="color: #fff; font-size: 14px; font-weight: 500;">🪙 平台币余额</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 14px;">交易后余额</span>
+                            <span style="color: #fff; font-size: 14px; font-weight: 500;">🪙 23,650</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部操作按钮 -->
+                <div style="margin-top: 30px; display: flex; gap: 12px;">
+                    <button class="btn-secondary" style="flex: 1; font-size: 14px;">下载凭证</button>
+                    <button class="btn-primary" style="flex: 2; height: 56px; font-size: 15px;">对此交易有疑问?</button>
+                </div>
+
+                <div style="text-align: center; margin-top: 24px; padding-bottom: 40px;">
+                    <div style="font-size: 12px; color: #444; letter-spacing: 2px;">NEXUS RUNTIME SECURED</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<!-- ==================== 08d. 邀请好友 (完整版) ==================== -->
+    <div>
+        <div class="page-title-label">08d. 邀请好友 / Referrals</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <div class="content-scroll" style="padding: 0;">
+                <!-- 顶部视觉区 -->
+                <div style="background: var(--primary-gradient); padding: 40px 24px 60px; text-align: center; position: relative;">
+                    <div style="font-size: 24px; color: #fff; position: absolute; left: 24px; top: 20px;">‹</div>
+                    <div style="font-size: 64px; margin-bottom: 10px;">🎁</div>
+                    <h1 style="font-size: 28px; margin: 0 0 8px 0;">邀请奖励</h1>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 15px; margin: 0;">分享专属链接，与好友瓜分平台币</p>
+                </div>
+
+                <!-- 内容区 -->
+                <div style="margin-top: -30px; background: var(--bg-base); border-radius: 32px 32px 0 0; padding: 30px 24px; position: relative;">
+                    
+                    <!-- 1. 邀请数据统计 -->
+                    <div style="display: flex; background: var(--bg-surface); border-radius: 20px; padding: 20px; border: 1px solid var(--border-light); margin-bottom: 30px;">
+                        <div style="flex: 1; text-align: center; border-right: 1px solid var(--border-light);">
+                            <div style="font-size: 24px; font-weight: 800; color: #fff;">12</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">成功邀请 (人)</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 800; color: var(--accent-green);">6,000</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">累计奖励 (🪙)</div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 专属邀请链接 -->
+                    <div style="margin-bottom: 30px;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; text-align: center;">你的专属邀请链接</div>
+                        <div style="background: var(--bg-surface-elevated); padding: 16px; border-radius: 16px; border: 1px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+                            <div style="flex: 1; font-size: 13px; color: var(--primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">https://nexus.link/join/user88293041</div>
+                            <div style="color: #fff; font-size: 13px; font-weight: 700; background: var(--primary); padding: 8px 16px; border-radius: 10px; flex-shrink: 0;">复制</div>
+                        </div>
+                    </div>
+
+                    <!-- 3. 社交分享矩阵 -->
+                    <div style="margin-bottom: 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 50px; height: 50px; border-radius: 15px; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 24px;">💬</div>
+                            <span style="font-size: 10px; color: var(--text-muted);">WhatsApp</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 50px; height: 50px; border-radius: 15px; background: #1877F2; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; font-weight: 900;">f</div>
+                            <span style="font-size: 10px; color: var(--text-muted);">Facebook</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 50px; height: 50px; border-radius: 15px; background: #ff2442; display: flex; align-items: center; justify-content: center; font-size: 18px;">📕</div>
+                            <span style="font-size: 10px; color: var(--text-muted);">小红书</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 50px; height: 50px; border-radius: 15px; background: var(--bg-surface-elevated); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 20px;">🔗</div>
+                            <span style="font-size: 10px; color: var(--text-muted);">更多分享</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. 邀请规则 (重新补全) -->
+                    <div style="background: rgba(255,255,255,0.03); border-radius: 24px; padding: 24px; border: 1px solid var(--border-light);">
+                        <h4 style="margin: 0 0 16px 0; font-size: 16px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--primary);">📜</span> 奖励规则与指南
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div style="display: flex; gap: 12px;">
+                                <div style="width: 22px; height: 22px; background: var(--bg-surface-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--primary); font-weight: 800; flex-shrink: 0; border: 1px solid var(--primary);">1</div>
+                                <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                                    <strong style="color: #fff;">发送链接：</strong>点击上方分享按钮，将你的专属链接发送给未注册过 Nexus 的好友。
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="width: 22px; height: 22px; background: var(--bg-surface-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--primary); font-weight: 800; flex-shrink: 0; border: 1px solid var(--primary);">2</div>
+                                <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                                    <strong style="color: #fff;">好友注册：</strong>好友通过链接进入页面，输入手机号领取礼包并成功下载 App 注册。
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <div style="width: 22px; height: 22px; background: var(--bg-surface-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--primary); font-weight: 800; flex-shrink: 0; border: 1px solid var(--primary);">3</div>
+                                <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                                    <strong style="color: #fff;">获得奖励：</strong>好友首场游戏结束，你将获得 <span style="color: var(--accent-green);">🪙500</span>，好友获得 <span style="color: var(--accent-green);">🪙200</span>。
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 补充说明 -->
+                        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-light); font-size: 11px; color: #555; line-height: 1.4;">
+                            * 严禁任何形式的刷号行为，一经发现将冻结账户及所有平台币奖励。本活动最终解释权归 Nexus 所有。
+                        </div>
+                    </div>
+                    
+                    <!-- 底部占位，防止被遮挡 -->
+                    <div style="height: 60px;"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- ==================== 08e. 邀请落地页 (Landing Page) ==================== -->
+    <div>
+        <div class="page-title-label">08e. 邀请落地页 / Landing H5</div>
+        <div class="device-mockup" style="background: #000;">
+            <!-- 模拟浏览器顶部 -->
+            <div style="height: 44px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; padding: 0 16px;">
+                <div style="background: #2b2b2b; height: 28px; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #888;">
+                    🔒 nexus.link
+                </div>
+            </div>
+
+            <div class="content-scroll" style="padding: 0; background: radial-gradient(circle at top, #2d1b4d 0%, #000 70%);">
+                
+                <!-- 邀请人信息 -->
+                <div style="padding: 40px 24px 20px; text-align: center;">
+                    <div style="width: 60px; height: 60px; border-radius: 30px; border: 2px solid var(--primary); margin: 0 auto 16px; background: url('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100') center/cover;"></div>
+                    <p style="color: #fff; font-size: 16px; margin: 0;">你的好友 <span style="color: var(--primary); font-weight: 700;">超级玩家 007</span></p>
+                    <h2 style="font-size: 24px; margin: 8px 0;">送你一个新人专属礼包</h2>
+                </div>
+
+                <!-- 礼包卡片 -->
+                <div style="margin: 0 24px; background: linear-gradient(180deg, #222433 0%, #15161d 100%); border-radius: 24px; border: 1px solid rgba(92, 103, 255, 0.3); padding: 30px 20px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                    <div style="font-size: 50px; margin-bottom: 10px;">🪙</div>
+                    <div style="font-size: 48px; font-weight: 900; color: #fff; margin-bottom: 4px;">500</div>
+                    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 30px;">平台币已就绪，注册即可领取</div>
+                    
+                    <!-- 领取表单 -->
+                    <input type="text" class="input-box" placeholder="输入手机号领取" style="background: rgba(255,255,255,0.05); text-align: center;">
+                    <button class="btn-primary" style="box-shadow: 0 0 20px rgba(92, 103, 255, 0.4);">立即领取并下载 App</button>
+                    
+                    <p style="font-size: 11px; color: #555; margin-top: 16px;">领取即代表同意用户服务协议</p>
+                </div>
+
+                <!-- 游戏预览展示 (增加吸引力) -->
+                <div style="padding: 40px 24px;">
+                    <h3 style="font-size: 16px; text-align: center; margin-bottom: 20px; color: var(--text-muted);">—— 在 Nexus 玩这些热门游戏 ——</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                        <div style="aspect-ratio: 1; border-radius: 12px; background: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200') center/cover;"></div>
+                        <div style="aspect-ratio: 1; border-radius: 12px; background: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=200') center/cover;"></div>
+                        <div style="aspect-ratio: 1; border-radius: 12px; background: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200') center/cover;"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--primary);">查看更多 2000+ 精彩小游戏 ›</div>
+                </div>
+
+                <!-- 底部品牌背书 -->
+                <div style="text-align: center; padding: 20px 0 60px; opacity: 0.3; font-size: 12px; letter-spacing: 2px;">
+                    NEXUS GAMING ENGINE
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- ==================== 11a. 账户与安全主页 ==================== -->
+    <div>
+        <div class="page-title-label">11a. 安全中心 / Security Hub</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <div class="content-scroll">
+                <div style="margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 24px; color: var(--text-muted);">‹</span>
+                    <h2 style="margin: 0; font-size: 20px;">账户与安全</h2>
+                </div>
+
+                <!-- 安全评分预览 -->
+                <div style="background: var(--bg-surface); border-radius: 20px; padding: 20px; border: 1px solid var(--border-light); margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 50px; height: 50px; border-radius: 25px; border: 4px solid var(--accent-green); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--accent-green);">85</div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 600;">安全等级：中等</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">建议开启双重身份验证</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 10px;">基础信息</div>
+                <div class="menu-group" style="margin-top: 0;">
+                    <div class="menu-item">
+                        <span>手机绑定</span><span style="color: var(--text-muted);">+86 138****8888 ›</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>邮箱绑定</span><span style="color: var(--primary);">去绑定 ›</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--text-muted); margin: 24px 0 12px 10px;">账号保护</div>
+                <div class="menu-group" style="margin-top: 0;">
+                    <div class="menu-item">
+                        <span>登录密码</span><span style="color: var(--text-muted);">定期修改更安全 ›</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>登录设备管理</span><span style="color: var(--text-muted);">2 台设备登录中 ›</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>三方账号绑定</span><span style="color: var(--text-muted);">微信、Apple ›</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--text-muted); margin: 24px 0 12px 10px;">其他</div>
+                <div class="menu-group" style="margin-top: 0;">
+                    <div class="menu-item">
+                        <span>实名认证</span><span style="color: var(--accent-green);">已认证 ›</span>
+                    </div>
+                    <div class="menu-item" style="color: var(--accent-red);">
+                        <span>注销账号</span><span>›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 11b. 修改密码 ==================== -->
+    <div>
+        <div class="page-title-label">11b. 修改密码 / Password</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <div class="content-scroll">
+                <div style="margin-bottom: 40px; display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 24px; color: var(--text-muted);">‹</span>
+                    <h2 style="margin: 0; font-size: 20px;">修改登录密码</h2>
+                </div>
+
+                <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;">
+                    请确认为本人操作。修改成功后，其他设备上的登录状态将被清除。
+                </p>
+
+                <input type="password" class="input-box" placeholder="输入当前旧密码">
+                <div style="height: 10px;"></div>
+                <input type="password" class="input-box" placeholder="设置新密码 (8-16位字母加数字)">
+                <input type="password" class="input-box" placeholder="再次确认新密码">
+
+                <button class="btn-primary" style="margin-top: 24px;">确认修改</button>
+                
+                <div style="text-align: center; margin-top: 20px; font-size: 14px; color: var(--primary);">忘记旧密码？</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 11c. 设备管理 ==================== -->
+    <div>
+        <div class="page-title-label">11c. 设备管理 / Devices</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <div class="content-scroll">
+                <div style="margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 24px; color: var(--text-muted);">‹</span>
+                    <h2 style="margin: 0; font-size: 20px;">登录设备管理</h2>
+                </div>
+
+                <!-- 当前设备 -->
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">当前使用的设备</div>
+                <div class="list-item">
+                    <div style="font-size: 24px;">📱</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">iPhone 15 Pro Max</div>
+                        <div style="font-size: 12px; color: var(--accent-green); margin-top: 4px;">当前在线</div>
+                    </div>
+                </div>
+
+                <!-- 其他设备 -->
+                <div style="font-size: 13px; color: var(--text-muted); margin: 30px 0 12px 0;">最近登录的其他设备</div>
+                
+                <div class="list-item">
+                    <div style="font-size: 24px;">💻</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">MacBook Pro 14"</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">最后登录: 北京 · 10-24 10:20</div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--accent-red); font-weight: 600;">退出登录</div>
+                </div>
+
+                <div class="list-item" style="opacity: 0.7;">
+                    <div style="font-size: 24px;">📱</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600;">iPad Air</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">最后登录: 上海 · 10-15 14:05</div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted);">已过期</div>
+                </div>
+
+                <div style="margin-top: 40px; padding: 20px; background: rgba(255, 77, 79, 0.05); border-radius: 16px; border: 1px dashed var(--accent-red);">
+                    <p style="margin: 0; font-size: 12px; color: var(--accent-red); line-height: 1.5; text-align: center;">
+                        如果发现非本人操作的异常记录，请立即修改密码并强制下线所有可疑设备。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 11d. 注销账号 ==================== -->
+    <div>
+        <div class="page-title-label">11d. 注销账号 / Termination</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            
+            <div class="content-scroll">
+                <div style="margin-bottom: 40px; display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 24px; color: var(--text-muted);">‹</span>
+                    <h2 style="margin: 0; font-size: 20px;">注销 Nexus 账号</h2>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 80px; height: 80px; background: rgba(255, 77, 79, 0.1); border-radius: 40px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px;">⚠️</div>
+                    <h3 style="color: #fff; margin-bottom: 8px;">这是一项不可逆的操作</h3>
+                    <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+                        注销后，您的所有游戏存档、平台币余额、社区成就及好友关系将被永久删除且无法找回。
+                    </p>
+                </div>
+
+                <div style="background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid var(--border-light);">
+                    <div style="font-size: 14px; color: #fff; margin-bottom: 12px; font-weight: 600;">账号资产确认：</div>
+                    <div style="font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px;">
+                        <span>● 平台币余额：🪙 24,850 (将清零)</span>
+                        <span>● 已购游戏内容：12 项 (将作废)</span>
+                        <span>● 云端存档：4.2 GB (将清除)</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: flex-start; margin: 30px 0;">
+                    <div style="width: 18px; height: 18px; border: 1px solid var(--accent-red); border-radius: 4px; flex-shrink: 0; margin-top: 2px;"></div>
+                    <p style="margin: 0; font-size: 12px; color: var(--text-muted);">我已清楚知晓注销风险，并自愿承担因注销账号带来的所有后果。</p>
+                </div>
+
+                <button class="btn-secondary" style="color: var(--accent-red); border-color: var(--accent-red); background: transparent;">申请注销账号</button>
+                <button class="btn-primary" style="margin-top: 12px;">我再想想</button>
+            </div>
+        </div>
+    </div>
+
+<!-- ==================== 09. 注册账号 (Register) ==================== -->
+    <div>
+        <div class="page-title-label">09. 注册账号 / Register</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                
+                <!-- 顶部返回小控件 -->
+                <div style="margin-top: 10px; font-size: 24px; color: var(--text-muted); cursor: pointer; width: 30px;">‹</div>
+
+                <div class="auth-header" style="margin: 20px 0 30px;">
+                    <h1 style="font-size: 36px; margin: 0 0 8px 0;">创建新账号</h1>
+                    <p style="color: var(--text-muted); font-size: 15px;">加入 Nexus，开启次世代云端游戏体验。</p>
+                </div>
+                
+                <!-- 表单区 -->
+                <input type="text" class="input-box" placeholder="手机号 / 电子邮箱">
+                
+                <!-- 验证码复合输入框 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <input type="text" class="input-box" placeholder="输入验证码" style="flex: 1; margin-bottom: 0;">
+                    <button class="btn-secondary" style="width: 110px; font-size: 14px; padding: 0;">获取验证码</button>
+                </div>
+
+                <input type="password" class="input-box" placeholder="设置密码 (不少于8位字符)">
+                
+                <!-- 用户协议 -->
+                <div style="display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 32px;">
+                    <div style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center; margin-top: 2px; background: rgba(92, 103, 255, 0.2);">
+                        <span style="color: var(--primary); font-size: 12px; font-weight: bold;">✓</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; flex: 1;">
+                        我已阅读并同意 Nexus 的 <span style="color: var(--primary);">《用户服务协议》</span> 与 <span style="color: var(--primary);">《隐私政策》</span>
+                    </div>
+                </div>
+                
+                <button class="btn-primary">同意协议并注册</button>
+                
+                <div style="text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-muted);">
+                    已有账号？ <span style="color: #fff; font-weight: 700; border-bottom: 1px solid #fff; padding-bottom: 2px;">直接登录</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 10. 忘记密码 (Forgot Password) ==================== -->
+    <div>
+        <div class="page-title-label">10. 找回密码 / Forgot Password</div>
+        <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="content-scroll">
+                
+                <!-- 顶部返回小控件 -->
+                <div style="margin-top: 10px; font-size: 15px; color: var(--text-muted); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 20px; margin-top: -2px;">‹</span> 返回登录
+                </div>
+
+                <div class="auth-header" style="margin: 30px 0 40px;">
+                    <h1 style="font-size: 36px; margin: 0 0 8px 0;">重置密码</h1>
+                    <p style="color: var(--text-muted); font-size: 15px;">请输入您绑定的手机号或邮箱，我们将发送验证码以验证您的身份。</p>
+                </div>
+                
+                <!-- 表单区 -->
+                <input type="text" class="input-box" placeholder="请输入绑定的手机号 / 邮箱">
+                
+                <!-- 验证码复合输入框 -->
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <input type="text" class="input-box" placeholder="6位验证码" style="flex: 1; margin-bottom: 0;">
+                    <button class="btn-secondary" style="width: 110px; font-size: 14px; padding: 0; color: var(--text-muted);">重新发送(59s)</button>
+                </div>
+
+                <input type="password" class="input-box" placeholder="输入新密码">
+                <input type="password" class="input-box" placeholder="再次确认新密码">
+                
+                <!-- 留白缓冲 -->
+                <div style="height: 20px;"></div>
+                
+                <button class="btn-primary">确认重置</button>
+                
+                <!-- 底部客服入口 -->
+                <div style="text-align: center; margin-top: 40px; font-size: 13px; color: var(--text-muted);">
+                    设备不在身边或无法接收验证码？<br>
+                    <span style="color: var(--primary); font-weight: 600; display: inline-block; margin-top: 8px;">联系人工客服援助</span>
+                </div>
+
             </div>
         </div>
     </div>

@@ -28,6 +28,8 @@ fun ActionButton(
     modifier: Modifier = Modifier
 ) {
     val gradient = Brush.linearGradient(listOf(PrimaryStart, PrimaryEnd))
+    val buttonShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+    
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
@@ -36,6 +38,7 @@ fun ActionButton(
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+        shape = buttonShape,
         modifier = modifier
     ) {
         Box(
@@ -46,13 +49,13 @@ fun ActionButton(
                     if (primary) gradient else Brush.linearGradient(
                         listOf(BackgroundSurfaceElevated, BackgroundSurfaceElevated)
                     ),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    shape = buttonShape
                 )
                 .then(
                     if (primary) Modifier else Modifier.border(
                         width = 1.dp,
                         color = BorderLight,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        shape = buttonShape
                     )
                 ),
             contentAlignment = androidx.compose.ui.Alignment.Center

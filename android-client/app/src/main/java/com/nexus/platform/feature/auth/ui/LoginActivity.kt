@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.feature.auth.ui
+package com.nexus.platform.feature.auth.ui
 
 import android.content.Intent
 import android.content.Context
@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +22,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,8 @@ import com.nexus.platform.R
 import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
+import com.nexus.platform.ui.theme.PrimaryEnd
+import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMuted
 
 class LoginActivity : ComponentActivity() {
@@ -71,6 +76,12 @@ class LoginActivity : ComponentActivity() {
                     uiState = state,
                     onUsernameChange = viewModel::updateUsername,
                     onPasswordChange = viewModel::updatePassword,
+                    onForgotPasswordClick = {
+                        startActivity(Intent(this, ForgotPasswordActivity::class.java))
+                    },
+                    onSignupClick = {
+                        startActivity(Intent(this, RegisterActivity::class.java))
+                    },
                     onLoginClick = {
                         viewModel.login {
                             startActivity(Intent(this, MainActivity::class.java))
@@ -97,8 +108,10 @@ private fun LoginScreen(
     uiState: LoginUiState,
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onForgotPasswordClick: () -> Unit,
+    onSignupClick: () -> Unit,
     onLoginClick: () -> Unit
-    ) {
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,42 +119,81 @@ private fun LoginScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(modifier = Modifier.height(72.dp))
-        Text(stringResource(R.string.login_welcome), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        Text(
+            text = stringResource(R.string.login_welcome),
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Black,
+            color = Color.White
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(stringResource(R.string.login_subtitle), color = TextMuted)
-        Spacer(modifier = Modifier.height(36.dp))
+        Text(
+            text = stringResource(R.string.login_subtitle),
+            color = TextMuted
+        )
+        Spacer(modifier = Modifier.height(40.dp))
 
         OutlinedTextField(
             value = uiState.username,
             onValueChange = onUsernameChange,
             label = { Text(stringResource(R.string.login_account_label)) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0x0DFFFFFF),
+                unfocusedContainerColor = Color(0x08FFFFFF),
+                focusedIndicatorColor = Primary,
+                unfocusedIndicatorColor = Color(0x14FFFFFF),
+                cursorColor = Primary
+            )
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = uiState.password,
             onValueChange = onPasswordChange,
             label = { Text(stringResource(R.string.login_password_label)) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0x0DFFFFFF),
+                unfocusedContainerColor = Color(0x08FFFFFF),
+                focusedIndicatorColor = Primary,
+                unfocusedIndicatorColor = Color(0x14FFFFFF),
+                cursorColor = Primary
+            )
         )
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = {}) { Text(stringResource(R.string.login_forgot_password), color = Primary) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onForgotPasswordClick) {
+                Text(
+                    text = stringResource(R.string.login_forgot_password),
+                    color = Primary
+                )
+            }
         }
 
         if (!uiState.errorMessage.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             val resolvedError = when (uiState.errorMessage) {
                 "__error_empty_credentials__" -> stringResource(R.string.login_error_empty_credentials)
                 "__error_login_failed__" -> stringResource(R.string.login_error_failed)
                 else -> uiState.errorMessage.orEmpty()
             }
-            Text(resolvedError, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = resolvedError,
+                color = MaterialTheme.colorScheme.error
+            )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         if (uiState.isLoading) {
             CircularProgressIndicator()
         } else {
@@ -154,33 +206,60 @@ private fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Text(stringResource(R.string.login_new_user), color = TextMuted)
-            Text(stringResource(R.string.login_signup), color = Color.White, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(R.string.login_new_user),
+                color = TextMuted
+            )
+            TextButton(onClick = onSignupClick) {
+                Text(
+                    text = stringResource(R.string.login_signup),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(36.dp))
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Spacer(modifier = Modifier.height(60.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(1.dp)
-                    .background(TextMuted.copy(alpha = 0.2f))
+                    .background(TextMuted.copy(alpha = 0.08f))
             )
-            Text("  ${stringResource(R.string.login_quick)}  ", color = TextMuted)
+            Text(
+                text = "  ${stringResource(R.string.login_quick)}  ",
+                color = TextMuted
+            )
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(1.dp)
-                    .background(TextMuted.copy(alpha = 0.2f))
+                    .background(TextMuted.copy(alpha = 0.08f))
             )
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            QuickLoginBox(stringResource(R.string.login_quick_google), Modifier.weight(1f))
-            QuickLoginBox(stringResource(R.string.login_quick_wechat), Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            QuickLoginBox(
+                label = stringResource(R.string.login_quick_google),
+                modifier = Modifier.weight(1f)
+            )
+            QuickLoginBox(
+                label = stringResource(R.string.login_quick_wechat),
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -191,9 +270,17 @@ private fun QuickLoginBox(label: String, modifier: Modifier = Modifier) {
         modifier = modifier
             .height(50.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0x2215161D)),
+            .background(Color(0x0D15161D))
+            .border(
+                width = 1.dp,
+                color = Color(0x14FFFFFF),
+                shape = RoundedCornerShape(12.dp)
+            ),
         contentAlignment = Alignment.Center
     ) {
-        Text(label, fontWeight = FontWeight.Black)
+        Text(
+            text = label,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

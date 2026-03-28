@@ -40,6 +40,11 @@ public class GameController {
         return gameService.getGameList(currentUser);
     }
 
+    @GetMapping("/public/list")
+    public Result<java.util.List<Game>> getPublicGameList() {
+        return gameService.getGameList(null);
+    }
+
     @GetMapping("/list/page")
     public Result<PageResult<Game>> getGameListPaged(
             @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser,
@@ -69,6 +74,13 @@ public class GameController {
         return gameService.getDeveloperGamesPaged(developerId, currentUser, page, size);
     }
 
+    @GetMapping("/{gameId}/versions")
+    public Result<java.util.List<com.nexus.platform.entity.GameVersion>> getGameVersions(
+            @PathVariable Long gameId,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser) {
+        return gameService.getGameVersions(gameId, currentUser);
+    }
+
     @GetMapping("/download-url/{appId}")
     public Result<String> getDownloadUrl(
             @PathVariable String appId,
@@ -96,6 +108,38 @@ public class GameController {
         return gameService.approveGame(id, currentUser, request.getRequestURI(), reason);
     }
 
+    @PostMapping("/submit/{id}")
+    public Result<Void> submitGame(
+            @PathVariable Long id,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestBody(required = false) SubmitAuditRequest decision) {
+        String note = decision == null ? null : decision.note();
+        return gameService.submitGameForAudit(id, currentUser, request.getRequestURI(), note);
+    }
+
+    @PostMapping("/{gameId}/submit-version/{versionId}")
+    public Result<Void> submitGameVersion(
+            @PathVariable Long gameId,
+            @PathVariable Long versionId,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestBody(required = false) SubmitAuditRequest decision) {
+        String note = decision == null ? null : decision.note();
+        return gameService.submitGameVersionForAudit(gameId, versionId, currentUser, request.getRequestURI(), note);
+    }
+
+    @PostMapping("/{gameId}/rollback/{versionId}")
+    public Result<Void> rollbackVersion(
+            @PathVariable Long gameId,
+            @PathVariable Long versionId,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestBody(required = false) RollbackVersionRequest decision) {
+        String reason = decision == null ? null : decision.reason();
+        return gameService.rollbackToVersion(gameId, versionId, currentUser, request.getRequestURI(), reason);
+    }
+
     @PostMapping("/reject/{id}")
     public Result<Void> rejectGame(
             @PathVariable Long id,
@@ -110,3 +154,8 @@ public class GameController {
 record AuditDecisionRequest(String reason) {
 }
 
+record SubmitAuditRequest(String note) {
+}
+
+record RollbackVersionRequest(String reason) {
+}

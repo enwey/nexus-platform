@@ -34,6 +34,16 @@
             android:name=".feature.auth.ui.LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.auth.ui.RegisterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.auth.ui.ForgotPasswordActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
         
         <activity
             android:name=".feature.main.ui.MainActivity"
@@ -48,6 +58,46 @@
             android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:screenOrientation="portrait"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.game.ui.RuntimeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.AccountSecurityActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.ChangePasswordActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.DeviceManagementActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.AccountTerminationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.BillingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.TransactionDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.profile.ui.ReferralActivity"
+            android:exported="false"
             android:theme="@style/Theme.NexusPlatform.Fullscreen" />
     </application>
 

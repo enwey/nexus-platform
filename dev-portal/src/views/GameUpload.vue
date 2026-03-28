@@ -3,7 +3,7 @@
     <header class="page-header">
       <div>
         <h1>上传游戏</h1>
-        <p>上传 ZIP 包并补充基础信息，提交后进入审核流程。</p>
+        <p>上传 ZIP 包并补充基础信息，上传成功后可在“我的游戏”手动提交审核。</p>
       </div>
     </header>
 
@@ -101,7 +101,7 @@ const handleUpload = async () => {
 
     await uploadGame(formData)
 
-    ElMessage.success('上传成功，已提交审核')
+    ElMessage.success('上传成功，请在列表中点击“提交审核”')
     router.push('/games')
   } catch (error) {
     ElMessage.error(error.message || '上传失败')

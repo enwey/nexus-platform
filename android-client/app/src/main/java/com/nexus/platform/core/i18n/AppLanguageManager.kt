@@ -2,6 +2,7 @@ package com.nexus.platform.core.i18n
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.LocaleList
 import androidx.annotation.StringRes
 import com.nexus.platform.R
 import java.util.Locale
@@ -58,6 +59,10 @@ object AppLanguageManager {
         Locale.setDefault(locale)
         val config = Configuration(context.resources.configuration)
         config.setLocale(locale)
-        return context.createConfigurationContext(config)
+        config.setLocales(LocaleList(locale))
+        val wrapped = context.createConfigurationContext(config)
+        @Suppress("DEPRECATION")
+        wrapped.resources.updateConfiguration(config, wrapped.resources.displayMetrics)
+        return wrapped
     }
 }

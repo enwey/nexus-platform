@@ -1,12 +1,15 @@
 package com.nexus.platform.feature.game.data
 
 import android.content.Context
+import android.util.Log
 import com.nexus.platform.domain.model.GameItem
+import com.nexus.platform.core.network.BackendConfig
 import com.nexus.platform.utils.ZipUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -14,6 +17,9 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 class GameManager(private val context: Context) {
+    private companion object {
+        const val TAG = "GameManager"
+    }
 
     data class PreparedGame(
         val rootDir: File,
@@ -25,6 +31,8 @@ class GameManager(private val context: Context) {
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
+        .followRedirects(false)
+        .followSslRedirects(false)
         .build()
 
     fun getGameDir(gameId: String): File {
@@ -84,37 +92,60 @@ class GameManager(private val context: Context) {
             if (normalizedUrl.isBlank()) {
                 throw IOException("Game download url is empty")
             }
+            Log.d(TAG, "downloadGame start id=${game.id} url=$normalizedUrl")
 
             deleteDirectory(targetDir)
             targetDir.mkdirs()
 
-            val request = Request.Builder()
-                .url(normalizedUrl)
-                .build()
+            val zipFile = downloadPackageWithRedirects(game.id, normalizedUrl)
 
+            val actualMd5 = calculateMD5(zipFile)
+            if (game.md5.isNotBlank() && !actualMd5.equals(game.md5, ignoreCase = true)) {
+                zipFile.delete()
+                throw IOException("Game package checksum mismatch")
+            }
+
+            ZipUtils.unzip(zipFile, targetDir)
+            zipFile.delete()
+            normalizeExtractedStructure(targetDir)
+        }
+    }
+
+    private fun downloadPackageWithRedirects(gameId: String, initialUrl: String): File {
+        var currentUrl = initialUrl
+        var redirectCount = 0
+        while (redirectCount < 5) {
+            Log.d(TAG, "download try id=$gameId redirect=$redirectCount url=$currentUrl")
+            val request = Request.Builder().url(currentUrl).build()
             client.newCall(request).execute().use { response ->
+                if (response.isRedirect) {
+                    val location = response.header("Location").orEmpty()
+                    if (location.isBlank()) {
+                        throw IOException("Game download redirect missing location")
+                    }
+                    currentUrl = normalizeDownloadUrl(location).trim()
+                    Log.d(TAG, "download redirect id=$gameId location=$location normalized=$currentUrl")
+                    redirectCount++
+                    return@use
+                }
+
                 if (!response.isSuccessful) {
+                    Log.e(TAG, "download failed id=$gameId http=${response.code} url=$currentUrl")
                     throw IOException("Game download failed: ${response.code}")
                 }
 
-                val zipFile = File(context.cacheDir, "${game.id}_${System.currentTimeMillis()}.zip")
+                val zipFile = File(context.cacheDir, "${gameId}_${System.currentTimeMillis()}.zip")
                 response.body?.byteStream()?.use { input ->
                     FileOutputStream(zipFile).use { output ->
                         input.copyTo(output)
                     }
                 } ?: throw IOException("Game package is empty")
-
-                val actualMd5 = calculateMD5(zipFile)
-                if (game.md5.isNotBlank() && !actualMd5.equals(game.md5, ignoreCase = true)) {
-                    zipFile.delete()
-                    throw IOException("Game package checksum mismatch")
-                }
-
-                ZipUtils.unzip(zipFile, targetDir)
-                zipFile.delete()
-                normalizeExtractedStructure(targetDir)
+                Log.d(TAG, "download success id=$gameId file=${zipFile.absolutePath}")
+                return zipFile
             }
         }
+        Log.e(TAG, "download failed id=$gameId reason=too_many_redirects")
+        throw IOException("Game download failed: too many redirects")
     }
 
     suspend fun readSDKContent(): String {
@@ -348,11 +379,31 @@ class GameManager(private val context: Context) {
     }
 
     private fun normalizeDownloadUrl(rawUrl: String): String {
-        return rawUrl
-            .replace("http://localhost", "http://10.0.2.2")
-            .replace("https://localhost", "https://10.0.2.2")
-            .replace("http://127.0.0.1", "http://10.0.2.2")
-            .replace("https://127.0.0.1", "https://10.0.2.2")
+        if (rawUrl.startsWith("/")) {
+            return BackendConfig.localHttpHost + rawUrl
+        }
+        val isPresigned = rawUrl.contains("X-Amz-Signature=", ignoreCase = true)
+        return runCatching {
+            val url = rawUrl.toHttpUrlOrNull() ?: return@runCatching rawUrl
+            val host = url.host.lowercase()
+            if (host == "localhost" || host == "127.0.0.1" || host == "::1") {
+                if (isPresigned) {
+                    return@runCatching rawUrl
+                }
+                url.newBuilder()
+                    .host(BackendConfig.localHost)
+                    .build()
+                    .toString()
+            } else {
+                rawUrl
+            }
+        }.getOrElse {
+            rawUrl
+                .replace("http://localhost", "http://${BackendConfig.localHost}")
+                .replace("https://localhost", "https://${BackendConfig.localHost}")
+                .replace("http://127.0.0.1", "http://${BackendConfig.localHost}")
+                .replace("https://127.0.0.1", "https://${BackendConfig.localHost}")
+        }
     }
 
     private fun calculateMD5(file: File): String {
