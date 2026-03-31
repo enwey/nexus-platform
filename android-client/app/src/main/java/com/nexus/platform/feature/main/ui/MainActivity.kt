@@ -19,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import com.nexus.platform.NexusApplication
 import com.nexus.platform.core.i18n.AppLanguage
 import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.usecase.GetApprovedGamesUseCase
 import com.nexus.platform.feature.auth.ui.LoginActivity
@@ -30,6 +31,8 @@ import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 
 class MainActivity : ComponentActivity() {
+    private lateinit var libraryViewModel: LibraryViewModel
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguageManager.wrap(newBase))
     }
@@ -40,8 +43,11 @@ class MainActivity : ComponentActivity() {
         val container = (application as NexusApplication).container
 
         val logoutUseCase = container.logoutUseCase
-        val libraryFactory = LibraryViewModelFactory(container.getApprovedGamesUseCase)
-        val libraryViewModel = ViewModelProvider(this, libraryFactory)[LibraryViewModel::class.java]
+        val libraryFactory = LibraryViewModelFactory(
+            container.getApprovedGamesUseCase,
+            GameEngagementStore(this)
+        )
+        libraryViewModel = ViewModelProvider(this, libraryFactory)[LibraryViewModel::class.java]
 
         setContent {
             NexusPlatformTheme {
@@ -49,7 +55,10 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     libraryState = libraryState,
                     onLoadLibrary = { libraryViewModel.load() },
-                    onPlayGame = { game -> GameRuntimeActivity.start(this, game) },
+                    onPlayGame = { game ->
+                        libraryViewModel.markPlayed(game)
+                        GameRuntimeActivity.start(this, game)
+                    },
                     currentLanguage = AppLanguageManager.currentLanguage(this),
                     onChangeLanguage = { selectedLanguage ->
                         if (selectedLanguage != AppLanguageManager.currentLanguage(this)) {
@@ -67,13 +76,21 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        if (::libraryViewModel.isInitialized) {
+            libraryViewModel.refreshLocalOrder()
+        }
+    }
 }
 
 private class LibraryViewModelFactory(
-    private val useCase: GetApprovedGamesUseCase
+    private val useCase: GetApprovedGamesUseCase,
+    private val engagementStore: GameEngagementStore
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        return LibraryViewModel(useCase) as T
+        return LibraryViewModel(useCase, engagementStore) as T
     }
 }
 

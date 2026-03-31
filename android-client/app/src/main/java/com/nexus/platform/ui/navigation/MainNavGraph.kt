@@ -223,8 +223,8 @@ fun MainNavGraph(
                 backStackEntry.arguments?.getString(MainRoutes.LIBRARY_SECTION_ARG)
             )
             val games = when (section) {
-                LibrarySection.RECENT -> libraryState.games
-                LibrarySection.MY_GAMES -> libraryState.games
+                LibrarySection.RECENT -> libraryState.recentGames
+                LibrarySection.MY_GAMES -> libraryState.myGames
             }
             LibrarySectionListScreen(
                 section = section,

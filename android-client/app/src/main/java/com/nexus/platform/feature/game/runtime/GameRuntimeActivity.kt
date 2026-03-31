@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -27,8 +29,10 @@ import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
 import com.nexus.platform.R
 import com.nexus.platform.core.bridge.NexusBridge
 import com.nexus.platform.core.bridge.RuntimeMetricsProvider
+import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.feature.game.data.GameManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,7 +49,9 @@ class GameRuntimeActivity : AppCompatActivity() {
     private lateinit var runtimeStatus: TextView
     private lateinit var runtimeRetry: TextView
     private lateinit var gameManager: GameManager
+    private lateinit var engagementStore: GameEngagementStore
     private lateinit var nexusBridge: NexusBridge
+    private var runtimeMenuDialog: BottomSheetDialog? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var loadJob: Job? = null
     private var currentGame: GameItem? = null
@@ -102,18 +108,13 @@ class GameRuntimeActivity : AppCompatActivity() {
         runtimeStatus = findViewById(R.id.runtimeStatus)
         runtimeRetry = findViewById(R.id.runtimeRetry)
         findViewById<View>(R.id.capsuleClose).setOnClickListener { finish() }
-        findViewById<View>(R.id.capsuleMore).setOnClickListener {
-            Toast.makeText(
-                this,
-                getString(R.string.runtime_capsule_more_todo),
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+        findViewById<View>(R.id.capsuleMore).setOnClickListener { showRuntimeMenu() }
         runtimeRetry.setOnClickListener {
             val game = currentGame ?: return@setOnClickListener
             loadGame(game = game, forceRefresh = true)
         }
         gameManager = GameManager(this)
+        engagementStore = GameEngagementStore(this)
     }
 
     private fun initWindowInsets() {
@@ -267,6 +268,7 @@ class GameRuntimeActivity : AppCompatActivity() {
     }
 
     private fun loadGame(game: GameItem, forceRefresh: Boolean) {
+        engagementStore.markPlayed(game.id)
         loadJob?.cancel()
         loadJob = scope.launch {
             try {
@@ -300,6 +302,83 @@ class GameRuntimeActivity : AppCompatActivity() {
                 showFailure(error = e)
             }
         }
+    }
+
+    private fun showRuntimeMenu() {
+        val game = currentGame ?: return
+        val dialog = runtimeMenuDialog ?: BottomSheetDialog(this).also { sheet ->
+            val root = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setBackgroundColor(0xFF1A1B23.toInt())
+                setPadding(dp(20), dp(16), dp(20), dp(24))
+            }
+            root.addView(TextView(this).apply {
+                text = game.name
+                setTextColor(0xFFFFFFFF.toInt())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+            })
+            root.addView(menuItem(getString(R.string.runtime_menu_share_title)) {
+                val text = "${game.name}\n${game.downloadUrl}"
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+                startActivity(Intent.createChooser(intent, getString(R.string.runtime_menu_share_title)))
+            })
+
+            val favoriteItem = menuItem("", {})
+            val refreshFavoriteLabel = {
+                favoriteItem.text = if (engagementStore.isFavorite(game.id)) {
+                    getString(R.string.runtime_menu_remove_favorite)
+                } else {
+                    getString(R.string.runtime_menu_add_favorite)
+                }
+            }
+            refreshFavoriteLabel()
+            favoriteItem.setOnClickListener {
+                val nowFavorite = engagementStore.toggleFavorite(game.id)
+                refreshFavoriteLabel()
+                Toast.makeText(
+                    this,
+                    if (nowFavorite) getString(R.string.runtime_favorite_added) else getString(R.string.runtime_favorite_removed),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            root.addView(favoriteItem)
+
+            root.addView(menuItem(getString(R.string.runtime_menu_restart)) {
+                sheet.dismiss()
+                loadGame(game = game, forceRefresh = true)
+            })
+            root.addView(menuItem(getString(R.string.runtime_menu_feedback)) {
+                Toast.makeText(this, getString(R.string.runtime_feedback_todo), Toast.LENGTH_SHORT).show()
+            })
+            root.addView(menuItem(getString(R.string.common_cancel)) {
+                sheet.dismiss()
+            })
+
+            sheet.setContentView(root)
+            runtimeMenuDialog = sheet
+        }
+        dialog.show()
+    }
+
+    private fun menuItem(label: String, onClick: () -> Unit): TextView {
+        return TextView(this).apply {
+            text = label
+            setTextColor(0xFFF3F4F6.toInt())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setPadding(0, dp(14), 0, dp(14))
+            setOnClickListener { onClick() }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
     }
 
     private fun buildWebViewClient(assetLoader: WebViewAssetLoader): WebViewClient {
@@ -422,6 +501,8 @@ class GameRuntimeActivity : AppCompatActivity() {
             webView.webViewClient = WebViewClient()
             webView.destroy()
         }
+        runtimeMenuDialog?.dismiss()
+        runtimeMenuDialog = null
         scope.cancel()
         super.onDestroy()
     }

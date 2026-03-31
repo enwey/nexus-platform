@@ -24,11 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,9 +40,6 @@ import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
 import com.nexus.platform.ui.theme.BorderLight
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
-import kotlin.math.min
-
-private const val LOAD_MORE_SIZE = 40
 private const val GRID_COLUMNS = 4
 
 @Composable
@@ -56,37 +49,8 @@ fun LibrarySectionListScreen(
     onBackClick: () -> Unit,
     onGameClick: (GameItem) -> Unit
 ) {
-    val sourceGames = remember(section, games) {
-        if (games.isEmpty()) {
-            emptyList()
-        } else {
-            val total = maxOf(games.size, 120)
-            List(total) { index ->
-                val base = games[index % games.size]
-                base.copy(
-                    id = "${section.routeValue}_${index}_${base.id}",
-                    name = "${base.name} ${index + 1}"
-                )
-            }
-        }
-    }
-    var loadedCount by remember(sourceGames) {
-        mutableIntStateOf(min(LOAD_MORE_SIZE, sourceGames.size))
-    }
+    val sourceGames = remember(section, games) { games }
     val gridState = rememberLazyGridState()
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            if (loadedCount >= sourceGames.size) return@derivedStateOf false
-            val lastVisibleIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisibleIndex >= gridState.layoutInfo.totalItemsCount - GRID_COLUMNS * 2
-        }
-    }
-
-    LaunchedEffect(shouldLoadMore, sourceGames.size, loadedCount) {
-        if (shouldLoadMore) {
-            loadedCount = min(loadedCount + LOAD_MORE_SIZE, sourceGames.size)
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -120,8 +84,7 @@ fun LibrarySectionListScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(count = loadedCount, key = { index -> sourceGames[index].id }) { index ->
-                val game = sourceGames[index]
+            items(items = sourceGames, key = { it.id }) { game ->
                 SectionGameCard(game = game, onGameClick = onGameClick)
             }
             item(span = { GridItemSpan(GRID_COLUMNS) }) {
@@ -131,15 +94,11 @@ fun LibrarySectionListScreen(
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (loadedCount < sourceGames.size) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text(
-                            text = androidx.compose.ui.res.stringResource(R.string.library_load_end),
-                            color = TextMuted,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                    Text(
+                        text = androidx.compose.ui.res.stringResource(R.string.library_load_end),
+                        color = TextMuted,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }

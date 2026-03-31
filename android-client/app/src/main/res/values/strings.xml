@@ -135,8 +135,12 @@
     <string name="runtime_menu_share_xiaohongshu">小红书</string>
     <string name="runtime_menu_share_link">复制链接</string>
     <string name="runtime_menu_add_favorite">加入我的游戏（收藏）</string>
+    <string name="runtime_menu_remove_favorite">移出我的游戏（取消收藏）</string>
     <string name="runtime_menu_restart">重新进入游戏</string>
     <string name="runtime_menu_feedback">反馈与投诉</string>
+    <string name="runtime_favorite_added">已加入我的游戏</string>
+    <string name="runtime_favorite_removed">已从我的游戏移除</string>
+    <string name="runtime_feedback_todo">反馈入口即将上线</string>
     <string name="billing_title">账单明细</string>
     <string name="billing_income_title">本月累计收入</string>
     <string name="billing_income_value">+4,200</string>

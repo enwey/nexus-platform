@@ -78,44 +78,18 @@ fun LibraryScreen(
         uiState.loading -> LoadingState()
         !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
         uiState.games.isEmpty() -> EmptyState()
-        else -> ContentState(uiState.games, onGameClick, onMoreClick)
+        else -> ContentState(uiState, onGameClick, onMoreClick)
     }
 }
 
 @Composable
 private fun ContentState(
-    games: List<GameItem>,
+    uiState: LibraryUiState,
     onGameClick: (GameItem) -> Unit,
     onMoreClick: (LibrarySection) -> Unit
 ) {
-    val recentGames = remember(games) {
-        if (games.isEmpty()) {
-            emptyList()
-        } else {
-            List(8) { index ->
-                val base = games[index % games.size]
-                if (games.size >= 8) {
-                    base
-                } else {
-                    base.copy(id = "recent_${index}_${base.id}")
-                }
-            }
-        }
-    }
-    val myGameSource = remember(games) {
-        if (games.isEmpty()) {
-            emptyList()
-        } else {
-            val total = maxOf(games.size, 160)
-            List(total) { index ->
-                val base = games[index % games.size]
-                base.copy(
-                    id = "my_${index}_${base.id}",
-                    name = "${base.name} ${index + 1}"
-                )
-            }
-        }
-    }
+    val recentGames = remember(uiState.recentGames) { uiState.recentGames.take(8) }
+    val myGameSource = remember(uiState.myGames) { uiState.myGames }
     var myLoadedCount by remember(myGameSource) {
         mutableIntStateOf(min(40, myGameSource.size))
     }
@@ -148,7 +122,7 @@ private fun ContentState(
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
             ResumeCard(
-                featuredGame = recentGames.firstOrNull(),
+                featuredGame = uiState.currentPlayingGame,
                 onGameClick = onGameClick
             )
         }
@@ -259,8 +233,17 @@ private fun ResumeCard(
                     Text(stringResource(R.string.library_running), color = AccentGreen, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(stringResource(R.string.library_resume_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-                Text(stringResource(R.string.library_resume_subtitle), color = TextMuted, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    featuredGame?.name ?: stringResource(R.string.library_resume_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black
+                )
+                Text(
+                    featuredGame?.description?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.library_resume_subtitle),
+                    color = TextMuted,
+                    style = MaterialTheme.typography.bodySmall
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Box(
                     modifier = Modifier
@@ -304,6 +287,14 @@ private fun SectionHeader(title: String, action: String? = null, onActionClick: 
 
 @Composable
 private fun RecentGameGrid(games: List<GameItem>, onGameClick: (GameItem) -> Unit) {
+    if (games.isEmpty()) {
+        Text(
+            text = stringResource(R.string.library_empty_section),
+            color = TextMuted,
+            style = MaterialTheme.typography.bodySmall
+        )
+        return
+    }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
