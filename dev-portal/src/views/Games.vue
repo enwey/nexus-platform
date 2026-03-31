@@ -1,11 +1,14 @@
-<template>
+﻿<template>
   <div class="page-shell">
     <header class="page-header">
       <div>
         <h1>我的游戏</h1>
-        <p>查看当前账号提交的游戏版本和审核状态。</p>
+        <p>查看当前账号提交的游戏版本与审核状态。</p>
       </div>
-      <el-button type="primary" @click="$router.push('/games/upload')">上传游戏</el-button>
+      <div class="header-actions">
+        <el-button @click="$router.push('/docs')">开发者文档</el-button>
+        <el-button type="primary" @click="$router.push('/games/upload')">上传游戏</el-button>
+      </div>
     </header>
 
     <el-card>
@@ -19,7 +22,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="200" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleView(row)">查看</el-button>
             <el-button link type="info" size="small" @click="openVersionDialog(row)">版本</el-button>
@@ -44,7 +47,7 @@
     >
       <el-table :data="versions" v-loading="versionLoading" empty-text="暂无版本数据">
         <el-table-column prop="versionName" label="版本号" width="120" />
-        <el-table-column label="线上" width="90">
+        <el-table-column label="线上" width="100">
           <template #default="{ row }">
             <el-tag v-if="isCurrentOnlineVersion(row)" type="success" size="small">当前线上</el-tag>
             <span v-else>-</span>
@@ -111,7 +114,7 @@ const statusTextMap = {
   DRAFT: '草稿',
   PENDING: '待审核',
   APPROVED: '已通过',
-  REJECTED: '已拒绝'
+  REJECTED: '已驳回'
 }
 
 const statusTypeMap = {
@@ -127,7 +130,7 @@ const versionStatusTextMap = {
   DRAFT: '草稿',
   SUBMITTED: '待审核',
   APPROVED: '已通过',
-  REJECTED: '已拒绝'
+  REJECTED: '已驳回'
 }
 
 const versionStatusTypeMap = {
@@ -273,5 +276,10 @@ onMounted(loadGames)
 .page-header p {
   margin: 0;
   color: #6b7280;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>

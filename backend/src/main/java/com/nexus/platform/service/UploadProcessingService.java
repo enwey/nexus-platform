@@ -62,6 +62,7 @@ public class UploadProcessingService {
             version.setStorageKey(game.getStorageKey());
             version.setDownloadUrl(game.getDownloadUrl());
             version.setMd5(md5);
+            version.setForcedUpdate(false);
             version.setStatus(GameVersion.VersionStatus.DRAFT);
             gameVersionRepository.save(version);
 

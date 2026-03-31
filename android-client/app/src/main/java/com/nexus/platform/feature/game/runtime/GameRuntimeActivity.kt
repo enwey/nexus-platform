@@ -26,6 +26,7 @@ import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
 import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
 import com.nexus.platform.R
 import com.nexus.platform.core.bridge.NexusBridge
+import com.nexus.platform.core.bridge.RuntimeMetricsProvider
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.feature.game.data.GameManager
 import kotlinx.coroutines.CoroutineScope
@@ -48,6 +49,8 @@ class GameRuntimeActivity : AppCompatActivity() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var loadJob: Job? = null
     private var currentGame: GameItem? = null
+    private var statusBarInsetPx: Int = 0
+    private var navBarBottomInsetPx: Int = 0
 
     companion object {
         private const val EXTRA_GAME = "game"
@@ -117,6 +120,8 @@ class GameRuntimeActivity : AppCompatActivity() {
         val baseTop = resources.getDimensionPixelSize(R.dimen.runtime_capsule_margin_top)
         ViewCompat.setOnApplyWindowInsetsListener(capsuleMenu) { view, insets ->
             val statusTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            statusBarInsetPx = statusTop
+            navBarBottomInsetPx = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             val lp = view.layoutParams as FrameLayout.LayoutParams
             val targetTop = baseTop + statusTop
             if (lp.topMargin != targetTop) {
@@ -147,7 +152,101 @@ class GameRuntimeActivity : AppCompatActivity() {
     }
 
     private fun initBridge() {
-        nexusBridge = NexusBridge(this, webView)
+        val metricsProvider = object : RuntimeMetricsProvider {
+            override fun getSystemInfo(): Map<String, Any> {
+                val density = resources.displayMetrics.density
+                val windowWidthPx = if (webView.width > 0) webView.width else resources.displayMetrics.widthPixels
+                val windowHeightPx = if (webView.height > 0) webView.height else resources.displayMetrics.heightPixels
+                val windowWidth = windowWidthPx / density
+                val windowHeight = windowHeightPx / density
+                val statusBarHeight = statusBarInsetPx / density
+                val safeBottom = windowHeight - (navBarBottomInsetPx / density)
+
+                return mapOf(
+                    "brand" to Build.BRAND,
+                    "model" to Build.MODEL,
+                    "pixelRatio" to density,
+                    "screenWidth" to windowWidth,
+                    "screenHeight" to windowHeight,
+                    "windowWidth" to windowWidth,
+                    "windowHeight" to windowHeight,
+                    "statusBarHeight" to statusBarHeight,
+                    "safeArea" to mapOf(
+                        "left" to 0f,
+                        "right" to windowWidth,
+                        "top" to statusBarHeight,
+                        "bottom" to safeBottom
+                    ),
+                    "language" to java.util.Locale.getDefault().language,
+                    "version" to "1.0.0",
+                    "system" to "Android ${Build.VERSION.RELEASE}",
+                    "platform" to "android",
+                    "fontSizeSetting" to 16,
+                    "SDKVersion" to "1.0.0",
+                    "benchmarkLevel" to 1,
+                    "albumAuthorized" to true,
+                    "cameraAuthorized" to true,
+                    "locationAuthorized" to true,
+                    "microphoneAuthorized" to true,
+                    "notificationAuthorized" to true,
+                    "bluetoothAuthorized" to true
+                )
+            }
+
+            override fun getMenuButtonRect(): Map<String, Any> {
+                val density = resources.displayMetrics.density
+                val location = IntArray(2)
+                capsuleMenu.getLocationOnScreen(location)
+                val left = location[0] / density
+                val top = location[1] / density
+                val width = capsuleMenu.width / density
+                val height = capsuleMenu.height / density
+                return mapOf(
+                    "width" to width,
+                    "height" to height,
+                    "left" to left,
+                    "top" to top,
+                    "right" to left + width,
+                    "bottom" to top + height
+                )
+            }
+
+            override suspend fun checkForUpdate(): Map<String, Any> {
+                val game = currentGame ?: return mapOf(
+                    "hasUpdate" to false,
+                    "forceUpdate" to false,
+                    "ready" to false,
+                    "errMsg" to "update.check:fail"
+                )
+                val result = gameManager.checkForUpdate(game)
+                return mapOf(
+                    "hasUpdate" to result.hasUpdate,
+                    "forceUpdate" to result.forceUpdate,
+                    "ready" to result.ready,
+                    "version" to (result.latestVersion ?: ""),
+                    "errMsg" to result.errMsg
+                )
+            }
+
+            override suspend fun applyUpdate(): Map<String, Any> {
+                val game = currentGame ?: return mapOf(
+                    "success" to false,
+                    "errMsg" to "update.apply:fail"
+                )
+                val success = gameManager.applyUpdate(game.id, null)
+                if (success) {
+                    runOnUiThread {
+                        recreate()
+                    }
+                }
+                return mapOf(
+                    "success" to success,
+                    "errMsg" to if (success) "update.apply:ok" else "update.apply:fail"
+                )
+            }
+        }
+
+        nexusBridge = NexusBridge(this, webView, metricsProvider)
         webView.addJavascriptInterface(nexusBridge, "AndroidApp")
         webView.addJavascriptInterface(nexusBridge.createSyncBridge(), "AndroidAppSync")
     }
@@ -172,6 +271,12 @@ class GameRuntimeActivity : AppCompatActivity() {
         loadJob = scope.launch {
             try {
                 showLoading(message = getString(R.string.runtime_status_preparing), showRetry = false)
+                val update = withContext(Dispatchers.IO) {
+                    gameManager.checkForUpdate(game = game, blockOnForce = true)
+                }
+                if (update.forceUpdate && !update.ready) {
+                    throw IOException("Game download failed: force update required")
+                }
                 val prepared = withContext(Dispatchers.IO) {
                     gameManager.prepareGame(game = game, forceRefresh = forceRefresh)
                 }

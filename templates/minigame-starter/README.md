@@ -1,4 +1,4 @@
-# Mini Game Starter (Nexus Platform)
+﻿# Mini Game Starter (Nexus Platform)
 
 This starter is the recommended structure for developers building web mini-games for Nexus Platform.
 
@@ -13,24 +13,24 @@ This starter is the recommended structure for developers building web mini-games
 
 ```text
 minigame-starter/
-├─ index.html
-├─ manifest.json
-├─ src/
-│  ├─ main.js
-│  ├─ game/
-│  │  └─ Game.js
-│  ├─ platform/
-│  │  ├─ bridge.js
-│  │  └─ api.js
-│  └─ ui/
-│     └─ hud.js
-├─ assets/
-│  └─ .gitkeep
-├─ config/
-│  ├─ dev.json
-│  └─ prod.json
-└─ scripts/
-   └─ package.ps1
+├── index.html
+├── manifest.json
+├── src/
+│   ├── main.js
+│   ├── game/
+│   │   └── Game.js
+│   ├── platform/
+│   │   ├── bridge.js
+│   │   └── api.js
+│   └── ui/
+│       └── hud.js
+├── assets/
+│   └── .gitkeep
+├── config/
+│   ├── dev.json
+│   └── prod.json
+└── scripts/
+    └── package.ps1
 ```
 
 ## Quick Start
@@ -57,4 +57,3 @@ Upload this zip in developer portal.
 3. Use relative paths only.
 4. Put platform-specific logic only in `src/platform/*`.
 5. Keep entry file name stable: `index.html`.
-

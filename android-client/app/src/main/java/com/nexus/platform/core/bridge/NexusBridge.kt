@@ -11,7 +11,11 @@ import kotlinx.coroutines.*
 /**
  * JavaScript妗ユ帴绫伙紝鐢ㄤ簬WebView鍜屽師鐢熶唬鐮佷箣闂寸殑閫氫俊
  */
-class NexusBridge(private val context: Context, private val webView: WebView) {
+class NexusBridge(
+    private val context: Context,
+    private val webView: WebView,
+    private val runtimeMetricsProvider: RuntimeMetricsProvider? = null
+) {
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val apiHandlers = mutableMapOf<String, ApiHandler>()
@@ -25,7 +29,12 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
     private fun registerApiHandlers() {
         apiHandlers["wx.login"] = LoginApi(context)
         apiHandlers["wx.request"] = RequestApi(context)
-        apiHandlers["wx.getSystemInfoSync"] = SystemInfoApi(context)
+        val systemInfoApi = SystemInfoApi(context, runtimeMetricsProvider)
+        apiHandlers["wx.getSystemInfoSync"] = systemInfoApi
+        apiHandlers["wx.getMenuButtonBoundingClientRect"] = systemInfoApi
+        val updateApi = UpdateApi(runtimeMetricsProvider)
+        apiHandlers["wx.update.check"] = updateApi
+        apiHandlers["wx.update.apply"] = updateApi
         apiHandlers["wx.setStorage"] = StorageApi(context)
         apiHandlers["wx.getStorage"] = StorageApi(context)
         apiHandlers["wx.removeStorage"] = StorageApi(context)

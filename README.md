@@ -36,3 +36,8 @@ npm run build:backend
 - 部署教学：`DEPLOYMENT.md`
 - 进度：`PROGRESS.md`
 - 任务计划：`docs/project-task-plan.md`
+- 小游戏引擎推荐：`docs/minigame-engine-recommendation.md`
+- 多引擎接入手册：`docs/minigame-engine-guides.md`
+- 平台开发者接入规范：`docs/platform-developer-integration-spec.md`
+
+

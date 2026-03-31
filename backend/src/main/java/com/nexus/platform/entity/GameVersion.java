@@ -49,6 +49,9 @@ public class GameVersion {
     @Column(name = "audit_reason", length = 256)
     private String auditReason;
 
+    @Column(name = "is_forced_update", nullable = false)
+    private Boolean forcedUpdate = false;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private VersionStatus status;

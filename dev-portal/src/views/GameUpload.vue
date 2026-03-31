@@ -1,9 +1,13 @@
-<template>
+﻿<template>
   <div class="page-shell">
     <header class="page-header">
       <div>
         <h1>上传游戏</h1>
         <p>上传 ZIP 包并补充基础信息，上传成功后可在“我的游戏”手动提交审核。</p>
+      </div>
+      <div class="header-actions">
+        <el-button @click="$router.push('/docs')">开发者文档</el-button>
+        <el-button type="success" @click="downloadTemplate">下载模板</el-button>
       </div>
     </header>
 
@@ -89,6 +93,15 @@ const handleFileRemove = () => {
   form.file = null
 }
 
+const downloadTemplate = () => {
+  const link = document.createElement('a')
+  link.href = '/downloads/minigame-starter.zip'
+  link.download = 'minigame-starter.zip'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 const handleUpload = async () => {
   try {
     await formRef.value.validate()
@@ -118,6 +131,10 @@ const handleUpload = async () => {
 
 .page-header {
   margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .page-header h1 {
@@ -129,7 +146,14 @@ const handleUpload = async () => {
   color: #6b7280;
 }
 
+.header-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}
+
 .upload-tip {
   color: #6b7280;
 }
 </style>
+

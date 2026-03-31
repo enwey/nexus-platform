@@ -3,11 +3,14 @@ package com.nexus.platform.controller;
 import com.nexus.platform.config.AuthInterceptor;
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
+import com.nexus.platform.dto.GameUpdateCheckResponse;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.service.GameService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,12 +21,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/game")
 @RequiredArgsConstructor
 public class GameController {
     private final GameService gameService;
+    @Value("${platform.download.mode:proxy}")
+    private String downloadMode;
 
     @PostMapping("/upload")
     public Result<Game> uploadGame(
@@ -43,6 +49,14 @@ public class GameController {
     @GetMapping("/public/list")
     public Result<java.util.List<Game>> getPublicGameList() {
         return gameService.getGameList(null);
+    }
+
+    @GetMapping("/check-update")
+    public Result<GameUpdateCheckResponse> checkUpdate(
+            @RequestParam("appId") String appId,
+            @RequestParam("localVersion") String localVersion
+    ) {
+        return gameService.checkUpdate(appId, localVersion);
     }
 
     @GetMapping("/list/page")
@@ -89,13 +103,33 @@ public class GameController {
     }
 
     @GetMapping("/download/{appId}")
-    public ResponseEntity<Void> downloadGame(@PathVariable String appId,
-                                             @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
-        Result<String> result = gameService.getPresignedDownloadUrl(appId, currentUser);
+    public ResponseEntity<?> downloadGame(
+            @PathVariable String appId,
+            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
+        if ("redirect".equalsIgnoreCase(downloadMode)) {
+            Result<String> redirect = gameService.getPresignedDownloadUrl(appId, currentUser);
+            if (redirect.getCode() != 0 || redirect.getData() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.status(302).header(HttpHeaders.LOCATION, redirect.getData()).build();
+        }
+
+        Result<GameService.GameDownloadStream> result = gameService.getDownloadStream(appId, currentUser);
         if (result.getCode() != 0 || result.getData() == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.status(302).header(HttpHeaders.LOCATION, result.getData()).build();
+
+        GameService.GameDownloadStream payload = result.getData();
+        StreamingResponseBody body = outputStream -> {
+            try (var input = payload.stream()) {
+                input.transferTo(outputStream);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + payload.filename() + "\"")
+                .body(body);
     }
 
     @PostMapping("/approve/{id}")
@@ -115,7 +149,8 @@ public class GameController {
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) SubmitAuditRequest decision) {
         String note = decision == null ? null : decision.note();
-        return gameService.submitGameForAudit(id, currentUser, request.getRequestURI(), note);
+        Boolean forceUpdate = decision == null ? null : decision.forceUpdate();
+        return gameService.submitGameForAudit(id, currentUser, request.getRequestURI(), note, forceUpdate);
     }
 
     @PostMapping("/{gameId}/submit-version/{versionId}")
@@ -126,7 +161,15 @@ public class GameController {
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) SubmitAuditRequest decision) {
         String note = decision == null ? null : decision.note();
-        return gameService.submitGameVersionForAudit(gameId, versionId, currentUser, request.getRequestURI(), note);
+        Boolean forceUpdate = decision == null ? null : decision.forceUpdate();
+        return gameService.submitGameVersionForAudit(
+                gameId,
+                versionId,
+                currentUser,
+                request.getRequestURI(),
+                note,
+                forceUpdate
+        );
     }
 
     @PostMapping("/{gameId}/rollback/{versionId}")
@@ -154,7 +197,7 @@ public class GameController {
 record AuditDecisionRequest(String reason) {
 }
 
-record SubmitAuditRequest(String note) {
+record SubmitAuditRequest(String note, Boolean forceUpdate) {
 }
 
 record RollbackVersionRequest(String reason) {

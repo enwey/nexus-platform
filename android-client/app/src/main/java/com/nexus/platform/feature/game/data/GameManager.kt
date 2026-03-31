@@ -2,10 +2,15 @@ package com.nexus.platform.feature.game.data
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.core.network.BackendConfig
 import com.nexus.platform.utils.ZipUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -14,12 +19,23 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class GameManager(private val context: Context) {
     private companion object {
         const val TAG = "GameManager"
     }
+
+    data class UpdateCheckResult(
+        val hasUpdate: Boolean,
+        val forceUpdate: Boolean,
+        val ready: Boolean,
+        val latestVersion: String?,
+        val downloadUrl: String?,
+        val md5: String?,
+        val errMsg: String
+    )
 
     data class PreparedGame(
         val rootDir: File,
@@ -34,24 +50,177 @@ class GameManager(private val context: Context) {
         .followRedirects(false)
         .followSslRedirects(false)
         .build()
+    private val gson = Gson()
+    private val updateScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val updateStateMap = ConcurrentHashMap<String, UpdateState>()
+
+    private data class UpdateState(
+        var hasUpdate: Boolean = false,
+        var forceUpdate: Boolean = false,
+        var ready: Boolean = false,
+        var latestVersion: String? = null,
+        var downloadUrl: String? = null,
+        var md5: String? = null,
+        var inProgress: Boolean = false,
+        var failed: Boolean = false
+    )
 
     fun getGameDir(gameId: String): File {
-        val gamesDir = File(context.filesDir, "games")
-        if (!gamesDir.exists()) {
-            gamesDir.mkdirs()
-        }
-        return File(gamesDir, gameId)
+        val activeVersion = getActiveVersion(gameId) ?: return getLegacyGameDir(gameId)
+        return getVersionGameDir(gameId, activeVersion)
     }
 
     fun isGameDownloaded(gameId: String): Boolean {
         return resolveEntryPath(getGameDir(gameId)) != null
     }
 
+    suspend fun checkForUpdate(game: GameItem, blockOnForce: Boolean = false): UpdateCheckResult = withContext(Dispatchers.IO) {
+        val state = updateStateMap.getOrPut(game.id) { UpdateState() }
+        if (state.ready) {
+            return@withContext UpdateCheckResult(
+                hasUpdate = true,
+                forceUpdate = state.forceUpdate,
+                ready = true,
+                latestVersion = state.latestVersion,
+                downloadUrl = state.downloadUrl,
+                md5 = state.md5,
+                errMsg = "update.check:ok"
+            )
+        }
+        if (state.inProgress) {
+            return@withContext UpdateCheckResult(
+                hasUpdate = true,
+                forceUpdate = state.forceUpdate,
+                ready = false,
+                latestVersion = state.latestVersion,
+                downloadUrl = state.downloadUrl,
+                md5 = state.md5,
+                errMsg = "update.check:ok"
+            )
+        }
+
+        val appId = game.id
+        val localVersion = getActiveVersion(game.id) ?: game.version.ifBlank { "0.0.0" }
+        val checkUrl = "${BackendConfig.apiBaseUrl}/game/check-update?appId=$appId&localVersion=$localVersion"
+        val request = Request.Builder().url(checkUrl).build()
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@withContext UpdateCheckResult(false, false, false, null, null, null, "update.check:fail")
+                }
+                val body = response.body?.string().orEmpty()
+                val payload = gson.fromJson(body, JsonObject::class.java)
+                if (payload?.get("code")?.asInt != 0) {
+                    return@withContext UpdateCheckResult(false, false, false, null, null, null, "update.check:fail")
+                }
+                val data = payload.getAsJsonObject("data")
+                if (data == null) {
+                    state.hasUpdate = false
+                    return@withContext UpdateCheckResult(false, false, false, null, null, null, "update.check:ok")
+                }
+                val hasUpdate = data.get("hasUpdate")?.asBoolean ?: false
+                val forceUpdate = data.get("forceUpdate")?.asBoolean ?: false
+                val latestVersion = data.get("latestVersion")?.asString
+                val downloadUrl = normalizeDownloadUrl(data.get("downloadUrl")?.asString.orEmpty())
+                val md5 = data.get("md5")?.asString.orEmpty()
+                if (!hasUpdate || latestVersion.isNullOrBlank() || downloadUrl.isBlank()) {
+                    state.hasUpdate = false
+                    return@withContext UpdateCheckResult(false, false, false, latestVersion, null, md5, "update.check:ok")
+                }
+
+                state.hasUpdate = true
+                state.forceUpdate = forceUpdate
+                state.ready = false
+                state.latestVersion = latestVersion
+                state.downloadUrl = downloadUrl
+                state.md5 = md5
+                state.inProgress = true
+                state.failed = false
+
+                if (forceUpdate && blockOnForce) {
+                    try {
+                        downloadUpdateToStaging(game.id, latestVersion, downloadUrl, md5)
+                        val applied = applyUpdate(game.id, latestVersion)
+                        state.ready = applied
+                        state.inProgress = false
+                        return@withContext UpdateCheckResult(
+                            hasUpdate = true,
+                            forceUpdate = true,
+                            ready = applied,
+                            latestVersion = latestVersion,
+                            downloadUrl = downloadUrl,
+                            md5 = md5,
+                            errMsg = if (applied) "update.check:ok" else "update.check:fail"
+                        )
+                    } catch (e: Exception) {
+                        state.failed = true
+                        state.inProgress = false
+                        return@withContext UpdateCheckResult(
+                            hasUpdate = true,
+                            forceUpdate = true,
+                            ready = false,
+                            latestVersion = latestVersion,
+                            downloadUrl = downloadUrl,
+                            md5 = md5,
+                            errMsg = "update.check:fail"
+                        )
+                    }
+                }
+
+                updateScope.launch {
+                    try {
+                        downloadUpdateToStaging(game.id, latestVersion, downloadUrl, md5)
+                        state.ready = true
+                    } catch (e: Exception) {
+                        state.failed = true
+                        Log.e(TAG, "update download failed id=${game.id} msg=${e.message}")
+                    } finally {
+                        state.inProgress = false
+                    }
+                }
+
+                return@withContext UpdateCheckResult(true, forceUpdate, false, latestVersion, downloadUrl, md5, "update.check:ok")
+            }
+        } catch (e: Exception) {
+            return@withContext UpdateCheckResult(false, false, false, null, null, null, "update.check:fail")
+        }
+    }
+
+    suspend fun applyUpdate(gameId: String, targetVersion: String? = null): Boolean = withContext(Dispatchers.IO) {
+        val state = updateStateMap[gameId] ?: return@withContext false
+        if (!state.ready && targetVersion == null) {
+            return@withContext false
+        }
+        val version = targetVersion ?: state.latestVersion ?: return@withContext false
+        val gameDir = getVersionGameDir(gameId, version)
+        val stagingDir = getStagingGameDir(gameId, version)
+        if (!stagingDir.exists()) {
+            return@withContext false
+        }
+        val backupDir = File(gameDir.parentFile, "${version}_backup")
+        deleteDirectory(backupDir)
+        if (gameDir.exists()) {
+            gameDir.renameTo(backupDir)
+        }
+        if (!stagingDir.renameTo(gameDir)) {
+            deleteDirectory(gameDir)
+            stagingDir.copyRecursively(gameDir, overwrite = true)
+            deleteDirectory(stagingDir)
+        }
+        deleteDirectory(backupDir)
+        setActiveVersion(gameId, version)
+        cleanupOldVersions(gameId, version)
+        updateStateMap.remove(gameId)
+        true
+    }
+
     suspend fun prepareGame(game: GameItem, forceRefresh: Boolean = false): PreparedGame {
         return withContext(Dispatchers.IO) {
-            val gameDir = getGameDir(game.id)
+            val targetVersion = game.version.ifBlank { "0.0.0" }
+            val gameDir = getVersionGameDir(game.id, targetVersion)
             val cachedEntry = resolveEntryPath(gameDir)
             if (!forceRefresh && cachedEntry != null) {
+                setActiveVersion(game.id, targetVersion)
                 return@withContext PreparedGame(
                     rootDir = gameDir,
                     entryRelativePath = cachedEntry,
@@ -66,10 +235,12 @@ class GameManager(private val context: Context) {
                     downloadGame(game, gameDir)
                 }
             } catch (e: Exception) {
-                if (!forceRefresh && cachedEntry != null) {
+                val fallbackDir = getGameDir(game.id)
+                val fallbackEntry = resolveEntryPath(fallbackDir)
+                if (!forceRefresh && fallbackEntry != null) {
                     return@withContext PreparedGame(
-                        rootDir = gameDir,
-                        entryRelativePath = cachedEntry,
+                        rootDir = fallbackDir,
+                        entryRelativePath = fallbackEntry,
                         fromCache = true
                     )
                 }
@@ -78,6 +249,8 @@ class GameManager(private val context: Context) {
 
             val entryPath = resolveEntryPath(gameDir)
                 ?: throw IOException("Game entry not found: index.html")
+            setActiveVersion(game.id, targetVersion)
+            cleanupOldVersions(game.id, targetVersion)
             PreparedGame(
                 rootDir = gameDir,
                 entryRelativePath = entryPath,
@@ -146,6 +319,29 @@ class GameManager(private val context: Context) {
         }
         Log.e(TAG, "download failed id=$gameId reason=too_many_redirects")
         throw IOException("Game download failed: too many redirects")
+    }
+
+    private fun downloadUpdateToStaging(gameId: String, version: String, downloadUrl: String, md5: String) {
+        val stagingDir = getStagingGameDir(gameId, version)
+        deleteDirectory(stagingDir)
+        stagingDir.mkdirs()
+        val zipFile = downloadPackageWithRedirects("${gameId}_ota", downloadUrl)
+        val actualMd5 = calculateMD5(zipFile)
+        if (md5.isNotBlank() && !actualMd5.equals(md5, ignoreCase = true)) {
+            zipFile.delete()
+            throw IOException("Update package checksum mismatch")
+        }
+        ZipUtils.unzip(zipFile, stagingDir)
+        zipFile.delete()
+        normalizeExtractedStructure(stagingDir)
+    }
+
+    private fun getStagingGameDir(gameId: String, version: String): File {
+        val root = getGameRootDir(gameId)
+        if (!root.exists()) {
+            root.mkdirs()
+        }
+        return File(root, "staging/${safeVersion(version)}")
     }
 
     suspend fun readSDKContent(): String {
@@ -330,6 +526,59 @@ class GameManager(private val context: Context) {
               function ok(api) {
                 return Promise.resolve({ errMsg: api + ':ok' });
               }
+              function createUpdateManager() {
+                var checkedCallbacks = [];
+                var readyCallbacks = [];
+                var failedCallbacks = [];
+                var state = { hasUpdate: false, ready: false };
+                function emit(list, payload) {
+                  list.forEach(function (fn) {
+                    try { fn(payload); } catch (e) {}
+                  });
+                }
+                function pollReady() {
+                  if (!state.hasUpdate || state.ready) return;
+                  setTimeout(function () {
+                    call('wx.update.check', {}).then(function (res) {
+                      state = {
+                        hasUpdate: !!(res && res.hasUpdate),
+                        ready: !!(res && res.ready)
+                      };
+                      if (state.ready) {
+                        emit(readyCallbacks, {});
+                      } else if (state.hasUpdate) {
+                        pollReady();
+                      }
+                    }).catch(function () {
+                      emit(failedCallbacks, {});
+                    });
+                  }, 1500);
+                }
+                setTimeout(function () {
+                  call('wx.update.check', {}).then(function (res) {
+                    state = {
+                      hasUpdate: !!(res && res.hasUpdate),
+                      ready: !!(res && res.ready)
+                    };
+                    emit(checkedCallbacks, { hasUpdate: state.hasUpdate });
+                    if (state.ready) {
+                      emit(readyCallbacks, {});
+                    } else if (state.hasUpdate) {
+                      pollReady();
+                    }
+                  }).catch(function () {
+                    emit(checkedCallbacks, { hasUpdate: false });
+                    emit(failedCallbacks, {});
+                  });
+                }, 0);
+
+                return {
+                  onCheckForUpdate: function (cb) { if (typeof cb === 'function') checkedCallbacks.push(cb); },
+                  onUpdateReady: function (cb) { if (typeof cb === 'function') readyCallbacks.push(cb); },
+                  onUpdateFailed: function (cb) { if (typeof cb === 'function') failedCallbacks.push(cb); },
+                  applyUpdate: function () { return call('wx.update.apply', {}); }
+                };
+              }
               window.wx = {
                 request: function (params) { return call('wx.request', params); },
                 login: function (params) { return call('wx.login', params); },
@@ -357,7 +606,24 @@ class GameManager(private val context: Context) {
                     }
                   }
                   return {};
-                }
+                },
+                getMenuButtonBoundingClientRect: function () {
+                  if (window.AndroidAppSync && window.AndroidAppSync.invokeSync) {
+                    try {
+                      var raw = window.AndroidAppSync.invokeSync(JSON.stringify({
+                        api: 'wx.getMenuButtonBoundingClientRect',
+                        params: {},
+                        callbackId: 'sync'
+                      }));
+                      var parsed = JSON.parse(raw || '{}');
+                      return parsed.data || {};
+                    } catch (e) {
+                      return {};
+                    }
+                  }
+                  return {};
+                },
+                getUpdateManager: function () { return createUpdateManager(); }
               };
             })();
         """.trimIndent()
@@ -417,5 +683,75 @@ class GameManager(private val context: Context) {
         }
         val digest = md.digest()
         return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun compareVersion(left: String, right: String): Int {
+        val l = left.split(".")
+        val r = right.split(".")
+        val size = maxOf(l.size, r.size)
+        for (i in 0 until size) {
+            val lv = l.getOrNull(i)?.toIntOrNull() ?: 0
+            val rv = r.getOrNull(i)?.toIntOrNull() ?: 0
+            if (lv != rv) {
+                return lv - rv
+            }
+        }
+        return 0
+    }
+
+    private fun getGameRootDir(gameId: String): File {
+        val gamesDir = File(context.filesDir, "games")
+        if (!gamesDir.exists()) {
+            gamesDir.mkdirs()
+        }
+        return File(gamesDir, gameId)
+    }
+
+    private fun getLegacyGameDir(gameId: String): File {
+        return File(File(context.filesDir, "games"), gameId)
+    }
+
+    private fun getVersionsRootDir(gameId: String): File {
+        val versionsRoot = File(getGameRootDir(gameId), "versions")
+        if (!versionsRoot.exists()) {
+            versionsRoot.mkdirs()
+        }
+        return versionsRoot
+    }
+
+    private fun getVersionGameDir(gameId: String, version: String): File {
+        return File(getVersionsRootDir(gameId), safeVersion(version))
+    }
+
+    private fun getActiveVersionFile(gameId: String): File {
+        return File(getGameRootDir(gameId), "active_version.txt")
+    }
+
+    private fun getActiveVersion(gameId: String): String? {
+        val activeFile = getActiveVersionFile(gameId)
+        if (!activeFile.exists()) return null
+        return activeFile.readText().trim().ifBlank { null }
+    }
+
+    private fun setActiveVersion(gameId: String, version: String) {
+        val activeFile = getActiveVersionFile(gameId)
+        val parent = activeFile.parentFile
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs()
+        }
+        activeFile.writeText(version)
+    }
+
+    private fun cleanupOldVersions(gameId: String, keepVersion: String) {
+        val versionsRoot = getVersionsRootDir(gameId)
+        versionsRoot.listFiles()
+            ?.filter { it.isDirectory && !it.name.equals(safeVersion(keepVersion), ignoreCase = true) }
+            ?.sortedByDescending { it.lastModified() }
+            ?.drop(1)
+            ?.forEach { deleteDirectory(it) }
+    }
+
+    private fun safeVersion(version: String): String {
+        return version.replace(Regex("[^A-Za-z0-9._-]"), "_")
     }
 }

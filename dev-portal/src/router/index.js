@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 import { getCurrentUser } from '../api'
 import { useUserStore } from '../stores/user'
 
@@ -8,7 +8,8 @@ const routes = [
   { path: '/register', name: 'Register', component: () => import('../views/Register.vue') },
   { path: '/dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue'), meta: { requiresAuth: true } },
   { path: '/games', name: 'Games', component: () => import('../views/Games.vue'), meta: { requiresAuth: true } },
-  { path: '/games/upload', name: 'GameUpload', component: () => import('../views/GameUpload.vue'), meta: { requiresAuth: true } }
+  { path: '/games/upload', name: 'GameUpload', component: () => import('../views/GameUpload.vue'), meta: { requiresAuth: true } },
+  { path: '/docs', name: 'DeveloperDocs', component: () => import('../views/DeveloperDocs.vue'), meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({
@@ -57,4 +58,3 @@ router.beforeEach(async (to) => {
 })
 
 export default router
-
