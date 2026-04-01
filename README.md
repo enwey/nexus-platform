@@ -1,4 +1,4 @@
-﻿# Nexus Platform
+# Nexus Platform
 
 ## 背景
 Nexus Platform 是一个多端协同的小游戏运行与分发平台仓库。

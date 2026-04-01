@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.core.bridge
+package com.nexus.platform.core.bridge
 
 import android.webkit.JavascriptInterface
 import com.google.gson.Gson

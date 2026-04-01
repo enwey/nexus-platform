@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.service;
+package com.nexus.platform.service;
 
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
@@ -79,7 +79,7 @@ public class GameService {
             uploadProcessingService.processUpload(game.getId());
             return Result.success(game);
         } catch (Exception e) {
-            return Result.error("涓婁紶澶辫触: " + e.getMessage());
+            return Result.error("上传失败: " + e.getMessage());
         }
     }
 
@@ -115,7 +115,7 @@ public class GameService {
     public Result<Game> getGameByAppId(String appId) {
         Game game = gameRepository.findByAppId(appId);
         if (game == null) {
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            return Result.error("游戏不存在");
         }
         normalizeClientUrls(game);
         return Result.success(game);
@@ -123,10 +123,10 @@ public class GameService {
 
     public Result<List<Game>> getDeveloperGames(Long developerId, User currentUser) {
         if (currentUser == null) {
-            return Result.error("缂哄皯鏈夋晥鐨勭櫥褰曞嚟璇?);
+            return Result.error("缺少有效的登录凭证");
         }
         if (currentUser.getRole() != User.UserRole.ADMIN && !currentUser.getId().equals(developerId)) {
-            return Result.error("鏃犳潈鏌ョ湅鍏朵粬寮€鍙戣€呯殑娓告垙鍒楄〃");
+            return Result.error("无权查看其他开发者的游戏列表");
         }
         List<Game> games = gameRepository.findByDeveloperIdOrderByCreatedAtDesc(developerId);
         games.forEach(this::normalizeClientUrls);
@@ -135,10 +135,10 @@ public class GameService {
 
     public Result<PageResult<Game>> getDeveloperGamesPaged(Long developerId, User currentUser, int page, int size) {
         if (currentUser == null) {
-            return Result.error("缂哄皯鏈夋晥鐨勭櫥褰曞嚟璇?);
+            return Result.error("缺少有效的登录凭证");
         }
         if (currentUser.getRole() != User.UserRole.ADMIN && !currentUser.getId().equals(developerId)) {
-            return Result.error("鏃犳潈鏌ョ湅鍏朵粬寮€鍙戣€呯殑娓告垙鍒楄〃");
+            return Result.error("无权查看其他开发者的游戏列表");
         }
         Page<Game> gamesPage = gameRepository.findByDeveloperIdOrderByCreatedAtDesc(
                 developerId, PageRequest.of(Math.max(page, 0), clampSize(size))
@@ -157,7 +157,7 @@ public class GameService {
         try {
             Game game = gameRepository.findByAppId(appId);
             if (game == null) {
-                return Result.error("娓告垙涓嶅瓨鍦?);
+                return Result.error("游戏不存在");
             }
 
             boolean canDownload = game.getStatus() == Game.GameStatus.APPROVED
@@ -165,7 +165,7 @@ public class GameService {
                     || currentUser.getId().equals(game.getDeveloperId())));
 
             if (!canDownload) {
-                return Result.error("褰撳墠娓告垙涓嶅彲涓嬭浇");
+                return Result.error("当前游戏不可下载");
             }
 
             if (cdnBaseUrl != null && !cdnBaseUrl.isBlank()) {
@@ -183,22 +183,22 @@ public class GameService {
             );
             return Result.success(normalizePresignedUrlForClient(url));
         } catch (Exception e) {
-            return Result.error("鐢熸垚涓嬭浇閾炬帴澶辫触: " + e.getMessage());
+            return Result.error("生成下载链接失败: " + e.getMessage());
         }
     }
 
     public Result<List<GameVersion>> getGameVersions(Long gameId, User currentUser) {
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            return Result.error("游戏不存在");
         }
         if (currentUser == null) {
-            return Result.error("缂哄皯鏈夋晥鐨勭櫥褰曞嚟璇?);
+            return Result.error("缺少有效的登录凭证");
         }
         boolean canView = currentUser.getRole() == User.UserRole.ADMIN
                 || currentUser.getId().equals(game.getDeveloperId());
         if (!canView) {
-            return Result.error("鏃犳潈鏌ョ湅璇ユ父鎴忕増鏈?);
+            return Result.error("无权查看该游戏版本");
         }
         return Result.success(gameVersionRepository.findByGameIdOrderByCreatedAtDesc(gameId));
     }
@@ -206,26 +206,26 @@ public class GameService {
     public Result<Void> submitGameForAudit(Long id, User currentUser, String requestUri, String note) {
         Game game = gameRepository.findById(id).orElse(null);
         if (game == null) {
-            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, null, false, "娓告垙涓嶅瓨鍦?, requestUri);
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, null, false, "游戏不存在", requestUri);
+            return Result.error("游戏不存在");
         }
 
         boolean canSubmit = currentUser.getRole() == User.UserRole.ADMIN
                 || currentUser.getId().equals(game.getDeveloperId());
         if (!canSubmit) {
-            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, false, "鏃犳潈闄愭彁浜?, requestUri);
-            return Result.error("鏃犳潈鎻愪氦姝ゆ父鎴?);
+            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, false, "无权限提交", requestUri);
+            return Result.error("无权提交此游戏");
         }
 
         GameVersion latest = gameVersionRepository.findTopByGameIdOrderByCreatedAtDesc(game.getId()).orElse(null);
         if (latest == null) {
-            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, false, "缂哄皯鍙彁浜ょ増鏈?, requestUri);
-            return Result.error("鏈壘鍒板彲鎻愪氦鐨勬父鎴忕増鏈?);
+            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, false, "缺少可提交版本", requestUri);
+            return Result.error("未找到可提交的游戏版本");
         }
         if (!(latest.getStatus() == GameVersion.VersionStatus.DRAFT
                 || latest.getStatus() == GameVersion.VersionStatus.REJECTED)) {
-            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, false, "闈炴硶鐘舵€佹祦杞?, requestUri);
-            return Result.error("褰撳墠鐗堟湰鐘舵€佷笉鍏佽鎻愪氦瀹℃牳");
+            auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, false, "非法状态流转", requestUri);
+            return Result.error("当前版本状态不允许提交审核");
         }
 
         latest.setStatus(GameVersion.VersionStatus.SUBMITTED);
@@ -238,7 +238,7 @@ public class GameService {
         game.setStorageKey(latest.getStorageKey());
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
-        auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, true, "鎻愪氦瀹℃牳", requestUri);
+        auditLogService.logGameAudit("GAME_SUBMIT", currentUser, game, true, "提交审核", requestUri);
         return Result.success();
     }
 
@@ -251,26 +251,26 @@ public class GameService {
     ) {
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {
-            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, null, false, "娓告垙涓嶅瓨鍦?, requestUri);
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, null, false, "游戏不存在", requestUri);
+            return Result.error("游戏不存在");
         }
 
         boolean canSubmit = currentUser.getRole() == User.UserRole.ADMIN
                 || currentUser.getId().equals(game.getDeveloperId());
         if (!canSubmit) {
-            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, false, "鏃犳潈闄愭彁浜?, requestUri);
-            return Result.error("鏃犳潈鎻愪氦姝ゆ父鎴忕増鏈?);
+            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, false, "无权限提交", requestUri);
+            return Result.error("无权提交此游戏版本");
         }
 
         GameVersion version = gameVersionRepository.findByIdAndGameId(versionId, gameId).orElse(null);
         if (version == null) {
-            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, false, "鐗堟湰涓嶅瓨鍦?, requestUri);
-            return Result.error("娓告垙鐗堟湰涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, false, "版本不存在", requestUri);
+            return Result.error("游戏版本不存在");
         }
         if (!(version.getStatus() == GameVersion.VersionStatus.DRAFT
                 || version.getStatus() == GameVersion.VersionStatus.REJECTED)) {
-            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, false, "闈炴硶鐘舵€佹祦杞?, requestUri);
-            return Result.error("璇ョ増鏈綋鍓嶇姸鎬佷笉鍏佽鎻愪氦瀹℃牳");
+            auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, false, "非法状态流转", requestUri);
+            return Result.error("该版本当前状态不允许提交审核");
         }
 
         version.setStatus(GameVersion.VersionStatus.SUBMITTED);
@@ -284,7 +284,7 @@ public class GameService {
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
 
-        auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, true, "鎻愪氦鎸囧畾鐗堟湰瀹℃牳", requestUri);
+        auditLogService.logGameAudit("GAME_SUBMIT_VERSION", currentUser, game, true, "提交指定版本审核", requestUri);
         return Result.success();
     }
 
@@ -297,25 +297,25 @@ public class GameService {
     ) {
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {
-            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, null, false, "娓告垙涓嶅瓨鍦?, requestUri);
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, null, false, "游戏不存在", requestUri);
+            return Result.error("游戏不存在");
         }
 
         boolean canOperate = currentUser.getRole() == User.UserRole.ADMIN
                 || currentUser.getId().equals(game.getDeveloperId());
         if (!canOperate) {
-            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, false, "鏃犳潈闄愬洖婊?, requestUri);
-            return Result.error("鏃犳潈鍥炴粴姝ゆ父鎴忕増鏈?);
+            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, false, "无权限回滚", requestUri);
+            return Result.error("无权回滚此游戏版本");
         }
 
         GameVersion target = gameVersionRepository.findByIdAndGameId(versionId, gameId).orElse(null);
         if (target == null) {
-            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, false, "鐗堟湰涓嶅瓨鍦?, requestUri);
-            return Result.error("鐩爣鐗堟湰涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, false, "版本不存在", requestUri);
+            return Result.error("目标版本不存在");
         }
         if (target.getStatus() != GameVersion.VersionStatus.APPROVED) {
-            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, false, "鐗堟湰鏈鏍搁€氳繃", requestUri);
-            return Result.error("浠呮敮鎸佸洖婊氬埌宸插鏍搁€氳繃鐗堟湰");
+            auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, false, "版本未审核通过", requestUri);
+            return Result.error("仅支持回滚到已审核通过版本");
         }
 
         game.setStatus(Game.GameStatus.APPROVED);
@@ -325,26 +325,26 @@ public class GameService {
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
 
-        String finalReason = (reason == null || reason.isBlank()) ? "鐗堟湰鍥炴粴鍙戝竷" : reason.trim();
+        String finalReason = (reason == null || reason.isBlank()) ? "版本回滚发布" : reason.trim();
         auditLogService.logGameAudit("GAME_ROLLBACK", currentUser, game, true, finalReason, requestUri);
         return Result.success();
     }
 
     public Result<Void> approveGame(Long id, User currentUser, String requestUri, String reason) {
         if (reason == null || reason.trim().length() < 2) {
-            return Result.error("瀹℃牳鍘熷洜鑷冲皯 2 涓瓧绗?);
+            return Result.error("审核原因至少 2 个字符");
         }
         Game game = gameRepository.findById(id).orElse(null);
         if (game == null) {
-            auditLogService.logGameAudit("GAME_APPROVE", currentUser, null, false, "娓告垙涓嶅瓨鍦?, requestUri);
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_APPROVE", currentUser, null, false, "游戏不存在", requestUri);
+            return Result.error("游戏不存在");
         }
         GameVersion submitted = gameVersionRepository
                 .findTopByGameIdAndStatusOrderByCreatedAtDesc(game.getId(), GameVersion.VersionStatus.SUBMITTED)
                 .orElse(null);
         if (submitted == null || game.getStatus() != Game.GameStatus.PENDING) {
-            auditLogService.logGameAudit("GAME_APPROVE", currentUser, game, false, "闈炴硶鐘舵€佹祦杞?, requestUri);
-            return Result.error("褰撳墠鐘舵€佷笉鍏佽瀹℃牳閫氳繃");
+            auditLogService.logGameAudit("GAME_APPROVE", currentUser, game, false, "非法状态流转", requestUri);
+            return Result.error("当前状态不允许审核通过");
         }
 
         submitted.setStatus(GameVersion.VersionStatus.APPROVED);
@@ -363,19 +363,19 @@ public class GameService {
 
     public Result<Void> rejectGame(Long id, User currentUser, String requestUri, String reason) {
         if (reason == null || reason.trim().length() < 2) {
-            return Result.error("椹冲洖鍘熷洜鑷冲皯 2 涓瓧绗?);
+            return Result.error("驳回原因至少 2 个字符");
         }
         Game game = gameRepository.findById(id).orElse(null);
         if (game == null) {
-            auditLogService.logGameAudit("GAME_REJECT", currentUser, null, false, "娓告垙涓嶅瓨鍦?, requestUri);
-            return Result.error("娓告垙涓嶅瓨鍦?);
+            auditLogService.logGameAudit("GAME_REJECT", currentUser, null, false, "游戏不存在", requestUri);
+            return Result.error("游戏不存在");
         }
         GameVersion submitted = gameVersionRepository
                 .findTopByGameIdAndStatusOrderByCreatedAtDesc(game.getId(), GameVersion.VersionStatus.SUBMITTED)
                 .orElse(null);
         if (submitted == null || game.getStatus() != Game.GameStatus.PENDING) {
-            auditLogService.logGameAudit("GAME_REJECT", currentUser, game, false, "闈炴硶鐘舵€佹祦杞?, requestUri);
-            return Result.error("褰撳墠鐘舵€佷笉鍏佽瀹℃牳鎷掔粷");
+            auditLogService.logGameAudit("GAME_REJECT", currentUser, game, false, "非法状态流转", requestUri);
+            return Result.error("当前状态不允许审核拒绝");
         }
 
         submitted.setStatus(GameVersion.VersionStatus.REJECTED);
@@ -397,11 +397,11 @@ public class GameService {
 
     private String validateUpload(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return "涓婁紶鏂囦欢涓嶈兘涓虹┖";
+            return "上传文件不能为空";
         }
         String originalName = file.getOriginalFilename();
         if (originalName == null || !originalName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
-            return "浠呮敮鎸?ZIP 鏍煎紡涓婁紶";
+            return "仅支持 ZIP 格式上传";
         }
 
         try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
@@ -414,11 +414,11 @@ public class GameService {
             while ((entry = zis.getNextEntry()) != null) {
                 entries++;
                 if (entries > 1000) {
-                    return "鍘嬬缉鍖呮枃浠舵暟閲忚繃澶?;
+                    return "压缩包文件数量过多";
                 }
                 String name = entry.getName();
                 if (name == null || name.isBlank() || name.contains("..") || name.startsWith("/") || name.startsWith("\\")) {
-                    return "鍘嬬缉鍖呭寘鍚潪娉曡矾寰?;
+                    return "压缩包包含非法路径";
                 }
                 if ("index.html".equalsIgnoreCase(name)) {
                     hasIndexHtml = true;
@@ -427,16 +427,16 @@ public class GameService {
                 while ((read = zis.read(buffer)) != -1) {
                     totalSize += read;
                     if (totalSize > 200L * 1024 * 1024) {
-                        return "鍘嬬缉鍖呰В鍘嬪悗浣撶Н瓒呰繃闄愬埗";
+                        return "压缩包解压后体积超过限制";
                     }
                 }
             }
 
             if (!hasIndexHtml) {
-                return "鍘嬬缉鍖呯己灏?index.html";
+                return "压缩包缺少 index.html";
             }
         } catch (Exception e) {
-            return "鍘嬬缉鍖呮牎楠屽け璐? " + e.getMessage();
+            return "压缩包校验失败: " + e.getMessage();
         }
         return null;
     }

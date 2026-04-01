@@ -14,10 +14,10 @@ let redirectingToLogin = false
 let refreshPromise = null
 
 function isAuthExpiredMessage(message = '') {
-  return /鐧诲綍|鍑瘉|澶辨晥|鏈巿鏉億unauthorized|token/i.test(message)
+  return /登录|凭证|失效|未授权|unauthorized|token/i.test(message)
 }
 
-function redirectToLogin(message = '鐧诲綍鐘舵€佸凡澶辨晥锛岃閲嶆柊鐧诲綍') {
+function redirectToLogin(message = '登录状态已失效，请重新登录') {
   if (redirectingToLogin) {
     return
   }
@@ -104,7 +104,7 @@ request.interceptors.response.use(
     }
 
     if (res.code === 401 || isAuthExpiredMessage(res.message)) {
-      const message = res.message || '鐧诲綍鐘舵€佸凡澶辨晥锛岃閲嶆柊鐧诲綍'
+      const message = res.message || '登录状态已失效，请重新登录'
       const retried = await retryWithRefresh(response.config, message)
       if (retried) {
         return retried
@@ -114,7 +114,7 @@ request.interceptors.response.use(
     }
 
     if (res.code !== 0) {
-      const message = res.message || '璇锋眰澶辫触'
+      const message = res.message || '请求失败'
       ElMessage.error(message)
       return Promise.reject(new Error(message))
     }
@@ -125,7 +125,7 @@ request.interceptors.response.use(
     if (error?.response?.status === 401) {
       const message = typeof error?.response?.data === 'string'
         ? error.response.data
-        : '鐧诲綍鐘舵€佸凡澶辨晥锛岃閲嶆柊鐧诲綍'
+        : '登录状态已失效，请重新登录'
       const retried = await retryWithRefresh(error.config, message)
       if (retried) {
         return retried
@@ -134,7 +134,7 @@ request.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    ElMessage.error(error.message || '缃戠粶閿欒')
+    ElMessage.error(error.message || '网络错误')
     return Promise.reject(error)
   }
 )

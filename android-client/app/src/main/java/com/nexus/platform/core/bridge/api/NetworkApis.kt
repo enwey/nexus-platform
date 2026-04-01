@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.core.bridge.api
+package com.nexus.platform.core.bridge.api
 
 import android.content.Context
 import android.widget.Toast
@@ -12,7 +12,8 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
- * 缃戠粶璇锋眰API澶勭悊鍣? */
+ * 网络请求API处理器
+ */
 class RequestApi(private val context: Context) : ApiHandler {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -37,7 +38,7 @@ class RequestApi(private val context: Context) : ApiHandler {
                 }
 
                 val mediaType = "application/json; charset=utf-8".toMediaType()
-                val body = when (method.uppercase()) {
+                when (method.uppercase()) {
                     "POST", "PUT", "PATCH" -> {
                         val requestBody = if (data != null) {
                             gson.toJson(data).toRequestBody(mediaType)
@@ -68,7 +69,8 @@ class RequestApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * Toast鎻愮ずAPI澶勭悊鍣? */
+ * Toast提示API处理器
+ */
 class ToastApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
@@ -83,13 +85,14 @@ class ToastApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 妯℃€佹API澶勭悊鍣? */
+ * 模态框API处理器
+ */
 class ModalApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
         val content = params.get("content")?.asString ?: ""
-        val confirmText = params.get("confirmText")?.asString ?: "纭畾"
-        val cancelText = params.get("cancelText")?.asString ?: "鍙栨秷"
+        val confirmText = params.get("confirmText")?.asString ?: "确定"
+        val cancelText = params.get("cancelText")?.asString ?: "取消"
 
         return mapOf(
             "confirm" to true,
@@ -100,7 +103,8 @@ class ModalApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 缃戠粶鐘舵€丄PI澶勭悊鍣? */
+ * 网络状态API处理器
+ */
 class NetworkApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
@@ -109,4 +113,3 @@ class NetworkApi(private val context: Context) : ApiHandler {
         )
     }
 }
-

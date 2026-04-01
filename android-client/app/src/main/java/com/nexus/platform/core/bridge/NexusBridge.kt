@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.core.bridge
+package com.nexus.platform.core.bridge
 
 import android.content.Context
 import android.webkit.JavascriptInterface
@@ -9,7 +9,7 @@ import com.nexus.platform.core.bridge.api.*
 import kotlinx.coroutines.*
 
 /**
- * JavaScript妗ユ帴绫伙紝鐢ㄤ簬WebView鍜屽師鐢熶唬鐮佷箣闂寸殑閫氫俊
+ * JavaScript桥接类，用于WebView和原生代码之间的通信
  */
 class NexusBridge(private val context: Context, private val webView: WebView) {
     private val gson = Gson()
@@ -21,7 +21,8 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
     }
 
     /**
-     * 娉ㄥ唽API澶勭悊鍣?     */
+     * 注册API处理器
+     */
     private fun registerApiHandlers() {
         apiHandlers["wx.login"] = LoginApi(context)
         apiHandlers["wx.request"] = RequestApi(context)
@@ -45,7 +46,8 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
     }
 
     /**
-     * 鎺ユ敹鏉ヨ嚜JavaScript鐨勬秷鎭?     * @param message JSON鏍煎紡鐨勬秷鎭瓧绗︿覆
+     * 接收来自 JavaScript 的消息
+     * @param message JSON 格式的消息字符串
      */
     @JavascriptInterface
     fun postMessage(message: String) {
@@ -79,10 +81,10 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
     }
 
     /**
-     * 鍙戦€佸洖璋冨埌JavaScript
-     * @param callbackId 鍥炶皟ID
-     * @param data 杩斿洖鏁版嵁
-     * @param error 閿欒淇℃伅
+     * 发送回调到JavaScript
+     * @param callbackId 回调ID
+     * @param data 返回数据
+     * @param error 错误信息
      */
     private fun sendCallback(callbackId: String, data: Any?, error: String?) {
         val response = JsonObject().apply {
@@ -105,10 +107,9 @@ class NexusBridge(private val context: Context, private val webView: WebView) {
     }
 
     /**
-     * 娓呯悊璧勬簮
+     * 清理资源
      */
     fun cleanup() {
         scope.cancel()
     }
 }
-

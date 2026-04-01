@@ -1,10 +1,11 @@
-﻿package com.nexus.platform.core.bridge.api
+package com.nexus.platform.core.bridge.api
 
 import android.content.Context
 import com.google.gson.JsonObject
 
 /**
- * 鐧诲綍API澶勭悊鍣? */
+ * 登录API处理器
+ */
 class LoginApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
@@ -15,7 +16,8 @@ class LoginApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 绯荤粺淇℃伅API澶勭悊鍣? */
+ * 系统信息API处理器
+ */
 class SystemInfoApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val metrics = context.resources.displayMetrics
@@ -43,4 +45,3 @@ class SystemInfoApi(private val context: Context) : ApiHandler {
         )
     }
 }
-

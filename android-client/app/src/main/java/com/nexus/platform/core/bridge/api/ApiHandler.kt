@@ -1,16 +1,16 @@
-﻿package com.nexus.platform.core.bridge.api
+package com.nexus.platform.core.bridge.api
 
 import com.google.gson.JsonObject
 
 /**
- * API澶勭悊鍣ㄦ帴鍙? */
+ * API处理器接口
+ */
 interface ApiHandler {
     /**
-     * 澶勭悊API璇锋眰
-     * @param api API鍚嶇О
-     * @param params 璇锋眰鍙傛暟
-     * @return 澶勭悊缁撴灉
+     * 处理API请求
+     * @param api API名称
+     * @param params 请求参数
+     * @return 处理结果
      */
     suspend fun handle(api: String, params: JsonObject): Any?
 }
-

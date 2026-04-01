@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# Mock SDK
+# Mock SDK
 
 ## 背景
 
