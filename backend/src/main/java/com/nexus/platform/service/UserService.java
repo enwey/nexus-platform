@@ -98,4 +98,3 @@ public class UserService {
         return hasLetter && hasDigit;
     }
 }
-

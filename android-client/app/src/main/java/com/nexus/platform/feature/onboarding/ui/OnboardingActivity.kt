@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.feature.onboarding.ui
+package com.nexus.platform.feature.onboarding.ui
 
 import android.content.Intent
 import android.content.Context

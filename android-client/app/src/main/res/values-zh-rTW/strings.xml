@@ -61,6 +61,7 @@
     <string name="discover_rank_1_subtitle">休閑 · 230 萬人在線</string>
     <string name="discover_rank_2_title">最強保衛戰</string>
     <string name="discover_rank_2_subtitle">塔防 · 評分 4.9</string>
+    <string name="discover_empty">暫無可推薦遊戲，請稍後重試</string>
     <string name="discover_quick_play">秒開</string>
     <string name="library_section_favorites">我的收藏</string>
     <string name="library_section_recent">最近遊玩</string>
@@ -111,6 +112,20 @@
     <string name="library_next_page">下一頁</string>
     <string name="library_page_info">第 %1$d/%2$d 頁</string>
     <string name="library_load_end">沒有更多遊戲了</string>
+    <string name="library_coldstart_new_player_tag">新手必玩推薦</string>
+    <string name="library_coldstart_hero_title">賽博之刃：源起</string>
+    <string name="library_coldstart_hero_subtitle">動作冒險 · 240萬人正在遊玩</string>
+    <string name="library_coldstart_cta">立即體驗</string>
+    <string name="library_coldstart_empty_icon">🎮</string>
+    <string name="library_coldstart_empty_title">遊戲庫還空空如也</string>
+    <string name="library_coldstart_empty_desc">遇見喜歡的遊戲，點擊星星即可收藏到這裡，隨時隨地秒開暢玩。</string>
+    <string name="library_coldstart_discover_action">去發現新遊戲</string>
+    <string name="library_coldstart_trending">大家都在玩</string>
+    <string name="library_coldstart_refresh">換一換</string>
+    <string name="library_coldstart_pick_1">合成大西瓜</string>
+    <string name="library_coldstart_pick_2">動物餐廳</string>
+    <string name="library_coldstart_pick_3">消消樂</string>
+    <string name="library_coldstart_pick_4">跳一跳</string>
     <string name="runtime_status_preparing">正在初始化運行環境...</string>
     <string name="runtime_status_loading_resource">正在準備遊戲資源...</string>
     <string name="runtime_status_starting">正在啟動遊戲...</string>
@@ -140,6 +155,7 @@
     <string name="runtime_menu_feedback">反饋與投訴</string>
     <string name="runtime_favorite_added">已加入我的遊戲</string>
     <string name="runtime_favorite_removed">已從我的遊戲移除</string>
+    <string name="runtime_favorite_sync_failed">收藏狀態同步失敗，將在稍後重試</string>
     <string name="runtime_feedback_todo">反饋入口即將上線</string>
     <string name="billing_title">賬單明細</string>
     <string name="billing_income_title">本月累計收入</string>

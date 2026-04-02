@@ -30,6 +30,7 @@ import com.nexus.platform.R
 import com.nexus.platform.core.bridge.NexusBridge
 import com.nexus.platform.core.bridge.RuntimeMetricsProvider
 import com.nexus.platform.data.local.GameEngagementStore
+import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.feature.game.data.GameManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -50,6 +51,7 @@ class GameRuntimeActivity : AppCompatActivity() {
     private lateinit var runtimeRetry: TextView
     private lateinit var gameManager: GameManager
     private lateinit var engagementStore: GameEngagementStore
+    private lateinit var backendApi: PlatformBackendApi
     private lateinit var nexusBridge: NexusBridge
     private var runtimeMenuDialog: BottomSheetDialog? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -115,6 +117,7 @@ class GameRuntimeActivity : AppCompatActivity() {
         }
         gameManager = GameManager(this)
         engagementStore = GameEngagementStore(this)
+        backendApi = PlatformBackendApi(this)
     }
 
     private fun initWindowInsets() {
@@ -343,6 +346,18 @@ class GameRuntimeActivity : AppCompatActivity() {
                     if (nowFavorite) getString(R.string.runtime_favorite_added) else getString(R.string.runtime_favorite_removed),
                     Toast.LENGTH_SHORT
                 ).show()
+                scope.launch(Dispatchers.IO) {
+                    val synced = backendApi.setFavorite(game.id, nowFavorite)
+                    if (!synced) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@GameRuntimeActivity,
+                                getString(R.string.runtime_favorite_sync_failed),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
             }
             root.addView(favoriteItem)
 

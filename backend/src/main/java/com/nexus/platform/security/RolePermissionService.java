@@ -12,7 +12,11 @@ public class RolePermissionService {
             User.UserRole.ADMIN, EnumSet.allOf(Permission.class),
             User.UserRole.DEVELOPER, EnumSet.of(
                     Permission.USER_PROFILE_READ,
+                    Permission.USER_PROFILE_WRITE,
+                    Permission.USER_WALLET_READ,
                     Permission.USER_LOGOUT,
+                    Permission.LIBRARY_READ,
+                    Permission.LIBRARY_WRITE,
                     Permission.GAME_UPLOAD,
                     Permission.GAME_DEVELOPER_READ,
                     Permission.GAME_AUDIT_SUBMIT,

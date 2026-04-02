@@ -4,7 +4,9 @@ import com.nexus.platform.config.AuthInterceptor;
 import com.nexus.platform.dto.AuthResponse;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.dto.UserProfileDto;
+import com.nexus.platform.dto.UserProfileDetailDto;
 import com.nexus.platform.entity.User;
+import com.nexus.platform.service.AccountService;
 import com.nexus.platform.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final AccountService accountService;
 
     @PostMapping("/register")
     public Result<AuthResponse> register(@RequestBody RegisterRequest request) {
@@ -51,6 +54,26 @@ public class UserController {
         return Result.success(UserProfileDto.from(user));
     }
 
+    @GetMapping("/profile")
+    public Result<UserProfileDetailDto> getProfile(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user) {
+        return accountService.getProfile(user);
+    }
+
+    @PostMapping("/profile")
+    public Result<UserProfileDetailDto> updateProfile(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @RequestBody UpdateProfileRequest request) {
+        return accountService.updateProfile(
+                user,
+                request.displayName(),
+                request.avatarUrl(),
+                request.languageTag(),
+                request.email(),
+                request.phone()
+        );
+    }
+
     @GetMapping("/{id}")
     public Result<UserProfileDto> getUser(@PathVariable Long id) {
         UserProfileDto user = userService.findById(id);
@@ -75,4 +98,10 @@ public class UserController {
 record RegisterRequest(String username, String password, String email) {}
 record LoginRequest(String username, String password) {}
 record RefreshRequest(String refreshToken) {}
-
+record UpdateProfileRequest(
+        String displayName,
+        String avatarUrl,
+        String languageTag,
+        String email,
+        String phone
+) {}

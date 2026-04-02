@@ -50,25 +50,7 @@ fun DiscoverScreen(
     onGameClick: (GameItem) -> Unit,
     onQuickPlayClick: (GameItem) -> Unit
 ) {
-    val fallbackGames = listOf(
-        GameItem(
-            id = "discover_demo_1",
-            name = stringResource(R.string.discover_rank_1_title),
-            description = stringResource(R.string.discover_rank_1_subtitle),
-            iconUrl = "",
-            downloadUrl = "",
-            version = "1.0.0"
-        ),
-        GameItem(
-            id = "discover_demo_2",
-            name = stringResource(R.string.discover_rank_2_title),
-            description = stringResource(R.string.discover_rank_2_subtitle),
-            iconUrl = "",
-            downloadUrl = "",
-            version = "1.0.0"
-        )
-    )
-    val rankedGames = if (games.isEmpty()) fallbackGames else games.take(8)
+    val rankedGames = games.take(8)
 
     Column(
         modifier = Modifier
@@ -81,12 +63,20 @@ fun DiscoverScreen(
         Banner()
         CategoryRow()
         SectionHeader(stringResource(R.string.discover_section_rank), stringResource(R.string.discover_view_more))
-        rankedGames.take(2).forEach { game ->
-            RankedItem(
-                game = game,
-                onGameClick = onGameClick,
-                onQuickPlayClick = onQuickPlayClick
+        if (rankedGames.isEmpty()) {
+            Text(
+                text = stringResource(R.string.discover_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextMuted
             )
+        } else {
+            rankedGames.take(2).forEach { game ->
+                RankedItem(
+                    game = game,
+                    onGameClick = onGameClick,
+                    onQuickPlayClick = onQuickPlayClick
+                )
+            }
         }
     }
 }

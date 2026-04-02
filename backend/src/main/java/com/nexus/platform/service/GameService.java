@@ -124,7 +124,7 @@ public class GameService {
             games.forEach(this::normalizeClientUrls);
             return Result.success(games);
         }
-        List<Game> games = gameRepository.findByStatus(Game.GameStatus.APPROVED);
+        List<Game> games = gameRepository.findByStatusOrderByCreatedAtDesc(Game.GameStatus.APPROVED);
         games.forEach(this::normalizeClientUrls);
         return Result.success(games);
     }

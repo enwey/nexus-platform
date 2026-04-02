@@ -363,7 +363,7 @@ class GameManager(private val context: Context) {
                 return@withContext assetScript
             }
 
-            defaultSDKStub()
+            ""
         }
     }
 

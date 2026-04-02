@@ -77,7 +77,7 @@ fun LibraryScreen(
     when {
         uiState.loading -> LoadingState()
         !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
-        uiState.games.isEmpty() -> EmptyState()
+        uiState.games.isEmpty() -> ColdStartState()
         else -> ContentState(uiState, onGameClick, onMoreClick)
     }
 }
@@ -402,5 +402,214 @@ private fun EmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(stringResource(R.string.no_games_available))
+    }
+}
+
+@Composable
+private fun ColdStartState() {
+    val picks = listOf(
+        stringResource(R.string.library_coldstart_pick_1),
+        stringResource(R.string.library_coldstart_pick_2),
+        stringResource(R.string.library_coldstart_pick_3),
+        stringResource(R.string.library_coldstart_pick_4)
+    )
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 24.dp,
+            end = 24.dp,
+            top = 24.dp,
+            bottom = TopLevelBottomPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item { Spacer(modifier = Modifier.height(10.dp)) }
+        item { ColdStartHeroCard() }
+        item {
+            SectionHeader(
+                title = stringResource(R.string.library_section_my_games)
+            )
+        }
+        item { ColdStartEmptyCollectionCard() }
+        item {
+            SectionHeader(
+                title = stringResource(R.string.library_coldstart_trending),
+                action = stringResource(R.string.library_coldstart_refresh)
+            )
+        }
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                picks.forEachIndexed { index, title ->
+                    ColdStartPickCard(
+                        title = title,
+                        badge = "${index + 1}"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColdStartHeroCard() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(260.dp)
+            .clip(RoundedCornerShape(32.dp))
+            .border(1.dp, BorderLight)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFF5C8CFF),
+                        Color(0xFF9258FF)
+                    )
+                )
+            )
+            .padding(24.dp),
+        contentAlignment = Alignment.BottomStart
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White.copy(alpha = 0.2f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.library_coldstart_new_player_tag),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = stringResource(R.string.library_coldstart_hero_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Black
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.library_coldstart_hero_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.82f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White)
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.library_coldstart_cta),
+                    color = Color(0xFF1A1A1A),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColdStartEmptyCollectionCard() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .border(1.dp, BorderLight, RoundedCornerShape(24.dp))
+            .background(BackgroundSurfaceElevated)
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White.copy(alpha = 0.06f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.library_coldstart_empty_icon),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = stringResource(R.string.library_coldstart_empty_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.library_coldstart_empty_desc),
+            color = TextMuted,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(modifier = Modifier.height(18.dp))
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(22.dp))
+                .border(1.dp, Primary, RoundedCornerShape(22.dp))
+                .padding(horizontal = 18.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.library_coldstart_discover_action),
+                color = Primary,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.ColdStartPickCard(
+    title: String,
+    badge: String
+) {
+    Column(
+        modifier = Modifier.weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(18.dp))
+                .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            PrimaryStart.copy(alpha = 0.5f),
+                            PrimaryEnd.copy(alpha = 0.5f)
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = badge,
+                color = Color.White.copy(alpha = 0.65f),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = title,
+            color = TextMuted,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

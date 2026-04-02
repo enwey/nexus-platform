@@ -9,7 +9,7 @@ import com.nexus.platform.core.bridge.api.*
 import kotlinx.coroutines.*
 
 /**
- * JavaScript妗ユ帴绫伙紝鐢ㄤ簬WebView鍜屽師鐢熶唬鐮佷箣闂寸殑閫氫俊
+ * JavaScript bridge for communication between WebView and native code.
  */
 class NexusBridge(
     private val context: Context,
@@ -25,7 +25,8 @@ class NexusBridge(
     }
 
     /**
-     * 娉ㄥ唽API澶勭悊鍣?     */
+     * Register API handlers.
+     */
     private fun registerApiHandlers() {
         apiHandlers["wx.login"] = LoginApi(context)
         apiHandlers["wx.request"] = RequestApi(context)
@@ -54,7 +55,7 @@ class NexusBridge(
     }
 
     /**
-     * 鎺ユ敹鏉ヨ嚜JavaScript鐨勬秷鎭?     * @param message JSON鏍煎紡鐨勬秷鎭瓧绗︿覆
+     * Receive message from JavaScript.
      */
     @JavascriptInterface
     fun postMessage(message: String) {
@@ -88,10 +89,7 @@ class NexusBridge(
     }
 
     /**
-     * 鍙戦€佸洖璋冨埌JavaScript
-     * @param callbackId 鍥炶皟ID
-     * @param data 杩斿洖鏁版嵁
-     * @param error 閿欒淇℃伅
+     * Send callback to JavaScript.
      */
     private fun sendCallback(callbackId: String, data: Any?, error: String?) {
         val response = JsonObject().apply {
@@ -114,7 +112,7 @@ class NexusBridge(
     }
 
     /**
-     * 娓呯悊璧勬簮
+     * Cleanup resources.
      */
     fun cleanup() {
         scope.cancel()

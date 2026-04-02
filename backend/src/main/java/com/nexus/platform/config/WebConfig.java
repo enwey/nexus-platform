@@ -55,7 +55,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns(
                         "/user/me",
+                        "/user/profile",
                         "/user/logout",
+                        "/wallet/**",
+                        "/library/**",
                         "/game/list",
                         "/game/list/**",
                         "/game/upload",

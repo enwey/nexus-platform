@@ -8,8 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.HandlerMapping;
 
 @Component
 @RequiredArgsConstructor
@@ -58,8 +58,24 @@ public class AuthInterceptor implements HandlerInterceptor {
         if ("/user/me".equals(uri)) {
             return Permission.USER_PROFILE_READ;
         }
+        if ("GET".equalsIgnoreCase(method) && "/user/profile".equals(uri)) {
+            return Permission.USER_PROFILE_READ;
+        }
+        if ("POST".equalsIgnoreCase(method) && "/user/profile".equals(uri)) {
+            return Permission.USER_PROFILE_WRITE;
+        }
+        if ("GET".equalsIgnoreCase(method) && "/wallet/summary".equals(uri)) {
+            return Permission.USER_WALLET_READ;
+        }
         if ("POST".equalsIgnoreCase(method) && "/user/logout".equals(uri)) {
             return Permission.USER_LOGOUT;
+        }
+        if ("GET".equalsIgnoreCase(method) && uri.startsWith("/library/")) {
+            return Permission.LIBRARY_READ;
+        }
+        if (("POST".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method))
+                && uri.startsWith("/library/")) {
+            return Permission.LIBRARY_WRITE;
         }
         if ("POST".equalsIgnoreCase(method) && "/game/upload".equals(uri)) {
             return Permission.GAME_UPLOAD;

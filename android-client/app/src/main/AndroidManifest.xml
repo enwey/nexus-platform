@@ -61,11 +61,6 @@
             android:theme="@style/Theme.NexusPlatform.Fullscreen" />
 
         <activity
-            android:name=".feature.game.ui.RuntimeActivity"
-            android:exported="false"
-            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
-
-        <activity
             android:name=".feature.profile.ui.AccountSecurityActivity"
             android:exported="false"
             android:theme="@style/Theme.NexusPlatform.Fullscreen" />

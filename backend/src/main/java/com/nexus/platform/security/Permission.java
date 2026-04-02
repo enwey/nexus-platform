@@ -2,7 +2,11 @@ package com.nexus.platform.security;
 
 public enum Permission {
     USER_PROFILE_READ,
+    USER_PROFILE_WRITE,
+    USER_WALLET_READ,
     USER_LOGOUT,
+    LIBRARY_READ,
+    LIBRARY_WRITE,
     GAME_UPLOAD,
     GAME_DEVELOPER_READ,
     GAME_AUDIT_SUBMIT,

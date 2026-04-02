@@ -5,7 +5,8 @@ import com.google.gson.JsonObject
 import com.nexus.platform.core.bridge.RuntimeMetricsProvider
 
 /**
- * 鐧诲綍API澶勭悊鍣? */
+ * Handle wx.login.
+ */
 class LoginApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
@@ -16,7 +17,8 @@ class LoginApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 绯荤粺淇℃伅API澶勭悊鍣? */
+ * Handle system info related APIs.
+ */
 class SystemInfoApi(
     private val context: Context,
     private val runtimeMetricsProvider: RuntimeMetricsProvider? = null

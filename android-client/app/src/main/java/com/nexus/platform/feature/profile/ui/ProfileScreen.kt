@@ -23,8 +23,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,6 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.AppLanguage
+import com.nexus.platform.data.remote.PlatformBackendApi
+import com.nexus.platform.domain.model.UserProfileDetail
+import com.nexus.platform.domain.model.WalletSummary
 import com.nexus.platform.ui.theme.AccentRed
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
@@ -58,7 +63,15 @@ fun ProfileScreen(
     onLogoutClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val backendApi = remember(context) { PlatformBackendApi(context) }
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    var profile by remember { mutableStateOf<UserProfileDetail?>(null) }
+    var wallet by remember { mutableStateOf<WalletSummary?>(null) }
+
+    LaunchedEffect(Unit) {
+        profile = runCatching { backendApi.getUserProfile() }.getOrNull()
+        wallet = runCatching { backendApi.getWalletSummary() }.getOrNull()
+    }
 
     Column(
         modifier = Modifier
@@ -67,8 +80,9 @@ fun ProfileScreen(
             .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = TopLevelBottomPadding),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        UserCard()
+        UserCard(profile = profile)
         WalletCard(
+            wallet = wallet,
             onBillClick = { context.startActivity(Intent(context, BillingActivity::class.java)) },
             onHowToEarnClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
         )
@@ -148,7 +162,12 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun UserCard() {
+private fun UserCard(profile: UserProfileDetail?) {
+    val displayName = profile?.displayName?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.profile_header_title)
+    val accountIdText = profile?.id?.let { "Nexus ID: $it" }
+        ?: stringResource(R.string.profile_account_id)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -169,14 +188,14 @@ private fun UserCard() {
             )
         }
         Column {
-            Text(stringResource(R.string.profile_header_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Text(displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .background(BackgroundSurfaceElevated)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(stringResource(R.string.profile_account_id), color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                Text(accountIdText, color = TextMuted, style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -184,9 +203,13 @@ private fun UserCard() {
 
 @Composable
 private fun WalletCard(
+    wallet: WalletSummary?,
     onBillClick: () -> Unit,
     onHowToEarnClick: () -> Unit
 ) {
+    val balanceText = wallet?.balance?.takeIf { it.isNotBlank() }?.let { "¥ $it" }
+        ?: stringResource(R.string.profile_wallet_value)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -206,7 +229,7 @@ private fun WalletCard(
         Column {
             Text(stringResource(R.string.profile_wallet_title), color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(stringResource(R.string.profile_wallet_value), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
+            Text(balanceText, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
             Spacer(modifier = Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(

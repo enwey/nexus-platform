@@ -4,6 +4,7 @@ import android.content.Context
 import com.nexus.platform.BuildConfig
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.GameItem
+import com.nexus.platform.domain.model.LibraryHomeSnapshot
 
 class GameRepository(context: Context) {
     private val backendApi = PlatformBackendApi(context)
@@ -47,5 +48,27 @@ class GameRepository(context: Context) {
         } else {
             backendApi.getApprovedGames()
         }
+    }
+
+    suspend fun getLibraryHome(): LibraryHomeSnapshot? {
+        if (BuildConfig.USE_MOCK_DATA) {
+            return null
+        }
+        return backendApi.getLibraryHome()
+    }
+
+    suspend fun getDiscoverGames(): List<GameItem> {
+        return if (BuildConfig.USE_MOCK_DATA) {
+            emptyList()
+        } else {
+            backendApi.getDiscoverGames()
+        }
+    }
+
+    suspend fun markPlayed(appId: String) {
+        if (BuildConfig.USE_MOCK_DATA) {
+            return
+        }
+        backendApi.markPlayed(appId)
     }
 }

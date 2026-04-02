@@ -54,6 +54,22 @@ android {
     }
 }
 
+val syncMockSdk by tasks.registering(Copy::class) {
+    val sdkSource = project.file("../../mock-sdk/dist/wx-mock-sdk.iife.js")
+    from(sdkSource)
+    into(file("src/main/assets"))
+    rename { "wx-mock-sdk.iife.js" }
+    doFirst {
+        if (!sdkSource.exists()) {
+            throw GradleException("Missing mock-sdk bundle: ${sdkSource.absolutePath}")
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn(syncMockSdk)
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

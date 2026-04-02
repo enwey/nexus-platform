@@ -107,7 +107,7 @@ private fun MainHomeScreen(
                 )
 
                 MainDestination.Discover -> DiscoverScreen(
-                    games = libraryState.games,
+                    games = libraryState.discoverGames,
                     onGameClick = onDiscoverGameClick,
                     onQuickPlayClick = onDiscoverQuickPlayClick
                 )

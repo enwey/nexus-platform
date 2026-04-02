@@ -1,24 +1,28 @@
-﻿package com.nexus.platform.core.bridge.api
+package com.nexus.platform.core.bridge.api
 
 import android.content.Context
 import android.widget.Toast
+import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
- * 缃戠粶璇锋眰API澶勭悊鍣? */
+ * Handle wx.request.
+ */
 class RequestApi(private val context: Context) : ApiHandler {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
+    private val gson = Gson()
 
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val url = params.get("url")?.asString ?: return mapOf("errMsg" to "request:fail")
@@ -29,7 +33,6 @@ class RequestApi(private val context: Context) : ApiHandler {
         return withContext(Dispatchers.IO) {
             try {
                 val requestBuilder = Request.Builder().url(url)
-
                 header?.keySet()?.forEach { key ->
                     header.get(key)?.asString?.let { value ->
                         requestBuilder.addHeader(key, value)
@@ -37,13 +40,9 @@ class RequestApi(private val context: Context) : ApiHandler {
                 }
 
                 val mediaType = "application/json; charset=utf-8".toMediaType()
-                val body = when (method.uppercase()) {
+                when (method.uppercase()) {
                     "POST", "PUT", "PATCH" -> {
-                        val requestBody = if (data != null) {
-                            gson.toJson(data).toRequestBody(mediaType)
-                        } else {
-                            "".toRequestBody(mediaType)
-                        }
+                        val requestBody = if (data != null) gson.toJson(data).toRequestBody(mediaType) else "".toRequestBody(mediaType)
                         requestBuilder.method(method, requestBody)
                     }
                     else -> requestBuilder.get()
@@ -51,47 +50,47 @@ class RequestApi(private val context: Context) : ApiHandler {
 
                 val response = client.newCall(requestBuilder.build()).execute()
                 val responseBody = response.body?.string() ?: ""
-
                 mapOf(
                     "statusCode" to response.code,
                     "data" to responseBody,
                     "errMsg" to "request:ok"
                 )
             } catch (e: IOException) {
-                e.printStackTrace()
                 mapOf("errMsg" to "request:fail", "error" to e.message)
             }
         }
     }
-
-    private val gson = com.google.gson.Gson()
 }
 
 /**
- * Toast鎻愮ずAPI澶勭悊鍣? */
+ * Handle wx.showToast.
+ */
 class ToastApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
         val duration = params.get("duration")?.asInt ?: 1500
-
         withContext(Dispatchers.Main) {
             Toast.makeText(context, title, duration).show()
         }
-
         return mapOf("errMsg" to "showToast:ok")
     }
 }
 
 /**
- * 妯℃€佹API澶勭悊鍣? */
+ * Handle wx.showModal.
+ */
 class ModalApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
         val content = params.get("content")?.asString ?: ""
-        val confirmText = params.get("confirmText")?.asString ?: "纭畾"
-        val cancelText = params.get("cancelText")?.asString ?: "鍙栨秷"
+        val confirmText = params.get("confirmText")?.asString ?: "确定"
+        val cancelText = params.get("cancelText")?.asString ?: "取消"
 
         return mapOf(
+            "title" to title,
+            "content" to content,
+            "confirmText" to confirmText,
+            "cancelText" to cancelText,
             "confirm" to true,
             "cancel" to false,
             "errMsg" to "showModal:ok"
@@ -100,7 +99,8 @@ class ModalApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 缃戠粶鐘舵€丄PI澶勭悊鍣? */
+ * Handle wx.getNetworkType.
+ */
 class NetworkApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
@@ -109,4 +109,3 @@ class NetworkApi(private val context: Context) : ApiHandler {
         )
     }
 }
-

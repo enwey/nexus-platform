@@ -20,7 +20,7 @@ public class LoginSecurityService {
         if (seconds == null || seconds < 0) {
             return null;
         }
-        return "鐧诲綍澶辫触娆℃暟杩囧锛岃 " + Math.max(seconds, 1) + " 绉掑悗閲嶈瘯";
+        return "登录失败次数过多，请 " + Math.max(seconds, 1) + " 秒后重试";
     }
 
     public void onLoginFailed(String username, String clientIp) {
