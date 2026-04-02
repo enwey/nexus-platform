@@ -1,4 +1,4 @@
-﻿# Dev Portal
+# Dev Portal
 
 ## 说明
 `dev-portal` 是开发者后台，负责开发者登录、游戏上传、版本查看。

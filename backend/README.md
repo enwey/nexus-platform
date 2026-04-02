@@ -1,4 +1,4 @@
-﻿# Backend
+# Backend
 
 ## 说明
 `backend` 是 Nexus Platform 的核心业务后端，负责用户认证、游戏上传下载、审核流程与基础服务集成。

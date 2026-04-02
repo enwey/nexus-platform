@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.core.bridge.api
+package com.nexus.platform.core.bridge.api
 
 import com.google.gson.JsonObject
 
