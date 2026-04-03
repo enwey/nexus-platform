@@ -38,7 +38,7 @@ object ZipUtils {
 
     fun zip(sourceDir: File, zipFile: File) {
         if (!sourceDir.exists()) {
-            throw FileNotFoundException("源目录不存在: ${sourceDir.absolutePath}")
+            throw FileNotFoundException("Source directory does not exist: ${sourceDir.absolutePath}")
         }
 
         zipFile.parentFile?.mkdirs()

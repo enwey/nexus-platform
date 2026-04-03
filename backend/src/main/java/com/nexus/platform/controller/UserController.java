@@ -2,13 +2,17 @@ package com.nexus.platform.controller;
 
 import com.nexus.platform.config.AuthInterceptor;
 import com.nexus.platform.dto.AuthResponse;
+import com.nexus.platform.dto.DeviceSessionDto;
 import com.nexus.platform.dto.Result;
-import com.nexus.platform.dto.UserProfileDto;
 import com.nexus.platform.dto.UserProfileDetailDto;
+import com.nexus.platform.dto.UserProfileDto;
+import com.nexus.platform.dto.VerificationCodeResponse;
 import com.nexus.platform.entity.User;
+import com.nexus.platform.service.AccountOpsService;
 import com.nexus.platform.service.AccountService;
 import com.nexus.platform.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
     private final AccountService accountService;
+    private final AccountOpsService accountOpsService;
 
     @PostMapping("/register")
     public Result<AuthResponse> register(@RequestBody RegisterRequest request) {
@@ -43,10 +48,60 @@ public class UserController {
 
     @PostMapping("/logout")
     public Result<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            userService.logout(authorization.substring("Bearer ".length()).trim());
+        String token = extractBearerToken(authorization);
+        if (token != null) {
+            userService.logout(token);
         }
         return Result.success();
+    }
+
+    @PostMapping("/send-code")
+    public Result<VerificationCodeResponse> sendCode(@RequestBody SendCodeRequest request) {
+        return accountOpsService.sendCode(request.account(), request.purpose());
+    }
+
+    @PostMapping("/password/reset")
+    public Result<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return accountOpsService.resetPassword(request.account(), request.code(), request.newPassword());
+    }
+
+    @PostMapping("/password/change")
+    public Result<Void> changePassword(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @RequestBody ChangePasswordRequest request) {
+        return accountOpsService.changePassword(user, request.oldPassword(), request.newPassword());
+    }
+
+    @GetMapping("/devices")
+    public Result<List<DeviceSessionDto>> devices(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        String token = extractBearerToken(authorization);
+        String currentDeviceId = token == null ? null : accountService.resolveDeviceIdFromToken(token);
+        return accountOpsService.listDevices(user.getId(), currentDeviceId);
+    }
+
+    @PostMapping("/devices/{deviceId}/kick")
+    public Result<Void> kickDevice(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @PathVariable String deviceId) {
+        return accountOpsService.kickDevice(user.getId(), deviceId);
+    }
+
+    @PostMapping("/logout-all")
+    public Result<Void> logoutAll(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        String token = extractBearerToken(authorization);
+        String currentDeviceId = token == null ? null : accountService.resolveDeviceIdFromToken(token);
+        return accountOpsService.logoutAll(user.getId(), currentDeviceId);
+    }
+
+    @PostMapping("/terminate")
+    public Result<Void> terminate(
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @RequestBody TerminateRequest request) {
+        return accountOpsService.terminateAccount(user, request.confirmText());
     }
 
     @GetMapping("/me")
@@ -78,7 +133,7 @@ public class UserController {
     public Result<UserProfileDto> getUser(@PathVariable Long id) {
         UserProfileDto user = userService.findById(id);
         if (user == null) {
-            return Result.error("用户不存在");
+            return Result.error("User not found");
         }
         return Result.success(user);
     }
@@ -93,11 +148,22 @@ public class UserController {
         }
         return request.getRemoteAddr();
     }
+
+    private String extractBearerToken(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return null;
+        }
+        return authorization.substring("Bearer ".length()).trim();
+    }
 }
 
 record RegisterRequest(String username, String password, String email) {}
 record LoginRequest(String username, String password) {}
 record RefreshRequest(String refreshToken) {}
+record SendCodeRequest(String account, String purpose) {}
+record ResetPasswordRequest(String account, String code, String newPassword) {}
+record ChangePasswordRequest(String oldPassword, String newPassword) {}
+record TerminateRequest(String confirmText) {}
 record UpdateProfileRequest(
         String displayName,
         String avatarUrl,

@@ -1,7 +1,7 @@
-package com.nexus.platform.feature.profile.ui
+﻿package com.nexus.platform.feature.profile.ui
 
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -38,16 +37,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
 import com.nexus.platform.ui.theme.BorderLight
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
-import com.nexus.platform.ui.theme.PrimaryEnd
-import com.nexus.platform.ui.theme.PrimaryStart
-import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import kotlinx.coroutines.launch
 
 class AccountSecurityActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +65,8 @@ private fun AccountSecurityScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var biometricEnabled by remember { mutableStateOf(true) }
 
     Column(
@@ -82,7 +82,7 @@ private fun AccountSecurityScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "‹",
+                text = "<",
                 style = MaterialTheme.typography.headlineMedium,
                 color = TextMuted,
                 modifier = Modifier.clickable { onBackClick() }
@@ -120,7 +120,7 @@ private fun AccountSecurityScreen(
                         }
                     )
                     MenuItem(
-                        icon = "📱",
+                        icon = "🧬",
                         title = stringResource(R.string.account_security_biometric),
                         subtitle = stringResource(R.string.account_security_biometric_subtitle),
                         showSwitch = true,
@@ -132,7 +132,7 @@ private fun AccountSecurityScreen(
                         title = stringResource(R.string.account_security_ai_login),
                         subtitle = stringResource(R.string.account_security_ai_login_subtitle),
                         onClick = {
-                            Toast.makeText(context, "Coming soon", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.account_security_gray_opening), Toast.LENGTH_SHORT).show()
                         },
                         showArrow = false
                     )
@@ -149,7 +149,7 @@ private fun AccountSecurityScreen(
                     SectionTitle(text = stringResource(R.string.account_security_section_device))
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuItem(
-                        icon = "📱",
+                        icon = "💻",
                         title = stringResource(R.string.account_security_current_device),
                         subtitle = stringResource(R.string.account_security_current_device_subtitle),
                         onClick = {
@@ -157,7 +157,7 @@ private fun AccountSecurityScreen(
                         }
                     )
                     MenuItem(
-                        icon = "📱",
+                        icon = "📋",
                         title = stringResource(R.string.account_security_device_count),
                         subtitle = stringResource(R.string.account_security_device_count_subtitle),
                         onClick = {
@@ -170,7 +170,14 @@ private fun AccountSecurityScreen(
                         title = stringResource(R.string.account_security_logout_all),
                         subtitle = stringResource(R.string.account_security_logout_all_subtitle),
                         onClick = {
-                            Toast.makeText(context, "Logged out from other devices", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                val ok = backendApi.logoutAllDevices()
+                                Toast.makeText(
+                                    context,
+                                    if (ok) context.getString(R.string.account_security_logout_all_success) else context.getString(R.string.account_security_logout_all_failed),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     )
                 }
@@ -260,15 +267,9 @@ private fun MenuItem(
                     uncheckedTrackColor = BackgroundSurfaceElevated
                 )
             )
-        } else if (showArrow) {
+        } else if (showArrow || showChevron) {
             Text(
-                text = "›",
-                style = MaterialTheme.typography.headlineMedium,
-                color = TextMuted
-            )
-        } else if (showChevron) {
-            Text(
-                text = "›",
+                text = ">",
                 style = MaterialTheme.typography.headlineMedium,
                 color = TextMuted
             )

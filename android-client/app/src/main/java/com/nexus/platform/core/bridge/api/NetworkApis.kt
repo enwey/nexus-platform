@@ -1,9 +1,10 @@
-package com.nexus.platform.core.bridge.api
+﻿package com.nexus.platform.core.bridge.api
 
 import android.content.Context
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.nexus.platform.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -83,8 +84,8 @@ class ModalApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val title = params.get("title")?.asString ?: ""
         val content = params.get("content")?.asString ?: ""
-        val confirmText = params.get("confirmText")?.asString ?: "确定"
-        val cancelText = params.get("cancelText")?.asString ?: "取消"
+        val confirmText = params.get("confirmText")?.asString ?: context.getString(R.string.common_confirm)
+        val cancelText = params.get("cancelText")?.asString ?: context.getString(R.string.common_cancel)
 
         return mapOf(
             "title" to title,

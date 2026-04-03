@@ -84,11 +84,14 @@ private fun AnimatedContentTransitionScope<*>.hierarchyPopExit() =
 @Composable
 private fun MainHomeScreen(
     libraryState: LibraryUiState,
+    isLoggedIn: Boolean,
     onLoadLibrary: () -> Unit,
+    onDiscoverCategoryChange: (String) -> Unit,
     onLibraryGameClick: (GameItem) -> Unit,
     onLibraryMoreClick: (LibrarySection) -> Unit,
     onDiscoverGameClick: (GameItem) -> Unit,
     onDiscoverQuickPlayClick: (GameItem) -> Unit,
+    onRequestLogin: () -> Unit,
     currentLanguage: AppLanguage,
     onChangeLanguage: (AppLanguage) -> Unit,
     onLogout: () -> Unit
@@ -108,13 +111,20 @@ private fun MainHomeScreen(
 
                 MainDestination.Discover -> DiscoverScreen(
                     games = libraryState.discoverGames,
+                    hero = libraryState.discoverHero,
+                    onCategoryChange = onDiscoverCategoryChange,
                     onGameClick = onDiscoverGameClick,
                     onQuickPlayClick = onDiscoverQuickPlayClick
                 )
-                MainDestination.Community -> CommunityScreen()
+                MainDestination.Community -> CommunityScreen(
+                    games = libraryState.discoverGames,
+                    onGameClick = onDiscoverGameClick
+                )
                 MainDestination.Profile -> ProfileScreen(
+                    isLoggedIn = isLoggedIn,
                     currentLanguage = currentLanguage,
                     onLanguageChange = onChangeLanguage,
+                    onRequestLogin = onRequestLogin,
                     onLogoutClick = onLogout
                 )
             }
@@ -137,9 +147,12 @@ fun MainNavGraph(
     navController: NavHostController,
     libraryState: LibraryUiState,
     onLoadLibrary: () -> Unit,
+    onDiscoverCategoryChange: (String) -> Unit,
     onLibraryGameClick: (GameItem) -> Unit,
     onLibraryMoreClick: (LibrarySection) -> Unit,
     onPlayGame: (GameItem) -> Unit,
+    isLoggedIn: Boolean,
+    onRequestLogin: () -> Unit,
     currentLanguage: AppLanguage,
     onChangeLanguage: (AppLanguage) -> Unit,
     onLogout: () -> Unit,
@@ -169,7 +182,9 @@ fun MainNavGraph(
         ) {
             MainHomeScreen(
                 libraryState = libraryState,
+                isLoggedIn = isLoggedIn,
                 onLoadLibrary = onLoadLibrary,
+                onDiscoverCategoryChange = onDiscoverCategoryChange,
                 onLibraryGameClick = onLibraryGameClick,
                 onLibraryMoreClick = onLibraryMoreClick,
                 onDiscoverGameClick = { game ->
@@ -179,6 +194,7 @@ fun MainNavGraph(
                     navController.navigate(MainRoutes.GAME_DETAIL)
                 },
                 onDiscoverQuickPlayClick = onPlayGame,
+                onRequestLogin = onRequestLogin,
                 currentLanguage = currentLanguage,
                 onChangeLanguage = onChangeLanguage,
                 onLogout = onLogout

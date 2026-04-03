@@ -15,17 +15,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuthTokenService authTokenService;
     private final LoginSecurityService loginSecurityService;
+    private final AccountOpsService accountOpsService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public Result<AuthResponse> register(String username, String password, String email) {
         if (username == null || username.trim().length() < 3) {
-            return Result.error("用户名长度至少为 3");
+            return Result.error("Username length must be at least 3");
         }
         if (!isStrongPassword(password)) {
-            return Result.error("密码至少 8 位，且需要包含字母和数字");
+            return Result.error("Password must be at least 8 chars and include letters and digits");
         }
-        if (userRepository.existsByUsername(username)) {
-            return Result.error("用户名已存在");
+        if (userRepository.existsByUsername(username.trim())) {
+            return Result.error("Username already exists");
         }
 
         User user = new User();
@@ -48,24 +49,25 @@ public class UserService {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             loginSecurityService.onLoginFailed(username, clientIp);
-            return Result.error("用户不存在");
+            return Result.error("User not found");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             loginSecurityService.onLoginFailed(username, clientIp);
-            return Result.error("密码错误");
+            return Result.error("Incorrect password");
         }
 
         loginSecurityService.onLoginSuccess(username, clientIp);
         String accessToken = authTokenService.issueAccessToken(user);
         String refreshToken = authTokenService.issueRefreshToken(user);
+        accountOpsService.recordDeviceLogin(user, clientIp, authTokenService.extractDeviceId(accessToken));
         return Result.success(new AuthResponse(accessToken, refreshToken, UserProfileDto.from(user)));
     }
 
     public Result<AuthResponse> refresh(String refreshToken) {
         AuthTokenService.TokenPair pair = authTokenService.rotateByRefreshToken(refreshToken);
         if (pair == null) {
-            return Result.error("刷新令牌无效或已过期");
+            return Result.error("Refresh token is invalid or expired");
         }
         return Result.success(new AuthResponse(pair.accessToken(), pair.refreshToken(), UserProfileDto.from(pair.user())));
     }

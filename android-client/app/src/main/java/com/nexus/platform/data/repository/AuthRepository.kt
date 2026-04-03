@@ -23,6 +23,19 @@ class AuthRepository(context: Context) {
         return session
     }
 
+    suspend fun register(username: String, password: String, email: String?): AuthSession {
+        val session = if (BuildConfig.USE_MOCK_DATA) {
+            AuthSession(
+                accessToken = "local-demo-token",
+                refreshToken = "local-demo-refresh-token"
+            )
+        } else {
+            authApi.register(username, password, email)
+        }
+        sessionStore.save(session)
+        return session
+    }
+
     fun currentSession(): AuthSession? = sessionStore.get()
 
     fun logout() {

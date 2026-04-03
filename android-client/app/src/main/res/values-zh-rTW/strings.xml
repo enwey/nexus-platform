@@ -277,6 +277,51 @@
     <string name="account_termination_submit">確認注銷并刪除所有數據</string>
     <string name="account_termination_footer">NEXUS RUNTIME SECURED</string>
     <string name="profile_cache_cleared">緩存已清理</string>
+    <string name="account_termination_waiting_hint">請等待冷靜期結束（%1$ds）</string>
+    <string name="account_termination_input_hint">請輸入「%1$s」後再操作</string>
+    <string name="account_termination_success">帳號已註銷</string>
+    <string name="account_termination_failed">帳號註銷失敗</string>
+
+    <string name="community_title">遊戲社群</string>
+    <string name="community_empty">暫無社群內容，先去發現頁找遊戲試玩吧</string>
+    <string name="community_topic_title_format">%1$s 玩家討論區</string>
+    <string name="community_topic_subtitle_fallback">歡迎分享攻略與心得</string>
+    <string name="community_hot">熱門</string>
+
+    <string name="device_management_empty">暫無裝置會話</string>
+    <string name="device_management_current_cannot_kick">當前裝置不可下線</string>
+    <string name="device_management_kick_success">裝置已下線</string>
+    <string name="device_management_kick_failed">裝置下線失敗</string>
+    <string name="device_management_status_current">當前</string>
+    <string name="device_management_status_offline">下線</string>
+
+    <string name="change_password_error_incomplete">請填寫完整密碼資訊</string>
+    <string name="change_password_error_too_short">新密碼至少 8 位</string>
+    <string name="change_password_error_mismatch">兩次輸入的新密碼不一致</string>
+    <string name="change_password_success">密碼修改成功</string>
+    <string name="change_password_failed">密碼修改失敗</string>
+
+    <string name="account_security_gray_opening">該功能正在灰度開放中</string>
+    <string name="account_security_logout_all_success">已下線其他裝置</string>
+    <string name="account_security_logout_all_failed">下線其他裝置失敗</string>
+
+    <string name="referral_link_copied">已複製邀請鏈接</string>
+    <string name="referral_summary_invites">邀請人數：%1$d</string>
+    <string name="referral_summary_reward">獎勵總額：%1$s</string>
+    <string name="referral_no_records">暫無邀請記錄</string>
+
+    <string name="discover_section_category_all">分類全部遊戲</string>
+    <string name="discover_page_info">第 %1$d/%2$d 頁（每頁 30 款）</string>
+    <string name="discover_prev_page">上一頁</string>
+    <string name="discover_next_page">下一頁</string>
+
+    <string name="profile_sync_disabled">未登入</string>
+    <string name="profile_login_account">登入帳號</string>
+    <string name="profile_login_required">請先登入後使用此功能</string>
+    <string name="profile_guest_mode">訪客模式</string>
+    <string name="profile_not_logged_in">未登入</string>
+
+    <string name="common_confirm">確認</string>
 </resources>
 
 

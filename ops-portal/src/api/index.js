@@ -34,6 +34,19 @@ export const getGameList = () =>
     method: 'get'
   })
 
+export const getGameCategories = () =>
+  request({
+    url: '/game/categories',
+    method: 'get'
+  })
+
+export const updateGameMetadata = (gameId, data) =>
+  request({
+    url: `/game/${gameId}/metadata`,
+    method: 'put',
+    data
+  })
+
 export const approveGame = (id, reason) =>
   request({
     url: `/game/approve/${id}`,
@@ -70,6 +83,32 @@ export const getAndroidConfig = () =>
 export const updateAndroidConfig = (data) =>
   request({
     url: '/admin/android/config',
+    method: 'put',
+    data
+  })
+
+export const getDiscoverOpsConfig = () =>
+  request({
+    url: '/admin/ops/discover/config',
+    method: 'get'
+  })
+
+export const updateDiscoverOpsConfig = (data) =>
+  request({
+    url: '/admin/ops/discover/config',
+    method: 'put',
+    data
+  })
+
+export const getOpsGameProfile = (gameId) =>
+  request({
+    url: `/admin/ops/game-profile/${gameId}`,
+    method: 'get'
+  })
+
+export const updateOpsGameProfile = (gameId, data) =>
+  request({
+    url: `/admin/ops/game-profile/${gameId}`,
     method: 'put',
     data
   })

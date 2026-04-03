@@ -1,6 +1,7 @@
-package com.nexus.platform.feature.profile.ui
+﻿package com.nexus.platform.feature.profile.ui
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,9 +41,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
-import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
 import com.nexus.platform.ui.theme.BorderLight
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
@@ -50,6 +51,7 @@ import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import kotlinx.coroutines.launch
 
 class ChangePasswordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +70,9 @@ class ChangePasswordActivity : ComponentActivity() {
 private fun ChangePasswordScreen(
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -86,7 +91,7 @@ private fun ChangePasswordScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "‹",
+                text = "<",
                 style = MaterialTheme.typography.headlineMedium,
                 color = TextMuted,
                 modifier = Modifier.clickable { onBackClick() }
@@ -117,7 +122,10 @@ private fun ChangePasswordScreen(
                         label = stringResource(R.string.change_password_current),
                         value = currentPassword,
                         onValueChange = { currentPassword = it },
-                        placeholder = stringResource(R.string.change_password_current_hint)
+                        placeholder = stringResource(R.string.change_password_current_hint),
+                        isPassword = true,
+                        passwordVisible = passwordVisible,
+                        onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
                     )
                     InputField(
                         label = stringResource(R.string.change_password_new),
@@ -134,6 +142,8 @@ private fun ChangePasswordScreen(
                         onValueChange = { confirmPassword = it },
                         placeholder = stringResource(R.string.change_password_confirm_hint),
                         isPassword = true,
+                        passwordVisible = passwordVisible,
+                        onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
                         showDivider = false
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -175,13 +185,39 @@ private fun ChangePasswordScreen(
                             )
                         )
                     )
-                    .clickable { },
+                    .clickable {
+                        when {
+                            currentPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank() -> {
+                                Toast.makeText(context, context.getString(R.string.change_password_error_incomplete), Toast.LENGTH_SHORT).show()
+                            }
+                            newPassword.length < 8 -> {
+                                Toast.makeText(context, context.getString(R.string.change_password_error_too_short), Toast.LENGTH_SHORT).show()
+                            }
+                            newPassword != confirmPassword -> {
+                                Toast.makeText(context, context.getString(R.string.change_password_error_mismatch), Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                scope.launch {
+                                    val ok = backendApi.changePassword(
+                                        oldPassword = currentPassword,
+                                        newPassword = newPassword
+                                    )
+                                    Toast.makeText(
+                                        context,
+                                        if (ok) context.getString(R.string.change_password_success) else context.getString(R.string.change_password_failed),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = stringResource(R.string.change_password_submit),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextMain
                 )
             }
         }

@@ -1,59 +1,38 @@
-﻿# Mini Game Starter (Nexus Platform)
+﻿# Mini Game Starter（Nexus Platform）
 
-This starter is the recommended structure for developers building web mini-games for Nexus Platform.
+更新日期：2026-04-03
 
-## Goals
+本模板用于开发者快速产出可上传到 Nexus Platform 的小游戏 ZIP 包。
 
-- Keep `index.html` at zip root (required by platform upload validator).
-- Isolate platform APIs in `src/platform/bridge.js`.
-- Keep gameplay code independent from platform-specific APIs.
-- Support desktop browser local debug and Android runtime.
+## 目标
 
-## Folder Layout
+- ZIP 根目录含 `index.html`
+- 平台相关逻辑集中在 `src/platform`
+- 游戏逻辑与平台逻辑解耦
+
+## 目录
 
 ```text
 minigame-starter/
 ├── index.html
 ├── manifest.json
 ├── src/
-│   ├── main.js
-│   ├── game/
-│   │   └── Game.js
-│   ├── platform/
-│   │   ├── bridge.js
-│   │   └── api.js
-│   └── ui/
-│       └── hud.js
 ├── assets/
-│   └── .gitkeep
 ├── config/
-│   ├── dev.json
-│   └── prod.json
 └── scripts/
-    └── package.ps1
 ```
 
-## Quick Start
-
-1. Open this folder in local static server.
-2. Edit game logic in `src/game/Game.js`.
-3. Call backend through `src/platform/api.js`.
-4. Build zip with:
+## 打包
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\package.ps1
 ```
 
-Output:
+输出：`release/minigame-starter.zip`
 
-- `release/minigame-starter.zip`
+## 上传前检查
 
-Upload this zip in developer portal.
-
-## Integration Rules
-
-1. Keep `index.html` in zip root.
-2. Do not rely on Node.js runtime in production package.
-3. Use relative paths only.
-4. Put platform-specific logic only in `src/platform/*`.
-5. Keep entry file name stable: `index.html`.
+1. `index.html` 在 ZIP 根目录
+2. 资源路径全部相对路径
+3. 文本编码 UTF-8
+4. 首屏可交互

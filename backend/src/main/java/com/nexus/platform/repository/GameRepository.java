@@ -12,8 +12,8 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     List<Game> findByDeveloperId(Long developerId);
 
     List<Game> findByStatus(Game.GameStatus status);
-    List<Game> findByStatusOrderByCreatedAtDesc(Game.GameStatus status);
     Page<Game> findByStatus(Game.GameStatus status, Pageable pageable);
+    List<Game> findByStatusOrderByCreatedAtDesc(Game.GameStatus status);
 
     List<Game> findAllByOrderByCreatedAtDesc();
     Page<Game> findAllByOrderByCreatedAtDesc(Pageable pageable);

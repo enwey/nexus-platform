@@ -7,5 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OpsCollectionRepository extends JpaRepository<OpsCollection, Long> {
+    Optional<OpsCollection> findByCollectionCode(String collectionCode);
+
     Optional<OpsCollection> findByCollectionCodeAndStatus(String collectionCode, String status);
 }

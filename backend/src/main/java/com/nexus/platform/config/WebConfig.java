@@ -54,10 +54,16 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns(
+                        "/user/send-code",
+                        "/user/password/**",
+                        "/user/devices/**",
+                        "/user/logout-all",
+                        "/user/terminate",
                         "/user/me",
                         "/user/profile",
                         "/user/logout",
                         "/wallet/**",
+                        "/referral/**",
                         "/library/**",
                         "/game/list",
                         "/game/list/**",
@@ -66,11 +72,13 @@ public class WebConfig implements WebMvcConfigurer {
                         "/game/*/versions",
                         "/game/*/submit-version/*",
                         "/game/*/rollback/*",
+                        "/game/*/metadata",
                         "/game/developer/**",
                         "/game/approve/**",
                         "/game/reject/**",
                         "/audit/**",
-                        "/admin/android/**"
+                        "/admin/android/**",
+                        "/admin/ops/**"
                 );
     }
 }

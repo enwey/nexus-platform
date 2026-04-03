@@ -1,11 +1,14 @@
 package com.nexus.platform.controller;
 
 import com.nexus.platform.config.AuthInterceptor;
+import com.nexus.platform.dto.GameMetadataUpdateRequest;
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.dto.GameUpdateCheckResponse;
+import com.nexus.platform.dto.GameOpsDtos.RuntimeProfileResponse;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.User;
+import com.nexus.platform.service.GameOpsProfileService;
 import com.nexus.platform.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +31,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RequiredArgsConstructor
 public class GameController {
     private final GameService gameService;
+    private final GameOpsProfileService gameOpsProfileService;
     @Value("${platform.download.mode:proxy}")
     private String downloadMode;
 
@@ -51,6 +55,11 @@ public class GameController {
         return gameService.getGameList(null);
     }
 
+    @GetMapping("/categories")
+    public Result<java.util.List<String>> getGameCategories() {
+        return gameService.getGameCategories();
+    }
+
     @GetMapping("/check-update")
     public Result<GameUpdateCheckResponse> checkUpdate(
             @RequestParam("appId") String appId,
@@ -70,6 +79,19 @@ public class GameController {
     @GetMapping("/{appId}")
     public Result<Game> getGame(@PathVariable String appId) {
         return gameService.getGameByAppId(appId);
+    }
+
+    @GetMapping("/{appId}/runtime-profile")
+    public Result<RuntimeProfileResponse> getRuntimeProfile(@PathVariable String appId) {
+        return gameOpsProfileService.getRuntimeProfile(appId);
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/{gameId}/metadata")
+    public Result<Game> updateGameMetadata(
+            @PathVariable Long gameId,
+            @RequestBody GameMetadataUpdateRequest request,
+            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser) {
+        return gameService.updateGameMetadata(gameId, request, currentUser);
     }
 
     @GetMapping("/developer/{developerId}")
@@ -103,20 +125,20 @@ public class GameController {
     }
 
     @GetMapping("/download/{appId}")
-    public ResponseEntity<?> downloadGame(
+    public ResponseEntity<StreamingResponseBody> downloadGame(
             @PathVariable String appId,
             @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
         if ("redirect".equalsIgnoreCase(downloadMode)) {
             Result<String> redirect = gameService.getPresignedDownloadUrl(appId, currentUser);
             if (redirect.getCode() != 0 || redirect.getData() == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.notFound().<StreamingResponseBody>build();
             }
-            return ResponseEntity.status(302).header(HttpHeaders.LOCATION, redirect.getData()).build();
+            return ResponseEntity.status(302).header(HttpHeaders.LOCATION, redirect.getData()).<StreamingResponseBody>build();
         }
 
         Result<GameService.GameDownloadStream> result = gameService.getDownloadStream(appId, currentUser);
         if (result.getCode() != 0 || result.getData() == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().<StreamingResponseBody>build();
         }
 
         GameService.GameDownloadStream payload = result.getData();

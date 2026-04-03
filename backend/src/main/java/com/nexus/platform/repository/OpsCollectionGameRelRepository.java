@@ -7,5 +7,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OpsCollectionGameRelRepository extends JpaRepository<OpsCollectionGameRel, Long> {
+    List<OpsCollectionGameRel> findByCollectionId(Long collectionId);
+
     List<OpsCollectionGameRel> findByCollectionIdOrderByPinTopDescSortOrderAscUpdatedAtDesc(Long collectionId);
+
+    void deleteByCollectionId(Long collectionId);
 }

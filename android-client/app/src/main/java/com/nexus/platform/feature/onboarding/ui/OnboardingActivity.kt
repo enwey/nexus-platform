@@ -34,7 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.AppLanguageManager
-import com.nexus.platform.feature.auth.ui.LoginActivity
+import com.nexus.platform.feature.main.ui.MainActivity
 import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.NexusPlatformTheme
@@ -52,7 +52,7 @@ class OnboardingActivity : ComponentActivity() {
         setContent {
             NexusPlatformTheme {
                 OnboardingScreen {
-                    startActivity(Intent(this, LoginActivity::class.java))
+                    startActivity(Intent(this, MainActivity::class.java))
                     overridePendingTransition(0, 0)
                     finish()
                 }

@@ -38,10 +38,12 @@ public class AuthTokenService {
     public String issueAccessToken(User user) {
         Instant now = Instant.now();
         Instant expireAt = now.plus(Duration.ofHours(accessTtlHours));
+        String deviceId = "did_" + UUID.randomUUID();
         return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
                 .claim("role", user.getRole().name())
                 .claim("typ", "access")
+                .claim("did", deviceId)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expireAt))
@@ -100,12 +102,18 @@ public class AuthTokenService {
             if (!"access".equals(claims.get("typ"))) {
                 return null;
             }
+            Long userId = Long.valueOf(claims.getSubject());
+            Long revokedAfterEpoch = parseLong(redisKeyValue(userRevokeAfterKey(userId)));
+            Date issuedAt = claims.getIssuedAt();
+            if (revokedAfterEpoch != null && issuedAt != null
+                    && issuedAt.toInstant().getEpochSecond() <= revokedAfterEpoch) {
+                return null;
+            }
             String jti = claims.getId();
             if (jti != null && Boolean.TRUE.equals(stringRedisTemplate.hasKey(denylistKey(jti)))) {
                 return null;
             }
-            String userId = claims.getSubject();
-            return userRepository.findById(Long.valueOf(userId)).orElse(null);
+            return userRepository.findById(userId).orElse(null);
         } catch (Exception ignore) {
             return null;
         }
@@ -153,6 +161,46 @@ public class AuthTokenService {
         return "auth:refresh:" + userId + ":" + jti;
     }
 
+    private String userRevokeAfterKey(Long userId) {
+        return "auth:user:revoke_after:" + userId;
+    }
+
+    private String redisKeyValue(String key) {
+        return stringRedisTemplate.opsForValue().get(key);
+    }
+
+    private Long parseLong(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ignore) {
+            return null;
+        }
+    }
+
+    public String extractDeviceId(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            if (!"access".equals(claims.get("typ"))) {
+                return null;
+            }
+            Object did = claims.get("did");
+            return did == null ? claims.getId() : did.toString();
+        } catch (Exception ignore) {
+            return null;
+        }
+    }
+
+    public void markUserTokensInvalidBefore(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        long epoch = Instant.now().getEpochSecond();
+        stringRedisTemplate.opsForValue().set(userRevokeAfterKey(userId), String.valueOf(epoch), Duration.ofDays(refreshTtlDays));
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
@@ -164,4 +212,3 @@ public class AuthTokenService {
     public record TokenPair(String accessToken, String refreshToken, User user) {
     }
 }
-

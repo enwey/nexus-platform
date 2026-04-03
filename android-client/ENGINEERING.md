@@ -1,59 +1,28 @@
-# Android Engineering Notes
+﻿# Android Engineering Notes
 
-## Current Status
+更新日期：2026-04-03
 
-- Architecture migrated to feature-oriented + layered structure.
-- Legacy screen packages removed.
-- Android build wrapper repaired (`gradle-wrapper.jar` restored).
-- `:app:assembleDebug` passes.
+## 当前状态
 
-## Key Technical Decisions
+- 架构采用 feature + layered
+- 运行页支持安全区与胶囊避让
+- 发现页/游戏库接入真实数据
+- 401 -> refresh -> retry 已在网络层实现
+- 可按登录态区分本地缓存与服务端同步行为
 
-1. UI logic moved behind ViewModel for key flows (`auth`, `library`).
-2. Backend calls are now behind repositories + use cases.
-3. JS bridge APIs live under `core/bridge/api` to avoid confusion with backend remote APIs.
-4. Main screen routing is centralized in `ui/navigation/MainNavGraph.kt`.
-5. Typography is aligned to Material 3 official type scale in `ui/theme/Type.kt`.
+## 关键实现点
 
-## Typography Standard
+1. `PlatformBackendApi` 统一后端访问
+2. `GameManager` 负责下载、解压、版本检查、更新应用
+3. `GameRuntimeActivity` 负责运行时容器与 bridge 注入
+4. `BackendConfig` 通过 `BuildConfig.BACKEND_BASE_URL` 注入环境地址
 
-- Source of truth: `app/src/main/java/com/nexus/platform/ui/theme/Type.kt`.
-- Base scale: Material 3 (`display/headline/title/body/label`) with official size, line-height, and letter-spacing tokens.
-- Usage convention:
-  - Page hero title: `headlineLarge`
-  - Section title: `titleLarge`
-  - Body text: `bodyMedium` / `bodyLarge`
-  - Secondary hint: `bodySmall`
-  - Buttons and interactive labels: `labelLarge`
+## 联调注意
 
-## Interaction Standard
+- 真机包必须用局域网后端地址编译
+- 若运行页提示下载失败，优先排查 `/game/download/{appId}` 返回码
 
-- Back behavior:
-  - System back and UI back must map to the same destination.
-  - Predictive back is enabled via `android:enableOnBackInvokedCallback="true"`.
-- Motion:
-  - Navigation transitions use one consistent duration family (enter ~220ms, exit ~180ms) and `FastOutSlowInEasing`.
-  - Forward transition direction: left; back transition direction: right.
-- No white flash policy:
-  - `windowBackground` and Compose root background must be the same base color.
-  - `Scaffold` container color is fixed to `BackgroundBase`.
-- Touch targets:
-  - Interactive controls should keep a minimum visual/touch size near 48dp.
+## 后续建议
 
-## Build Commands
-
-```bash
-npm run check:android-setup
-```
-
-```bash
-cd android-client
-./gradlew --no-daemon :app:assembleDebug
-```
-
-## Follow-up Recommendations
-
-- Add DI framework (Hilt/Koin) to replace manual ViewModel factory wiring.
-- Introduce `Result` sealed types for repository/usecase return consistency.
-- Add UI tests for login and library loading states.
-- Add token refresh flow in Android client for long sessions.
+- 运行页进一步消费运营素材（横幅/Logo）
+- 增加 UI smoke 自动化测试

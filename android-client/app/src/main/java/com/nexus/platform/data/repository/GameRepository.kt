@@ -2,12 +2,15 @@ package com.nexus.platform.data.repository
 
 import android.content.Context
 import com.nexus.platform.BuildConfig
+import com.nexus.platform.data.local.AuthSessionStore
 import com.nexus.platform.data.remote.PlatformBackendApi
+import com.nexus.platform.domain.model.DiscoverHomeSnapshot
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.LibraryHomeSnapshot
 
 class GameRepository(context: Context) {
     private val backendApi = PlatformBackendApi(context)
+    private val authSessionStore = AuthSessionStore(context)
 
     suspend fun getApprovedGames(): List<GameItem> {
         return if (BuildConfig.USE_MOCK_DATA) {
@@ -57,18 +60,38 @@ class GameRepository(context: Context) {
         return backendApi.getLibraryHome()
     }
 
-    suspend fun getDiscoverGames(): List<GameItem> {
+    suspend fun getDiscoverGames(category: String? = null): List<GameItem> {
         return if (BuildConfig.USE_MOCK_DATA) {
             emptyList()
         } else {
-            backendApi.getDiscoverGames()
+            backendApi.getDiscoverGames(category = category)
         }
+    }
+
+    suspend fun getDiscoverHome(): DiscoverHomeSnapshot? {
+        if (BuildConfig.USE_MOCK_DATA) {
+            return null
+        }
+        return backendApi.getDiscoverHome()
     }
 
     suspend fun markPlayed(appId: String) {
         if (BuildConfig.USE_MOCK_DATA) {
             return
         }
+        if (authSessionStore.get() == null) {
+            return
+        }
         backendApi.markPlayed(appId)
+    }
+
+    suspend fun markShared(appId: String) {
+        if (BuildConfig.USE_MOCK_DATA) {
+            return
+        }
+        if (authSessionStore.get() == null) {
+            return
+        }
+        backendApi.markShared(appId)
     }
 }

@@ -54,8 +54,6 @@ security:
 platform:
   public-base-url: ${PLATFORM_PUBLIC_BASE_URL:http://localhost:8080/api/v1}
   cdn-base-url: ${PLATFORM_CDN_BASE_URL:}
-  # local/dev recommends proxy; production with CDN/OSS can switch to redirect
-  download-mode: ${PLATFORM_DOWNLOAD_MODE:proxy}
   security:
     # Set false in staging/prod to block insecure defaults at startup
     allow-insecure-defaults: ${PLATFORM_ALLOW_INSECURE_DEFAULTS:true}

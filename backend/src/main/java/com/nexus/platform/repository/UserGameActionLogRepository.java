@@ -10,6 +10,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserGameActionLogRepository extends JpaRepository<UserGameActionLog, Long> {
+    List<UserGameActionLog> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<UserGameActionLog> findByUserIdAndActionTypeOrderByCreatedAtDesc(Long userId, String actionType);
+
     @Query("""
             SELECT l.gameId AS gameId, COUNT(l.id) AS actionCount
             FROM UserGameActionLog l

@@ -1,5 +1,6 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { ltGlobal } from '../i18n'
 
 const TOKEN_KEY = 'token'
 const USER_KEY = 'portal_user'
@@ -13,8 +14,12 @@ const request = axios.create({
 let redirectingToLogin = false
 let refreshPromise = null
 
+const msgAuthExpired = () => ltGlobal('登录状态已失效，请重新登录', '登入狀態已失效，請重新登入', 'Session expired. Please sign in again.')
+const msgRequestFailed = () => ltGlobal('请求失败', '請求失敗', 'Request failed')
+const msgNetworkError = () => ltGlobal('网络错误', '網路錯誤', 'Network error')
+
 function isAuthExpiredMessage(message = '') {
-  return /登录|凭证|失效|未授权|unauthorized|token/i.test(message)
+  return /登录|憑證|失效|未授權|unauthorized|token/i.test(message)
 }
 
 function clearSessionStorage() {
@@ -23,10 +28,8 @@ function clearSessionStorage() {
   localStorage.removeItem(REFRESH_TOKEN_KEY)
 }
 
-function redirectToLogin(message = '登录状态已失效，请重新登录') {
-  if (redirectingToLogin) {
-    return
-  }
+function redirectToLogin(message = msgAuthExpired()) {
+  if (redirectingToLogin) return
   redirectingToLogin = true
   clearSessionStorage()
   ElMessage.warning(message)
@@ -37,9 +40,7 @@ function redirectToLogin(message = '登录状态已失效，请重新登录') {
 
 async function refreshAccessToken() {
   const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-  if (!refreshToken) {
-    throw new Error('Missing refresh token')
-  }
+  if (!refreshToken) throw new Error('Missing refresh token')
 
   if (!refreshPromise) {
     refreshPromise = axios.post(
@@ -102,22 +103,18 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   async (response) => {
     const res = response.data
-    if (typeof res !== 'object' || res === null) {
-      return res
-    }
+    if (typeof res !== 'object' || res === null) return res
 
     if (res.code === 401 || isAuthExpiredMessage(res.message)) {
-      const message = res.message || '登录状态已失效，请重新登录'
+      const message = res.message || msgAuthExpired()
       const retried = await retryWithRefresh(response.config, message)
-      if (retried) {
-        return retried
-      }
+      if (retried) return retried
       redirectToLogin(message)
       return Promise.reject(new Error(message))
     }
 
     if (res.code !== 0) {
-      const message = res.message || '请求失败'
+      const message = res.message || msgRequestFailed()
       ElMessage.error(message)
       return Promise.reject(new Error(message))
     }
@@ -126,18 +123,14 @@ request.interceptors.response.use(
   },
   async (error) => {
     if (error?.response?.status === 401) {
-      const message = typeof error?.response?.data === 'string'
-        ? error.response.data
-        : '登录状态已失效，请重新登录'
+      const message = typeof error?.response?.data === 'string' ? error.response.data : msgAuthExpired()
       const retried = await retryWithRefresh(error.config, message)
-      if (retried) {
-        return retried
-      }
+      if (retried) return retried
       redirectToLogin(message)
       return Promise.reject(error)
     }
 
-    ElMessage.error(error.message || '网络错误')
+    ElMessage.error(error.message || msgNetworkError())
     return Promise.reject(error)
   }
 )

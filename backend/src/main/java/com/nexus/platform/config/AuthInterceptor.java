@@ -28,19 +28,19 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String authorization = request.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "缺少有效的登录凭证");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing valid authorization token");
             return false;
         }
 
         String token = authorization.substring("Bearer ".length()).trim();
         User user = authTokenService.resolveUser(token);
         if (user == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "登录凭证已失效，请重新登录");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is invalid or expired");
             return false;
         }
 
         if (!rolePermissionService.hasPermission(user, requiredPermission)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "当前账号没有执行该操作的权限");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "No permission");
             return false;
         }
 
@@ -55,6 +55,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
         String method = request.getMethod();
 
+        if ("POST".equalsIgnoreCase(method) && "/user/send-code".equals(uri)) {
+            return null;
+        }
+        if ("POST".equalsIgnoreCase(method) && "/user/password/reset".equals(uri)) {
+            return null;
+        }
         if ("/user/me".equals(uri)) {
             return Permission.USER_PROFILE_READ;
         }
@@ -64,11 +70,32 @@ public class AuthInterceptor implements HandlerInterceptor {
         if ("POST".equalsIgnoreCase(method) && "/user/profile".equals(uri)) {
             return Permission.USER_PROFILE_WRITE;
         }
-        if ("GET".equalsIgnoreCase(method) && "/wallet/summary".equals(uri)) {
-            return Permission.USER_WALLET_READ;
+        if ("POST".equalsIgnoreCase(method) && "/user/password/change".equals(uri)) {
+            return Permission.USER_PROFILE_WRITE;
+        }
+        if ("GET".equalsIgnoreCase(method) && "/user/devices".equals(uri)) {
+            return Permission.USER_PROFILE_READ;
+        }
+        if ("POST".equalsIgnoreCase(method) && uri.startsWith("/user/devices/")) {
+            return Permission.USER_PROFILE_WRITE;
         }
         if ("POST".equalsIgnoreCase(method) && "/user/logout".equals(uri)) {
             return Permission.USER_LOGOUT;
+        }
+        if ("POST".equalsIgnoreCase(method) && "/user/logout-all".equals(uri)) {
+            return Permission.USER_LOGOUT;
+        }
+        if ("POST".equalsIgnoreCase(method) && "/user/terminate".equals(uri)) {
+            return Permission.USER_PROFILE_WRITE;
+        }
+        if ("GET".equalsIgnoreCase(method) && uri.startsWith("/wallet/")) {
+            return Permission.USER_WALLET_READ;
+        }
+        if ("GET".equalsIgnoreCase(method) && uri.startsWith("/referral/")) {
+            return Permission.USER_WALLET_READ;
+        }
+        if ("POST".equalsIgnoreCase(method) && uri.startsWith("/referral/")) {
+            return Permission.USER_WALLET_READ;
         }
         if ("GET".equalsIgnoreCase(method) && uri.startsWith("/library/")) {
             return Permission.LIBRARY_READ;
@@ -95,6 +122,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/game/developer/")) {
             return Permission.GAME_DEVELOPER_READ;
         }
+        if ("PUT".equalsIgnoreCase(method) && uri.startsWith("/game/") && uri.endsWith("/metadata")) {
+            return Permission.GAME_DEVELOPER_WRITE;
+        }
         if ("POST".equalsIgnoreCase(method) && uri.startsWith("/game/approve/")) {
             return Permission.GAME_AUDIT_APPROVE;
         }
@@ -106,6 +136,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
         if (uri.startsWith("/admin/android/config") && "PUT".equalsIgnoreCase(method)) {
             return Permission.ANDROID_ADMIN_WRITE;
+        }
+        if (uri.startsWith("/admin/ops/discover/config") && "PUT".equalsIgnoreCase(method)) {
+            return Permission.ANDROID_ADMIN_WRITE;
+        }
+        if (uri.startsWith("/admin/ops/")) {
+            return Permission.ANDROID_ADMIN_READ;
         }
         if (uri.startsWith("/admin/android/")) {
             return Permission.ANDROID_ADMIN_READ;

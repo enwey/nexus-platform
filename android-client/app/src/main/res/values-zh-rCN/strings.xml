@@ -62,6 +62,7 @@
     <string name="discover_rank_2_title">最强保卫战</string>
     <string name="discover_rank_2_subtitle">塔防 · 评分 4.9</string>
     <string name="discover_quick_play">秒开</string>
+    <string name="discover_empty">暂无数据</string>
     <string name="library_section_favorites">我的收藏</string>
     <string name="library_section_recent">最近游玩</string>
     <string name="library_manage">管理</string>
@@ -111,6 +112,20 @@
     <string name="library_next_page">下一页</string>
     <string name="library_page_info">第 %1$d/%2$d 页</string>
     <string name="library_load_end">没有更多游戏了</string>
+    <string name="library_coldstart_new_player_tag">新手必玩</string>
+    <string name="library_coldstart_trending">大家都在玩</string>
+    <string name="library_coldstart_refresh">换一批</string>
+    <string name="library_coldstart_pick_1">经典入门</string>
+    <string name="library_coldstart_pick_2">热门竞技</string>
+    <string name="library_coldstart_pick_3">休闲解压</string>
+    <string name="library_coldstart_pick_4">策略精选</string>
+    <string name="library_coldstart_hero_title">欢迎来到 Nexus 游戏库</string>
+    <string name="library_coldstart_hero_subtitle">首次进入，先从热门精选开始</string>
+    <string name="library_coldstart_cta">开始探索</string>
+    <string name="library_coldstart_empty_icon">🎮</string>
+    <string name="library_coldstart_empty_title">还没有游玩记录</string>
+    <string name="library_coldstart_empty_desc">先玩几款游戏，这里会展示你的最近游玩和收藏</string>
+    <string name="library_coldstart_discover_action">去发现页看看</string>
     <string name="runtime_status_preparing">正在初始化运行环境...</string>
     <string name="runtime_status_loading_resource">正在准备游戏资源...</string>
     <string name="runtime_status_starting">正在启动游戏...</string>
@@ -257,5 +272,56 @@
     <string name="account_termination_submit">确认注销并删除所有数据</string>
     <string name="account_termination_footer">NEXUS RUNTIME SECURED</string>
     <string name="profile_cache_cleared">缓存已清理</string>
+    <string name="account_termination_waiting_hint">请等待冷静期结束（%1$ds）</string>
+    <string name="account_termination_input_hint">请输入“%1$s”后再操作</string>
+    <string name="account_termination_success">账号已注销</string>
+    <string name="account_termination_failed">账号注销失败</string>
+
+    <string name="community_title">游戏社区</string>
+    <string name="community_empty">暂无社区内容，先去发现页找游戏试玩吧</string>
+    <string name="community_topic_title_format">%1$s 玩家讨论区</string>
+    <string name="community_topic_subtitle_fallback">欢迎分享攻略与心得</string>
+    <string name="community_hot">热门</string>
+
+    <string name="device_management_empty">暂无设备会话</string>
+    <string name="device_management_current_cannot_kick">当前设备不可下线</string>
+    <string name="device_management_kick_success">设备已下线</string>
+    <string name="device_management_kick_failed">设备下线失败</string>
+    <string name="device_management_status_current">当前</string>
+    <string name="device_management_status_offline">下线</string>
+
+    <string name="change_password_error_incomplete">请填写完整密码信息</string>
+    <string name="change_password_error_too_short">新密码至少 8 位</string>
+    <string name="change_password_error_mismatch">两次输入的新密码不一致</string>
+    <string name="change_password_success">密码修改成功</string>
+    <string name="change_password_failed">密码修改失败</string>
+
+    <string name="account_security_gray_opening">该功能正在灰度开放中</string>
+    <string name="account_security_logout_all_success">已下线其他设备</string>
+    <string name="account_security_logout_all_failed">下线其他设备失败</string>
+
+    <string name="referral_link_copied">已复制邀请链接</string>
+    <string name="referral_summary_invites">邀请人数：%1$d</string>
+    <string name="referral_summary_reward">奖励总额：%1$s</string>
+    <string name="referral_no_records">暂无邀请记录</string>
+
+    <string name="discover_section_category_all">分类全部游戏</string>
+    <string name="discover_page_info">第 %1$d/%2$d 页（每页 30 款）</string>
+    <string name="discover_prev_page">上一页</string>
+    <string name="discover_next_page">下一页</string>
+
+    <string name="profile_sync_disabled">未登录</string>
+    <string name="profile_login_account">登录账号</string>
+    <string name="profile_login_required">请先登录后使用此功能</string>
+    <string name="profile_guest_mode">访客模式</string>
+    <string name="profile_not_logged_in">未登录</string>
+
+    <string name="runtime_menu_remove_favorite">从我的游戏移除</string>
+    <string name="runtime_favorite_added">已加入我的游戏</string>
+    <string name="runtime_favorite_removed">已从我的游戏移除</string>
+    <string name="runtime_favorite_sync_failed">同步收藏状态失败</string>
+    <string name="runtime_feedback_todo">反馈功能即将上线</string>
+
+    <string name="common_confirm">确认</string>
 </resources>
 

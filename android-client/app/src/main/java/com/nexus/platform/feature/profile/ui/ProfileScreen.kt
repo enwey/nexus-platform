@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -58,8 +57,10 @@ private val TopLevelBottomPadding = 96.dp
 
 @Composable
 fun ProfileScreen(
+    isLoggedIn: Boolean,
     currentLanguage: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
+    onRequestLogin: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -68,9 +69,23 @@ fun ProfileScreen(
     var profile by remember { mutableStateOf<UserProfileDetail?>(null) }
     var wallet by remember { mutableStateOf<WalletSummary?>(null) }
 
-    LaunchedEffect(Unit) {
-        profile = runCatching { backendApi.getUserProfile() }.getOrNull()
-        wallet = runCatching { backendApi.getWalletSummary() }.getOrNull()
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            profile = runCatching { backendApi.getUserProfile() }.getOrNull()
+            wallet = runCatching { backendApi.getWalletSummary() }.getOrNull()
+        } else {
+            profile = null
+            wallet = null
+        }
+    }
+
+    fun requireLogin(action: () -> Unit) {
+        if (isLoggedIn) {
+            action()
+        } else {
+            Toast.makeText(context, context.getString(R.string.profile_login_required), Toast.LENGTH_SHORT).show()
+            onRequestLogin()
+        }
     }
 
     Column(
@@ -80,15 +95,13 @@ fun ProfileScreen(
             .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = TopLevelBottomPadding),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        UserCard(profile = profile)
+        UserCard(profile = profile, isLoggedIn = isLoggedIn)
         WalletCard(
             wallet = wallet,
-            onBillClick = { context.startActivity(Intent(context, BillingActivity::class.java)) },
-            onHowToEarnClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
+            onBillClick = { requireLogin { context.startActivity(Intent(context, BillingActivity::class.java)) } },
+            onHowToEarnClick = { requireLogin { context.startActivity(Intent(context, ReferralActivity::class.java)) } }
         )
-        ReferralCard(
-            onClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
-        )
+        ReferralCard(onClick = { requireLogin { context.startActivity(Intent(context, ReferralActivity::class.java)) } })
         MenuGroup(
             items = listOf(
                 stringResource(R.string.profile_security),
@@ -98,34 +111,33 @@ fun ProfileScreen(
             ),
             rightTexts = listOf(
                 null,
-                stringResource(R.string.profile_sync_enabled),
+                if (isLoggedIn) stringResource(R.string.profile_sync_enabled) else stringResource(R.string.profile_sync_disabled),
                 stringResource(R.string.profile_cache_size),
                 stringResource(currentLanguage.labelRes)
             ),
             onItemClick = { index ->
                 when (index) {
-                    0 -> context.startActivity(Intent(context, AccountSecurityActivity::class.java))
-                    1 -> context.startActivity(Intent(context, DeviceManagementActivity::class.java))
-                    2 -> Toast.makeText(
-                        context,
-                        context.getString(R.string.profile_cache_cleared),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    0 -> requireLogin { context.startActivity(Intent(context, AccountSecurityActivity::class.java)) }
+                    1 -> requireLogin { context.startActivity(Intent(context, DeviceManagementActivity::class.java)) }
+                    2 -> Toast.makeText(context, context.getString(R.string.profile_cache_cleared), Toast.LENGTH_SHORT).show()
                     3 -> showLanguageDialog = true
                 }
             }
         )
         MenuGroup(
-            items = listOf(stringResource(R.string.profile_logout)),
+            items = listOf(if (isLoggedIn) stringResource(R.string.profile_logout) else stringResource(R.string.profile_login_account)),
             rightTexts = listOf(null),
             isLogout = true,
-            onLogoutClick = onLogoutClick
+            onLogoutClick = {
+                if (isLoggedIn) onLogoutClick() else onRequestLogin()
+            }
         )
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(stringResource(R.string.profile_system_hint), color = TextMuted.copy(alpha = 0.5f), style = MaterialTheme.typography.bodySmall)
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.profile_system_hint),
+                color = TextMuted.copy(alpha = 0.5f),
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 
@@ -162,11 +174,17 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun UserCard(profile: UserProfileDetail?) {
-    val displayName = profile?.displayName?.takeIf { it.isNotBlank() }
-        ?: stringResource(R.string.profile_header_title)
-    val accountIdText = profile?.id?.let { "Nexus ID: $it" }
-        ?: stringResource(R.string.profile_account_id)
+private fun UserCard(profile: UserProfileDetail?, isLoggedIn: Boolean) {
+    val displayName = if (isLoggedIn) {
+        profile?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.profile_header_title)
+    } else {
+        stringResource(R.string.profile_guest_mode)
+    }
+    val accountIdText = if (isLoggedIn) {
+        profile?.id?.let { "Nexus ID: $it" } ?: stringResource(R.string.profile_account_id)
+    } else {
+        stringResource(R.string.profile_not_logged_in)
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -218,16 +236,12 @@ private fun WalletCard(
             .padding(24.dp)
             .height(140.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .background(Color.White.copy(alpha = 0.1f))
-                .clip(CircleShape)
-                .align(Alignment.TopEnd)
-                .offset(x = 20.dp, y = (-20).dp)
-        )
         Column {
-            Text(stringResource(R.string.profile_wallet_title), color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+            Text(
+                stringResource(R.string.profile_wallet_title),
+                color = Color.White.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.bodySmall
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(balanceText, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
             Spacer(modifier = Modifier.height(16.dp))
@@ -241,7 +255,12 @@ private fun WalletCard(
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.profile_bill), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.profile_bill),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -253,7 +272,12 @@ private fun WalletCard(
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.profile_how_to_earn), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.profile_how_to_earn),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -261,32 +285,17 @@ private fun WalletCard(
 }
 
 @Composable
-private fun ReferralCard(
-    onClick: () -> Unit
-) {
+private fun ReferralCard(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        PrimaryStart.copy(alpha = 0.15f),
-                        PrimaryEnd.copy(alpha = 0.15f)
-                    )
-                )
-            )
+            .background(Brush.linearGradient(listOf(PrimaryStart.copy(alpha = 0.15f), PrimaryEnd.copy(alpha = 0.15f))))
             .border(1.dp, Primary, RoundedCornerShape(20.dp))
             .padding(20.dp)
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "🎁",
-                style = MaterialTheme.typography.displaySmall
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "🎁", style = MaterialTheme.typography.displaySmall)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.profile_referral_title),
@@ -316,18 +325,6 @@ private fun ReferralCard(
                 )
             }
         }
-        
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = 10.dp, y = 10.dp)
-        ) {
-            Text(
-                text = "🚀",
-                style = MaterialTheme.typography.displayLarge,
-                color = Color.White.copy(alpha = 0.1f)
-            )
-        }
     }
 }
 
@@ -351,11 +348,7 @@ private fun MenuGroup(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        if (isLogout && onLogoutClick != null) {
-                            onLogoutClick.invoke()
-                        } else {
-                            onItemClick?.invoke(index)
-                        }
+                        if (isLogout && onLogoutClick != null) onLogoutClick() else onItemClick?.invoke(index)
                     }
                     .padding(horizontal = 20.dp, vertical = 18.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,

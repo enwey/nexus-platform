@@ -19,6 +19,7 @@ public class RolePermissionService {
                     Permission.LIBRARY_WRITE,
                     Permission.GAME_UPLOAD,
                     Permission.GAME_DEVELOPER_READ,
+                    Permission.GAME_DEVELOPER_WRITE,
                     Permission.GAME_AUDIT_SUBMIT,
                     Permission.GAME_VERSION_ROLLBACK
             )

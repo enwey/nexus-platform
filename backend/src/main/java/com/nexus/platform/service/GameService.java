@@ -1,6 +1,7 @@
 package com.nexus.platform.service;
 
 import com.nexus.platform.dto.GameUpdateCheckResponse;
+import com.nexus.platform.dto.GameMetadataUpdateRequest;
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.entity.Game;
@@ -18,9 +19,11 @@ import io.minio.PutObjectArgs;
 import io.minio.http.Method;
 import java.net.URI;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import lombok.RequiredArgsConstructor;
@@ -152,6 +155,58 @@ public class GameService {
         if (game == null) {
             return Result.error("Game not found");
         }
+        normalizeClientUrls(game);
+        return Result.success(game);
+    }
+
+    public Result<List<String>> getGameCategories() {
+        return Result.success(List.of("all", "action", "casual", "rpg"));
+    }
+
+    public Result<Game> updateGameMetadata(Long gameId, GameMetadataUpdateRequest request, User currentUser) {
+        if (request == null) {
+            return Result.error("Request body is required");
+        }
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) {
+            return Result.error("Game not found");
+        }
+        boolean canEdit = currentUser != null && (currentUser.getRole() == User.UserRole.ADMIN
+                || currentUser.getId().equals(game.getDeveloperId()));
+        if (!canEdit) {
+            return Result.error("No permission to edit this game");
+        }
+
+        if (request.name() != null && !request.name().isBlank()) {
+            game.setName(request.name().trim());
+        }
+        if (request.description() != null) {
+            game.setDescription(request.description().trim());
+        }
+        if (request.iconUrl() != null) {
+            game.setIconUrl(request.iconUrl().trim());
+        }
+        if (request.version() != null && !request.version().isBlank()) {
+            game.setVersion(request.version().trim());
+        }
+        if (request.category() != null) {
+            String normalizedCategory = normalizeCategory(request.category());
+            if (normalizedCategory == null) {
+                return Result.error("Invalid category");
+            }
+            game.setCategory(normalizedCategory);
+        }
+        if (request.tags() != null) {
+            String serialized = request.tags().stream()
+                    .map(tag -> tag == null ? "" : tag.trim())
+                    .filter(tag -> !tag.isBlank())
+                    .distinct()
+                    .limit(20)
+                    .collect(Collectors.joining(","));
+            game.setTagsJson(serialized);
+        }
+
+        game = gameRepository.save(game);
         normalizeClientUrls(game);
         return Result.success(game);
     }
@@ -598,6 +653,16 @@ public class GameService {
         } catch (Exception ignored) {
             return 0;
         }
+    }
+
+    private String normalizeCategory(String raw) {
+        String normalized = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isBlank()) {
+            return "";
+        }
+        return Arrays.asList("all", "action", "casual", "rpg").contains(normalized)
+                ? normalized
+                : null;
     }
 
     private void normalizeClientUrls(Game game) {

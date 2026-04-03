@@ -40,7 +40,7 @@ class GameManager(private val context: Context) {
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw IOException("游戏下载失败: ${response.code}")
+                    throw IOException("Game download failed: ${response.code}")
                 }
 
                 val zipFile = File(context.cacheDir, "${game.id}.zip")
@@ -53,7 +53,7 @@ class GameManager(private val context: Context) {
                 val actualMd5 = calculateMD5(zipFile)
                 if (game.md5.isNotEmpty() && actualMd5 != game.md5) {
                     zipFile.delete()
-                    throw IOException("游戏包校验失败")
+                    throw IOException("Game package checksum verification failed")
                 }
 
                 ZipUtils.unzip(zipFile, targetDir)

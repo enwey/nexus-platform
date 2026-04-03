@@ -76,12 +76,6 @@ class LoginActivity : ComponentActivity() {
                     uiState = state,
                     onUsernameChange = viewModel::updateUsername,
                     onPasswordChange = viewModel::updatePassword,
-                    onForgotPasswordClick = {
-                        startActivity(Intent(this, ForgotPasswordActivity::class.java))
-                    },
-                    onSignupClick = {
-                        startActivity(Intent(this, RegisterActivity::class.java))
-                    },
                     onLoginClick = {
                         viewModel.login {
                             startActivity(Intent(this, MainActivity::class.java))
@@ -108,8 +102,6 @@ private fun LoginScreen(
     uiState: LoginUiState,
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onForgotPasswordClick: () -> Unit,
-    onSignupClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
     Column(
@@ -172,7 +164,7 @@ private fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            TextButton(onClick = onForgotPasswordClick) {
+            TextButton(onClick = {}) {
                 Text(
                     text = stringResource(R.string.login_forgot_password),
                     color = Primary
@@ -215,13 +207,11 @@ private fun LoginScreen(
                 text = stringResource(R.string.login_new_user),
                 color = TextMuted
             )
-            TextButton(onClick = onSignupClick) {
-                Text(
-                    text = stringResource(R.string.login_signup),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            Text(
+                text = stringResource(R.string.login_signup),
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         Spacer(modifier = Modifier.height(60.dp))

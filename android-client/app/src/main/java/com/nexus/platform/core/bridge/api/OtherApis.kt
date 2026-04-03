@@ -1,4 +1,4 @@
-package com.nexus.platform.core.bridge.api
+﻿package com.nexus.platform.core.bridge.api
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -9,7 +9,7 @@ import android.os.VibratorManager
 import com.google.gson.JsonObject
 
 /**
- * 震动API处理器
+ * Handle vibration APIs.
  */
 class VibrateApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
@@ -36,7 +36,7 @@ class VibrateApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 剪贴板API处理器
+ * Handle clipboard APIs.
  */
 class ClipboardApi(private val context: Context) : ApiHandler {
     private val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -64,19 +64,19 @@ class ClipboardApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 用户信息API处理器
+ * Handle user info APIs.
  */
 class UserInfoApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return mapOf(
             "userInfo" to mapOf(
-                "nickName" to "测试用户",
+                "nickName" to "Test User",
                 "avatarUrl" to "",
                 "gender" to 0,
                 "language" to "zh_CN",
                 "city" to "",
                 "province" to "",
-                "country" to "中国"
+                "country" to "China"
             ),
             "errMsg" to "getUserInfo:ok"
         )
@@ -84,7 +84,7 @@ class UserInfoApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 分享API处理器
+ * Handle share APIs.
  */
 class ShareApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
@@ -93,7 +93,7 @@ class ShareApi(private val context: Context) : ApiHandler {
 }
 
 /**
- * 图片API处理器
+ * Handle image APIs.
  */
 class ImageApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {
@@ -104,7 +104,9 @@ class ImageApi(private val context: Context) : ApiHandler {
                     "errMsg" to "chooseImage:ok"
                 )
             }
-            "wx.previewImage" -> mapOf("errMsg" to "previewImage:ok")
+            "wx.previewImage" -> {
+                mapOf("errMsg" to "previewImage:ok")
+            }
             "wx.getImageInfo" -> {
                 mapOf(
                     "width" to 100,
@@ -115,14 +117,16 @@ class ImageApi(private val context: Context) : ApiHandler {
                     "errMsg" to "getImageInfo:ok"
                 )
             }
-            "wx.saveImageToPhotosAlbum" -> mapOf("errMsg" to "saveImageToPhotosAlbum:ok")
+            "wx.saveImageToPhotosAlbum" -> {
+                mapOf("errMsg" to "saveImageToPhotosAlbum:ok")
+            }
             else -> null
         }
     }
 }
 
 /**
- * 文件API处理器
+ * Handle file APIs.
  */
 class FileApi(private val context: Context) : ApiHandler {
     override suspend fun handle(api: String, params: JsonObject): Any? {

@@ -18,8 +18,10 @@ public class DiscoverController {
     private final DiscoverService discoverService;
 
     @GetMapping("/feed")
-    public Result<List<DiscoverFeedItem>> feed(@RequestParam(defaultValue = "20") int limit) {
-        return discoverService.getFeed(limit);
+    public Result<List<DiscoverFeedItem>> feed(
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) String category) {
+        return discoverService.getFeed(limit, category);
     }
 
     @GetMapping("/home")

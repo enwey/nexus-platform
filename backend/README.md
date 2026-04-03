@@ -1,33 +1,44 @@
 # Backend
 
-## 说明
-`backend` 是 Nexus Platform 的核心业务后端，负责用户认证、游戏上传下载、审核流程与基础服务集成。
+更新日期：2026-04-03
 
-## 关键能力
-- 用户注册/登录/刷新/登出
-- 认证机制：JWT Access Token + Refresh Token + Redis 失效控制
-- 管理员初始化（默认 `admin/admin123456`）
-- 游戏上传、列表、审核、下载
-- 上传后异步处理，审核通过后生成预签名下载 URL
-- MinIO 对象存储接入（上传时自动创建 bucket）
-- 审核日志记录与查询（`/audit/logs`）
-- CORS 放行开发/运营双前端（5173/5174）
-- Flyway 数据库迁移
+## 模块职责
+
+`backend` 提供账号、游戏上传/审核/分发、运营配置、发现与游戏库数据接口。
+
+## 当前关键能力
+
+- 认证：JWT Access + Refresh Token（Redis 会话控制）
+- 游戏上传与版本管理
+- 审核流程与审计日志
+- 下载分发：后端代理流下载（默认）
+- 发现页与游戏库数据接口
+- 运营配置接口：发现运营配置、游戏运营资料
+- 版本检查与强更基础能力
 
 ## 启动
+
 ```bash
 mvn -f backend/pom.xml spring-boot:run
 ```
 
-## 构建
+## 编译
+
 ```bash
-mvn -f backend/pom.xml clean package -DskipTests
+mvn -f backend/pom.xml -DskipTests compile
 ```
 
-## 配置
-主要配置在 `src/main/resources/application.yml`。
+## 健康检查
 
-## 注意事项
-- 生产环境请修改 JWT 密钥、管理员初始密码和 MinIO/数据库凭据
-- 建议生产启用 HTTPS 与 CDN 下载域名
-- 社交相关 Nakama 接口目前为稳定占位实现
+- `GET /api/v1/actuator/health`
+
+## 配置说明
+
+配置文件：`backend/src/main/resources/application.yml`
+
+生产环境至少需替换：
+
+- JWT 密钥
+- 默认管理员密码
+- 数据库/Redis/MinIO 凭据
+- 公网域名配置

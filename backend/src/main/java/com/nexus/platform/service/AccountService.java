@@ -20,6 +20,7 @@ public class AccountService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final WalletAccountRepository walletAccountRepository;
+    private final AuthTokenService authTokenService;
 
     public Result<UserProfileDetailDto> getProfile(User currentUser) {
         User user = userRepository.findById(currentUser.getId()).orElse(null);
@@ -137,5 +138,9 @@ public class AccountService {
             return fallback;
         }
         return value;
+    }
+
+    public String resolveDeviceIdFromToken(String token) {
+        return authTokenService.extractDeviceId(token);
     }
 }

@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -32,6 +35,7 @@ import com.nexus.platform.ui.theme.NexusPlatformTheme
 
 class MainActivity : ComponentActivity() {
     private lateinit var libraryViewModel: LibraryViewModel
+    private var isLoggedIn by mutableStateOf(false)
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguageManager.wrap(newBase))
@@ -41,6 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AppLanguageManager.ensureInitialized(this)
         val container = (application as NexusApplication).container
+        isLoggedIn = container.authRepository.currentSession() != null
 
         val logoutUseCase = container.logoutUseCase
         val libraryFactory = LibraryViewModelFactory(
@@ -54,10 +59,15 @@ class MainActivity : ComponentActivity() {
                 val libraryState by libraryViewModel.uiState.collectAsStateWithLifecycle()
                 MainScreen(
                     libraryState = libraryState,
+                    isLoggedIn = isLoggedIn,
                     onLoadLibrary = { libraryViewModel.load() },
+                    onDiscoverCategoryChange = { category -> libraryViewModel.loadDiscoverByCategory(category) },
                     onPlayGame = { game ->
                         libraryViewModel.markPlayed(game)
                         GameRuntimeActivity.start(this, game)
+                    },
+                    onRequestLogin = {
+                        startActivity(Intent(this, LoginActivity::class.java))
                     },
                     currentLanguage = AppLanguageManager.currentLanguage(this),
                     onChangeLanguage = { selectedLanguage ->
@@ -68,9 +78,7 @@ class MainActivity : ComponentActivity() {
                     },
                     onLogout = {
                         logoutUseCase()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        overridePendingTransition(0, 0)
-                        finish()
+                        isLoggedIn = false
                     }
                 )
             }
@@ -79,6 +87,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        val container = (application as NexusApplication).container
+        isLoggedIn = container.authRepository.currentSession() != null
         if (::libraryViewModel.isInitialized) {
             libraryViewModel.refreshLocalOrder()
         }
@@ -97,8 +107,11 @@ private class LibraryViewModelFactory(
 @Composable
 private fun MainScreen(
     libraryState: com.nexus.platform.feature.library.ui.LibraryUiState,
+    isLoggedIn: Boolean,
     onLoadLibrary: () -> Unit,
+    onDiscoverCategoryChange: (String) -> Unit,
     onPlayGame: (GameItem) -> Unit,
+    onRequestLogin: () -> Unit,
     currentLanguage: AppLanguage,
     onChangeLanguage: (AppLanguage) -> Unit,
     onLogout: () -> Unit
@@ -119,6 +132,9 @@ private fun MainScreen(
                 navController.navigate(MainRoutes.librarySectionRoute(section.routeValue))
             },
             onPlayGame = onPlayGame,
+            onDiscoverCategoryChange = onDiscoverCategoryChange,
+            isLoggedIn = isLoggedIn,
+            onRequestLogin = onRequestLogin,
             currentLanguage = currentLanguage,
             onChangeLanguage = onChangeLanguage,
             onLogout = onLogout,

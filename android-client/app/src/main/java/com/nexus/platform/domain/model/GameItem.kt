@@ -9,5 +9,6 @@ data class GameItem(
     val iconUrl: String,
     val downloadUrl: String,
     val version: String,
-    val md5: String = ""
+    val md5: String = "",
+    val category: String = ""
 ) : Serializable

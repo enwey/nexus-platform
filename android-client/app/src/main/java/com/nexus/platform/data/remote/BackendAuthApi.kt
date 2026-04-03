@@ -22,31 +22,60 @@ class BackendAuthApi {
         .build()
 
     suspend fun login(username: String, password: String): AuthSession = withContext(Dispatchers.IO) {
+        authWithCredential(
+            path = "/user/login",
+            username = username,
+            password = password,
+            email = null,
+            errorPrefix = "Login"
+        )
+    }
+
+    suspend fun register(username: String, password: String, email: String?): AuthSession = withContext(Dispatchers.IO) {
+        authWithCredential(
+            path = "/user/register",
+            username = username,
+            password = password,
+            email = email,
+            errorPrefix = "Register"
+        )
+    }
+
+    private fun authWithCredential(
+        path: String,
+        username: String,
+        password: String,
+        email: String?,
+        errorPrefix: String
+    ): AuthSession {
         val payload = JsonObject().apply {
             addProperty("username", username)
             addProperty("password", password)
+            if (!email.isNullOrBlank()) {
+                addProperty("email", email)
+            }
         }
         val body = gson.toJson(payload).toRequestBody("application/json; charset=utf-8".toMediaType())
         val request = Request.Builder()
-            .url("${BackendConfig.apiBaseUrl}/user/login")
+            .url("${BackendConfig.apiBaseUrl}$path")
             .post(body)
             .build()
 
-        client.newCall(request).execute().use { response ->
+        return client.newCall(request).execute().use { response ->
             val bodyText = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
-                throw IOException("Login failed: ${response.code}")
+                throw IOException("$errorPrefix failed: ${response.code}")
             }
 
             val root = gson.fromJson(bodyText, JsonObject::class.java)
             val code = root.get("code")?.asInt ?: -1
             if (code != 0) {
-                throw IOException(root.get("message")?.asString ?: "Login failed")
+                throw IOException(root.get("message")?.asString ?: "$errorPrefix failed")
             }
 
-            val data = root.getAsJsonObject("data") ?: throw IOException("Login response missing data")
-            val accessToken = data.get("token")?.asString ?: throw IOException("Login response missing token")
-            val refreshToken = data.get("refreshToken")?.asString ?: throw IOException("Login response missing refreshToken")
+            val data = root.getAsJsonObject("data") ?: throw IOException("$errorPrefix response missing data")
+            val accessToken = data.get("token")?.asString ?: throw IOException("$errorPrefix response missing token")
+            val refreshToken = data.get("refreshToken")?.asString ?: throw IOException("$errorPrefix response missing refreshToken")
             AuthSession(accessToken, refreshToken)
         }
     }

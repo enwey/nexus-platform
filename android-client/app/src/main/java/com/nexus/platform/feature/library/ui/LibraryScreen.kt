@@ -77,7 +77,8 @@ fun LibraryScreen(
     when {
         uiState.loading -> LoadingState()
         !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
-        uiState.games.isEmpty() -> ColdStartState()
+        uiState.currentPlayingGame == null && uiState.recentGames.isEmpty() && uiState.myGames.isEmpty() ->
+            ColdStartState(uiState = uiState, onGameClick = onGameClick)
         else -> ContentState(uiState, onGameClick, onMoreClick)
     }
 }
@@ -317,13 +318,10 @@ private fun RecentGameGrid(games: List<GameItem>, onGameClick: (GameItem) -> Uni
 
 @Composable
 private fun RowScope.EmptyGridCell() {
-    Box(
+    Spacer(
         modifier = Modifier
             .weight(1f)
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
-            .background(BackgroundSurfaceElevated)
     )
 }
 
@@ -406,13 +404,11 @@ private fun EmptyState() {
 }
 
 @Composable
-private fun ColdStartState() {
-    val picks = listOf(
-        stringResource(R.string.library_coldstart_pick_1),
-        stringResource(R.string.library_coldstart_pick_2),
-        stringResource(R.string.library_coldstart_pick_3),
-        stringResource(R.string.library_coldstart_pick_4)
-    )
+private fun ColdStartState(
+    uiState: LibraryUiState,
+    onGameClick: (GameItem) -> Unit
+) {
+    val picks = (uiState.newbieMustPlay + uiState.everyonePlaying).distinctBy { it.id }.take(4)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -424,7 +420,12 @@ private fun ColdStartState() {
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
-        item { ColdStartHeroCard() }
+        item {
+            ColdStartHeroCard(
+                featured = uiState.newbieMustPlay.firstOrNull() ?: uiState.everyonePlaying.firstOrNull(),
+                onGameClick = onGameClick
+            )
+        }
         item {
             SectionHeader(
                 title = stringResource(R.string.library_section_my_games)
@@ -442,11 +443,21 @@ private fun ColdStartState() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                picks.forEachIndexed { index, title ->
-                    ColdStartPickCard(
-                        title = title,
-                        badge = "${index + 1}"
-                    )
+                if (picks.isEmpty()) {
+                    repeat(4) {
+                        ColdStartPickCard(title = stringResource(R.string.discover_empty), badge = "-")
+                    }
+                } else {
+                    picks.forEachIndexed { index, game ->
+                        ColdStartPickCard(
+                            title = game.name,
+                            badge = "${index + 1}",
+                            onClick = { onGameClick(game) }
+                        )
+                    }
+                    repeat((4 - picks.size).coerceAtLeast(0)) {
+                        ColdStartPickCard(title = "", badge = "")
+                    }
                 }
             }
         }
@@ -454,7 +465,10 @@ private fun ColdStartState() {
 }
 
 @Composable
-private fun ColdStartHeroCard() {
+private fun ColdStartHeroCard(
+    featured: GameItem?,
+    onGameClick: (GameItem) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -488,13 +502,14 @@ private fun ColdStartHeroCard() {
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = stringResource(R.string.library_coldstart_hero_title),
+                text = featured?.name ?: stringResource(R.string.library_coldstart_hero_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.library_coldstart_hero_subtitle),
+                text = featured?.description?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.library_coldstart_hero_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.82f)
             )
@@ -503,6 +518,13 @@ private fun ColdStartHeroCard() {
                 modifier = Modifier
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color.White)
+                    .then(
+                        if (featured != null) {
+                            Modifier.clickable { onGameClick(featured) }
+                        } else {
+                            Modifier
+                        }
+                    )
                     .padding(horizontal = 20.dp, vertical = 12.dp)
             ) {
                 Text(
@@ -572,10 +594,13 @@ private fun ColdStartEmptyCollectionCard() {
 @Composable
 private fun RowScope.ColdStartPickCard(
     title: String,
-    badge: String
+    badge: String,
+    onClick: (() -> Unit)? = null
 ) {
     Column(
-        modifier = Modifier.weight(1f),
+        modifier = Modifier
+            .weight(1f)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(

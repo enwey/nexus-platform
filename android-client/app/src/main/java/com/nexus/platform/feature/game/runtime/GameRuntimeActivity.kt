@@ -3,6 +3,7 @@ package com.nexus.platform.feature.game.runtime
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
@@ -32,6 +33,7 @@ import com.nexus.platform.core.bridge.RuntimeMetricsProvider
 import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.GameItem
+import com.nexus.platform.domain.model.GameRuntimeProfile
 import com.nexus.platform.feature.game.data.GameManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +59,7 @@ class GameRuntimeActivity : AppCompatActivity() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var loadJob: Job? = null
     private var currentGame: GameItem? = null
+    private var runtimeProfile: GameRuntimeProfile? = null
     private var statusBarInsetPx: Int = 0
     private var navBarBottomInsetPx: Int = 0
 
@@ -91,6 +94,7 @@ class GameRuntimeActivity : AppCompatActivity() {
         initWebView()
         initBridge()
         initBackDispatcher()
+        loadRuntimeProfile(game.id)
         loadGame(game = game, forceRefresh = false)
     }
 
@@ -307,26 +311,47 @@ class GameRuntimeActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadRuntimeProfile(appId: String) {
+        scope.launch(Dispatchers.IO) {
+            val profile = runCatching { backendApi.getGameRuntimeProfile(appId) }.getOrNull()
+            runtimeProfile = profile
+        }
+    }
+
     private fun showRuntimeMenu() {
         val game = currentGame ?: return
-        val dialog = runtimeMenuDialog ?: BottomSheetDialog(this).also { sheet ->
+        runtimeMenuDialog?.dismiss()
+        val dialog = BottomSheetDialog(this).also { sheet ->
             val root = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setBackgroundColor(0xFF1A1B23.toInt())
                 setPadding(dp(20), dp(16), dp(20), dp(24))
             }
+            val profile = runtimeProfile
             root.addView(TextView(this).apply {
-                text = game.name
+                text = profile?.gameName?.ifBlank { game.name } ?: game.name
                 setTextColor(0xFFFFFFFF.toInt())
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
             })
+            val summary = buildRuntimeSummary(profile)
+            if (summary.isNotBlank()) {
+                root.addView(TextView(this).apply {
+                    text = summary
+                    setTextColor(0xFFB8BBC7.toInt())
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                    setPadding(0, dp(6), 0, dp(2))
+                })
+            }
             root.addView(menuItem(getString(R.string.runtime_menu_share_title)) {
-                val text = "${game.name}\n${game.downloadUrl}"
+                val text = buildShareText(game, profile)
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, text)
                 }
                 startActivity(Intent.createChooser(intent, getString(R.string.runtime_menu_share_title)))
+                scope.launch(Dispatchers.IO) {
+                    backendApi.markShared(game.id)
+                }
             })
 
             val favoriteItem = menuItem("", {})
@@ -366,16 +391,48 @@ class GameRuntimeActivity : AppCompatActivity() {
                 loadGame(game = game, forceRefresh = true)
             })
             root.addView(menuItem(getString(R.string.runtime_menu_feedback)) {
-                Toast.makeText(this, getString(R.string.runtime_feedback_todo), Toast.LENGTH_SHORT).show()
+                val mailIntent = Intent(
+                    Intent.ACTION_SENDTO,
+                    Uri.parse("mailto:support@nexus.local")
+                ).apply {
+                    putExtra(Intent.EXTRA_SUBJECT, "Game feedback: ${game.name}")
+                    putExtra(Intent.EXTRA_TEXT, "AppId=${game.id}\nVersion=${game.version}\n\nDescribe your issue:")
+                }
+                if (mailIntent.resolveActivity(packageManager) != null) {
+                    startActivity(mailIntent)
+                } else {
+                    Toast.makeText(this, getString(R.string.runtime_feedback_todo), Toast.LENGTH_SHORT).show()
+                }
             })
             root.addView(menuItem(getString(R.string.common_cancel)) {
                 sheet.dismiss()
             })
 
             sheet.setContentView(root)
+            sheet.window?.setBackgroundDrawableResource(android.R.color.transparent)
             runtimeMenuDialog = sheet
-        }
+        }.also { runtimeMenuDialog = it }
         dialog.show()
+    }
+
+    private fun buildRuntimeSummary(profile: GameRuntimeProfile?): String {
+        if (profile == null) return ""
+        val studio = profile.studioName.trim()
+        val players = profile.playerCountText.trim()
+        return when {
+            studio.isNotBlank() && players.isNotBlank() -> "$studio  •  $players"
+            studio.isNotBlank() -> studio
+            players.isNotBlank() -> players
+            else -> ""
+        }
+    }
+
+    private fun buildShareText(game: GameItem, profile: GameRuntimeProfile?): String {
+        val title = profile?.shareTitle?.ifBlank { game.name } ?: game.name
+        val subtitle = profile?.shareSubtitle?.ifBlank { game.description } ?: game.description
+        return listOf(title, subtitle, game.downloadUrl)
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
     }
 
     private fun menuItem(label: String, onClick: () -> Unit): TextView {

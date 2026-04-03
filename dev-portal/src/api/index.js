@@ -65,6 +65,21 @@ export const getDeveloperGames = (developerId) => {
   })
 }
 
+export const getGameCategories = () => {
+  return request({
+    url: '/game/categories',
+    method: 'get'
+  })
+}
+
+export const updateGameMetadata = (gameId, data) => {
+  return request({
+    url: `/game/${gameId}/metadata`,
+    method: 'put',
+    data
+  })
+}
+
 export const approveGame = (id) => {
   return request({
     url: `/game/approve/${id}`,
@@ -76,37 +91,6 @@ export const rejectGame = (id) => {
   return request({
     url: `/game/reject/${id}`,
     method: 'post'
-  })
-}
-
-export const submitGameForAudit = (id, note = '') => {
-  return request({
-    url: `/game/submit/${id}`,
-    method: 'post',
-    data: { note }
-  })
-}
-
-export const getGameVersions = (gameId) => {
-  return request({
-    url: `/game/${gameId}/versions`,
-    method: 'get'
-  })
-}
-
-export const submitGameVersionForAudit = (gameId, versionId, note = '') => {
-  return request({
-    url: `/game/${gameId}/submit-version/${versionId}`,
-    method: 'post',
-    data: { note }
-  })
-}
-
-export const rollbackGameVersion = (gameId, versionId, reason = '') => {
-  return request({
-    url: `/game/${gameId}/rollback/${versionId}`,
-    method: 'post',
-    data: { reason }
   })
 }
 

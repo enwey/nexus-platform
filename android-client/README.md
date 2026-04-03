@@ -1,66 +1,45 @@
 # Android Client
 
-## Overview
+更新日期：2026-04-03
 
-`android-client` is the Android host app for Nexus Platform. It provides:
+## 模块职责
 
-- Native shell and UI (Compose)
-- WebView runtime container for game packages
-- JS bridge (`AndroidApp` / `AndroidAppSync`)
-- Backend integration for auth and approved game list
+`android-client` 是小游戏 Android 宿主，负责：
 
-## Architecture
+- 主端 UI（游戏库、发现、账号、运行页）
+- WebView 运行容器
+- `wx` bridge（`AndroidApp` / `AndroidAppSync`）
+- 下载、解压、校验、更新与本地缓存
 
-The project now uses layered + feature-oriented structure:
+## 构建要求
 
-- `core/`
-  - `bridge/`: JS bridge and bridge API adapters
-  - `network/`: backend endpoint configuration
-- `data/`
-  - `local/`: local session storage
-  - `remote/`: backend API clients
-  - `repository/`: repository implementations
-- `domain/`
-  - `model/`: domain models
-  - `usecase/`: business use cases
-- `feature/`
-  - `auth/`, `main/`, `library/`, `discover/`, `profile/`, `community/`, `game/`
-- `ui/`
-  - `components/`: reusable UI components
-  - `navigation/`: centralized navigation graph
-  - `theme/`: app theme
-
-## Build Requirements
-
-- Android Studio Hedgehog+
-- JDK 17
 - Android SDK 34
-- Gradle 8.2 (wrapper)
+- JDK 17
+- Gradle Wrapper（项目内置）
 
-## Quick Start
-
-1. Check required Android files:
-
-```bash
-npm run check:android-setup
-```
-
-2. Build debug APK:
+## 本地构建
 
 ```bash
-cd android-client
-./gradlew assembleDebug
+cmd /c android-client\gradlew.bat -p android-client assembleDebug
 ```
 
-Windows:
+## 真机联调（重要）
 
-```bat
-gradlew.bat assembleDebug
+默认 `BACKEND_BASE_URL` 是 `http://10.0.2.2:8080/api/v1`（模拟器专用）。
+
+真机必须使用局域网地址重新编译：
+
+```powershell
+$env:BACKEND_BASE_URL='http://<你的电脑局域网IP>:8080/api/v1'
+. .\scripts\env-local.ps1
+cmd /c android-client\gradlew.bat -p android-client assembleDebug
 ```
 
-## Runtime Notes
+否则会出现“页面获取不到数据/游戏下载失败”。
 
-- Local backend is accessed through emulator host `10.0.2.2`.
-- Auth uses backend login and stores `token + refreshToken` in local session store.
-- Main tabs are managed by a centralized nav graph.
-- Game runtime is handled by `feature/game/runtime/GameRuntimeActivity`.
+## 安装 APK
+
+```powershell
+$adb='C:\Users\7410\AppData\Local\Android\Sdk\platform-tools\adb.exe'
+& $adb install -r .\android-client\app\build\outputs\apk\debug\app-debug.apk
+```

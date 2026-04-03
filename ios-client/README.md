@@ -1,18 +1,15 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# iOS Client
-# iOS Client
+﻿# iOS Client
 
-## 背景
+更新日期：2026-04-03
 
-`ios-client` 是 Nexus Platform 的 iOS 原生宿主工程，用于在 iOS 环境中承载小游戏内容。
+## 模块职责
 
-## 功能
+`ios-client` 是 iOS 原生宿主工程，负责 WebView 承载、bridge 注入与本地资源加载。
 
-当前 iOS 工程负责：
+## 当前状态
 
-- 使用 WKWebView 加载游戏内容
-- 注入 `mock-sdk`
-- 提供 iOS 端异步桥接能力
-- 使用 URL scheme / 本地文件方式加载资源
+- 已具备基础容器能力
+- 与 Android 同步的完整功能仍在持续对齐中
 
 ## 目录
 
@@ -20,50 +17,23 @@
 ios-client/
 ├─ NexusPlatform/
 │  └─ Sources/NexusPlatform/
-│     ├─ API/       原生 API 实现
-│     ├─ Bridge/    JS 与 Native 桥接
-│     ├─ Views/     视图层
-│     └─ Utils/     工具类
 ├─ Package.swift
 └─ README.md
 ```
 
-## 依赖
-
-- Xcode 15+
-- iOS 14+
-- Swift 5.9+
-- Swift Package Manager
-
-## 启动
+## 打开与构建
 
 ```bash
 cd ios-client
 open Package.swift
 ```
 
-## 构建
-
 ```bash
 swift build
 ```
 
-## 联调
+## 联调建议
 
-iOS 联调时建议：
-
-1. 先保证 backend 和基础设施已启动
-2. 确认 `mock-sdk` 可被注入
-3. 在 Xcode 中运行宿主并加载游戏内容
-
-桥接调用方式：
-
-```javascript
-window.webkit.messageHandlers.NexusBridge.postMessage(...)
-```
-
-## 已知问题
-
-- iOS 当前不提供同步原生桥接。
-- `wx.getSystemInfoSync` 与存储类 sync API 应视为 Android 优先能力。
-- 后续如继续演进 iOS 运行时，建议保持异步桥接模型。
+1. 先确保 backend 与基础设施正常
+2. 再做 iOS runtime 对齐回归
+3. 优先验证：加载、桥接、下载、更新提示

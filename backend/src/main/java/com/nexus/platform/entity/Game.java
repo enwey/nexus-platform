@@ -42,6 +42,11 @@ public class Game {
 
     private String version;
     private String md5;
+    @Column(length = 32)
+    private String category;
+
+    @Column(name = "tags_json")
+    private String tagsJson;
 
     @Enumerated(EnumType.STRING)
     private GameStatus status;

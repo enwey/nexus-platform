@@ -1,14 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getCurrentUser } from '../api'
 import { useUserStore } from '../stores/user'
+import { ltGlobal } from '../i18n'
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'OpsLogin', component: () => import('../views/Login.vue') },
   { path: '/audit', name: 'OpsAudit', component: () => import('../views/Audit.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/audit/logs', name: 'OpsAuditLogs', component: () => import('../views/AuditLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/android', name: 'OpsAndroid', component: () => import('../views/AndroidConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } }
+  { path: '/runtime-ops', name: 'OpsRuntime', component: () => import('../views/RuntimeOpsConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/android', redirect: '/runtime-ops' }
 ]
 
 const router = createRouter({
@@ -55,7 +57,7 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAdmin && !userStore.isAdmin) {
     userStore.logout()
-    ElMessage.warning('当前账号没有运营审核权限，请使用管理员账号登录')
+    ElMessage.warning(ltGlobal('当前账号没有运营审核权限，请使用管理员账号登录', '當前帳號沒有營運審核權限，請使用管理員帳號登入', 'Current account does not have operations audit permission. Please sign in with an admin account.'))
     return '/login'
   }
 
@@ -63,4 +65,3 @@ router.beforeEach(async (to) => {
 })
 
 export default router
-
