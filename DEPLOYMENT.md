@@ -73,14 +73,18 @@ $adb='C:\Users\7410\AppData\Local\Android\Sdk\platform-tools\adb.exe'
 & $adb install -r .\android-client\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-## 6. 默认账号
+## 6. 管理员账号
 
-初始化管理员：
+系统默认不再内置弱口令管理员。
 
-- 用户名：`admin`
-- 密码：`admin123456`
+如需初始化管理员，请通过环境变量显式提供：
 
-如需修改请更新 `backend/src/main/resources/application.yml`。
+- `PLATFORM_BOOTSTRAP_ADMIN_ENABLED=true`
+- `PLATFORM_BOOTSTRAP_ADMIN_USERNAME`
+- `PLATFORM_BOOTSTRAP_ADMIN_PASSWORD`
+- `PLATFORM_BOOTSTRAP_ADMIN_EMAIL`
+
+本地通过 `scripts/env-local.ps1` 启动时，会注入一组仅限本地开发的管理员配置。
 
 ## 7. 当前关键说明
 

@@ -3,6 +3,7 @@ package com.nexus.platform.service;
 import com.nexus.platform.dto.AndroidAdminDtos.AndroidBridgeApiItem;
 import com.nexus.platform.dto.AndroidAdminDtos.AndroidConsolePayload;
 import com.nexus.platform.dto.AndroidAdminDtos.AndroidGameAssetRow;
+import com.nexus.platform.dto.AndroidAdminDtos.AndroidHostCapability;
 import com.nexus.platform.dto.AndroidAdminDtos.AndroidOverview;
 import com.nexus.platform.dto.AndroidAdminDtos.AndroidRuntimeConfig;
 import com.nexus.platform.dto.AndroidAdminDtos.AndroidRuntimeConfigUpdateRequest;
@@ -41,6 +42,7 @@ public class AndroidAdminService {
         return new AndroidConsolePayload(
                 buildOverview(),
                 runtimeConfigRef.get(),
+                hostCapabilities(),
                 bridgeApis(),
                 gameAssets()
         );
@@ -85,32 +87,120 @@ public class AndroidAdminService {
         long pending = games.stream().filter(g -> g.getStatus() == Game.GameStatus.PENDING).count();
         long processing = games.stream().filter(g -> g.getStatus() == Game.GameStatus.PROCESSING).count();
         long rejected = games.stream().filter(g -> g.getStatus() == Game.GameStatus.REJECTED).count();
+        long runtimeReady = games.stream()
+                .filter(g -> g.getStatus() == Game.GameStatus.APPROVED)
+                .filter(g -> g.getDownloadUrl() != null && !g.getDownloadUrl().isBlank())
+                .filter(g -> g.getMd5() != null && !g.getMd5().isBlank())
+                .count();
         int implemented = (int) bridgeApis().stream().filter(api -> "implemented".equals(api.supportStatus())).count();
-        int stub = (int) bridgeApis().stream().filter(api -> !"implemented".equals(api.supportStatus())).count();
-        return new AndroidOverview(total, approved, pending, processing, rejected, implemented, stub);
+        int partial = (int) bridgeApis().stream().filter(api -> !"implemented".equals(api.supportStatus())).count();
+        return new AndroidOverview(total, approved, pending, processing, rejected, runtimeReady, implemented, partial);
+    }
+
+    private List<AndroidHostCapability> hostCapabilities() {
+        return List.of(
+                capability(
+                        "android.webview.lockdown",
+                        "WebView Sandbox",
+                        "security",
+                        "implemented",
+                        "GameRuntimeActivity",
+                        "JavaScript enabled with file/content access disabled and mixed content blocked by default"
+                ),
+                capability(
+                        "android.asset.loader",
+                        "App Asset Loader",
+                        "delivery",
+                        "implemented",
+                        "GameRuntimeActivity",
+                        "Loads game bundles from app internal storage via appassets domain"
+                ),
+                capability(
+                        "android.bridge.async",
+                        "Async JS Bridge",
+                        "bridge",
+                        "implemented",
+                        "NexusBridge",
+                        "AndroidApp bridge handles async wx APIs and callbacks"
+                ),
+                capability(
+                        "android.bridge.sync",
+                        "Sync JS Bridge",
+                        "bridge",
+                        "implemented",
+                        "NexusSyncBridge",
+                        "AndroidAppSync handles sync bridge invocation for supported APIs"
+                ),
+                capability(
+                        "android.runtime.update",
+                        "Runtime Update Channel",
+                        "delivery",
+                        "implemented",
+                        "UpdateApi/GameManager",
+                        "Supports update check and apply flow before entering runtime"
+                ),
+                capability(
+                        "android.runtime.overlay",
+                        "Runtime Capsule Menu",
+                        "runtime",
+                        "implemented",
+                        "GameRuntimeActivity",
+                        "Native runtime overlay supports back, share, favorite and refresh actions"
+                ),
+                capability(
+                        "android.native.network",
+                        "Native Network Proxy",
+                        "bridge",
+                        "implemented",
+                        "RequestApi",
+                        "wx.request is proxied through native OkHttp"
+                ),
+                capability(
+                        "android.local.storage",
+                        "Local Storage",
+                        "bridge",
+                        "implemented",
+                        "StorageApi",
+                        "wx storage APIs are backed by SharedPreferences"
+                ),
+                capability(
+                        "android.media.integration",
+                        "Media & Clipboard",
+                        "device",
+                        "partial",
+                        "ImageApi/ClipboardApi",
+                        "Image selection and save APIs are mock-oriented, clipboard APIs are available"
+                )
+        );
     }
 
     private List<AndroidBridgeApiItem> bridgeApis() {
         return List.of(
-                api("wx.login", "implemented", false, "SystemApis", "returns mock login code"),
-                api("wx.request", "implemented", false, "NetworkApis", "native http proxy"),
-                api("wx.getSystemInfoSync", "implemented", true, "SystemApis", "sync bridge ready"),
-                api("wx.setStorage", "implemented", false, "StorageApi", "shared preferences"),
-                api("wx.getStorage", "implemented", false, "StorageApi", "shared preferences"),
-                api("wx.removeStorage", "implemented", false, "StorageApi", "shared preferences"),
-                api("wx.clearStorage", "implemented", false, "StorageApi", "shared preferences"),
-                api("wx.showToast", "implemented", false, "NetworkApis", "native toast"),
-                api("wx.showModal", "implemented", false, "NetworkApis", "returns mock confirm"),
-                api("wx.downloadFile", "implemented", false, "OtherApis", "returns mock file path"),
-                api("wx.uploadFile", "implemented", false, "OtherApis", "returns mock upload"),
-                api("wx.getNetworkType", "implemented", false, "NetworkApis", "returns wifi"),
-                api("wx.chooseImage", "implemented", false, "OtherApis", "currently mock"),
-                api("wx.setClipboardData", "implemented", false, "OtherApis", "system clipboard"),
-                api("wx.getClipboardData", "implemented", false, "OtherApis", "system clipboard"),
-                api("wx.vibrateShort", "implemented", false, "OtherApis", "native vibration"),
-                api("wx.vibrateLong", "implemented", false, "OtherApis", "native vibration"),
-                api("wx.navigateToMiniProgram", "stub", false, "SDK Stub", "no-op in host app"),
-                api("wx.openSetting", "stub", false, "UnsupportedApi", "not yet implemented")
+                api("wx.login", "mock", false, "LoginApi", "returns mock login code for host testing"),
+                api("wx.request", "implemented", false, "RequestApi", "native http proxy backed by OkHttp"),
+                api("wx.getSystemInfoSync", "implemented", true, "SystemInfoApi", "returns runtime metrics and safe-area data"),
+                api("wx.getMenuButtonBoundingClientRect", "implemented", true, "SystemInfoApi", "returns runtime capsule coordinates"),
+                api("wx.update.check", "implemented", false, "UpdateApi", "checks cached bundle and remote version state"),
+                api("wx.update.apply", "implemented", false, "UpdateApi", "applies prepared bundle update and restarts runtime"),
+                api("wx.setStorage", "implemented", false, "StorageApi", "shared preferences persistence"),
+                api("wx.getStorage", "implemented", false, "StorageApi", "shared preferences persistence"),
+                api("wx.removeStorage", "implemented", false, "StorageApi", "shared preferences persistence"),
+                api("wx.clearStorage", "implemented", false, "StorageApi", "shared preferences persistence"),
+                api("wx.getUserInfo", "mock", false, "UserInfoApi", "returns host-side mock profile"),
+                api("wx.shareAppMessage", "implemented", false, "ShareApi", "delegates to native share sheet"),
+                api("wx.showToast", "implemented", false, "ToastApi", "native toast prompt"),
+                api("wx.showModal", "mock", false, "ModalApi", "returns host-side confirm payload without native modal"),
+                api("wx.downloadFile", "mock", false, "FileApi", "returns mock temp file path"),
+                api("wx.uploadFile", "mock", false, "FileApi", "returns mock upload result"),
+                api("wx.getNetworkType", "mock", false, "NetworkApi", "currently returns fixed wifi type"),
+                api("wx.chooseImage", "mock", false, "ImageApi", "image selection is placeholder only"),
+                api("wx.previewImage", "mock", false, "ImageApi", "preview currently returns success without viewer"),
+                api("wx.getImageInfo", "mock", false, "ImageApi", "returns placeholder image metadata"),
+                api("wx.saveImageToPhotosAlbum", "mock", false, "ImageApi", "save flow is placeholder only"),
+                api("wx.setClipboardData", "implemented", false, "ClipboardApi", "system clipboard write"),
+                api("wx.getClipboardData", "implemented", false, "ClipboardApi", "system clipboard read"),
+                api("wx.vibrateShort", "implemented", false, "VibrateApi", "native vibration"),
+                api("wx.vibrateLong", "implemented", false, "VibrateApi", "native vibration")
         );
     }
 
@@ -134,6 +224,17 @@ public class AndroidAdminService {
 
     private AndroidBridgeApiItem api(String name, String status, boolean sync, String module, String notes) {
         return new AndroidBridgeApiItem(name, status, sync, module, notes);
+    }
+
+    private AndroidHostCapability capability(
+            String key,
+            String name,
+            String category,
+            String status,
+            String sourceModule,
+            String summary
+    ) {
+        return new AndroidHostCapability(key, name, category, status, sourceModule, summary);
     }
 
     private String valueOrDefault(String value, String fallback) {

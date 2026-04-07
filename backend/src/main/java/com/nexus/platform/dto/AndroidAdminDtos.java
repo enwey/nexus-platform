@@ -10,8 +10,9 @@ public class AndroidAdminDtos {
             long pendingGames,
             long processingGames,
             long rejectedGames,
+            long runtimeReadyGames,
             int bridgeImplementedCount,
-            int bridgeStubCount
+            int bridgePartialCount
     ) {}
 
     public record AndroidRuntimeConfig(
@@ -37,6 +38,15 @@ public class AndroidAdminDtos {
             String notes
     ) {}
 
+    public record AndroidHostCapability(
+            String capabilityKey,
+            String displayName,
+            String category,
+            String status,
+            String sourceModule,
+            String summary
+    ) {}
+
     public record AndroidGameAssetRow(
             Long gameId,
             String appId,
@@ -52,6 +62,7 @@ public class AndroidAdminDtos {
     public record AndroidConsolePayload(
             AndroidOverview overview,
             AndroidRuntimeConfig config,
+            List<AndroidHostCapability> hostCapabilities,
             List<AndroidBridgeApiItem> bridgeApis,
             List<AndroidGameAssetRow> gameAssets
     ) {}

@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-& (Join-Path $PSScriptRoot "env-local.ps1")
+& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'env-local.ps1')
 
 $dockerOk = $false
 try {
@@ -27,14 +27,13 @@ npm.cmd run infra:up
 
 Write-Host ""
 Write-Host "[2/3] Starting backend..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "& '$PSScriptRoot\env-local.ps1'; mvn -f '$root\backend\pom.xml' spring-boot:run"
+Start-Process powershell -ArgumentList '-ExecutionPolicy', 'Bypass', '-NoExit', '-Command', "& '$PSScriptRoot\env-local.ps1'; mvn -f '$root\backend\pom.xml' spring-boot:run"
 
 Write-Host ""
 Write-Host "[3/3] Starting dev portal..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$root'; npm.cmd run dev:portal"
+Start-Process powershell -ArgumentList '-ExecutionPolicy', 'Bypass', '-NoExit', '-Command', "Set-Location '$root'; npm.cmd run dev:portal"
 
 Write-Host ""
 Write-Host "Startup commands launched."
 Write-Host "Portal:  http://localhost:5173"
-Write-Host "Backend: http://localhost:8080/actuator/health"
-
+Write-Host "Backend: http://localhost:8080/api/v1/actuator/health"

@@ -2,9 +2,9 @@ spring:
   application:
     name: nexus-platform
   datasource:
-    url: jdbc:postgresql://localhost:5432/nexus_platform
-    username: nexus
-    password: nexus_password
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -15,10 +15,10 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   data:
     redis:
-      host: localhost
-      port: 6379
-      password:
-      database: 0
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
+      database: ${SPRING_REDIS_DATABASE:0}
   servlet:
     multipart:
       max-file-size: 100MB
@@ -29,15 +29,15 @@ spring:
     locations: classpath:db/migration
 
 minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
-  bucket-name: nexus-games
+  endpoint: ${MINIO_ENDPOINT}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket-name: ${MINIO_BUCKET_NAME:nexus-games}
 
 nakama:
-  server-key: defaultkeychanged
-  http-key: defaulthttpkeychanged
-  server-url: http://localhost:7351
+  server-key: ${NAKAMA_SERVER_KEY}
+  http-key: ${NAKAMA_HTTP_KEY}
+  server-url: ${NAKAMA_SERVER_URL:http://localhost:7351}
 
 server:
   port: 8080
@@ -46,8 +46,7 @@ server:
 
 security:
   jwt:
-    # Production must override this via SECURITY_JWT_SECRET (>= 32 chars)
-    secret: ${SECURITY_JWT_SECRET:change-this-in-dev-only-please-replace-with-strong-secret}
+    secret: ${SECURITY_JWT_SECRET}
     ttl-hours: ${SECURITY_JWT_TTL_HOURS:2}
     refresh-ttl-days: ${SECURITY_JWT_REFRESH_TTL_DAYS:14}
 
@@ -55,12 +54,11 @@ platform:
   public-base-url: ${PLATFORM_PUBLIC_BASE_URL:http://localhost:8080/api/v1}
   cdn-base-url: ${PLATFORM_CDN_BASE_URL:}
   security:
-    # Set false in staging/prod to block insecure defaults at startup
-    allow-insecure-defaults: ${PLATFORM_ALLOW_INSECURE_DEFAULTS:true}
+    allow-insecure-defaults: ${PLATFORM_ALLOW_INSECURE_DEFAULTS:false}
   bootstrap-admin:
-    enabled: ${PLATFORM_BOOTSTRAP_ADMIN_ENABLED:true}
+    enabled: ${PLATFORM_BOOTSTRAP_ADMIN_ENABLED:false}
     username: ${PLATFORM_BOOTSTRAP_ADMIN_USERNAME:admin}
-    password: ${PLATFORM_BOOTSTRAP_ADMIN_PASSWORD:admin123456}
+    password: ${PLATFORM_BOOTSTRAP_ADMIN_PASSWORD:}
     email: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:admin@nexus.local}
 
 logging:

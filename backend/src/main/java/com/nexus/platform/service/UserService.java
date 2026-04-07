@@ -6,7 +6,7 @@ import com.nexus.platform.dto.UserProfileDto;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,7 +16,7 @@ public class UserService {
     private final AuthTokenService authTokenService;
     private final LoginSecurityService loginSecurityService;
     private final AccountOpsService accountOpsService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     public Result<AuthResponse> register(String username, String password, String email) {
         if (username == null || username.trim().length() < 3) {

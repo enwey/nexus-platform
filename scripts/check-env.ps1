@@ -11,9 +11,9 @@ node -v
 npm.cmd -v
 
 Write-Host ""
-Write-Host "[Java + Maven from local tools]"
+Write-Host "[Java + Maven from D:\tools\ai_install]"
 try {
-  & (Join-Path $PSScriptRoot "env-local.ps1")
+  & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'env-local.ps1')
   java -version
   mvn -v
 } catch {
@@ -28,4 +28,3 @@ try {
 } catch {
   Write-Host "Docker unavailable: $($_.Exception.Message)"
 }
-

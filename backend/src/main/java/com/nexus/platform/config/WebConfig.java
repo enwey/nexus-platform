@@ -1,21 +1,16 @@
 package com.nexus.platform.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.List;
 
 @Configuration
-@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
-    private final AuthInterceptor authInterceptor;
-
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
@@ -50,35 +45,4 @@ public class WebConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(authInterceptor)
-                .addPathPatterns(
-                        "/user/send-code",
-                        "/user/password/**",
-                        "/user/devices/**",
-                        "/user/logout-all",
-                        "/user/terminate",
-                        "/user/me",
-                        "/user/profile",
-                        "/user/logout",
-                        "/wallet/**",
-                        "/referral/**",
-                        "/library/**",
-                        "/game/list",
-                        "/game/list/**",
-                        "/game/upload",
-                        "/game/submit/**",
-                        "/game/*/versions",
-                        "/game/*/submit-version/*",
-                        "/game/*/rollback/*",
-                        "/game/*/metadata",
-                        "/game/developer/**",
-                        "/game/approve/**",
-                        "/game/reject/**",
-                        "/audit/**",
-                        "/admin/android/**",
-                        "/admin/ops/**"
-                );
-    }
 }

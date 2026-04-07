@@ -3,6 +3,7 @@ package com.nexus.platform.security;
 import com.nexus.platform.entity.User;
 import java.util.EnumSet;
 import java.util.Map;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,5 +32,12 @@ public class RolePermissionService {
         }
         EnumSet<Permission> permissions = ROLE_PERMISSIONS.get(user.getRole());
         return permissions != null && permissions.contains(permission);
+    }
+
+    public boolean hasPermission(Authentication authentication, Permission permission) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
+            return false;
+        }
+        return hasPermission(user, permission);
     }
 }

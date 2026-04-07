@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +38,7 @@ public class AccountOpsService {
     private final UserRepository userRepository;
     private final UserGameActionLogRepository actionLogRepository;
     private final AuthTokenService authTokenService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     public Result<VerificationCodeResponse> sendCode(String account, String purpose) {
         String normalizedAccount = normalizeAccount(account);

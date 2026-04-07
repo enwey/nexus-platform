@@ -10,10 +10,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SecuritySanityCheck implements CommandLineRunner {
 
-    @Value("${platform.security.allow-insecure-defaults:true}")
+    @Value("${platform.security.allow-insecure-defaults:false}")
     private boolean allowInsecureDefaults;
 
-    @Value("${platform.bootstrap-admin.password:admin123456}")
+    @Value("${platform.bootstrap-admin.enabled:false}")
+    private boolean bootstrapAdminEnabled;
+
+    @Value("${platform.bootstrap-admin.password:}")
     private String adminPassword;
 
     @Value("${security.jwt.secret}")
@@ -41,11 +44,15 @@ public class SecuritySanityCheck implements CommandLineRunner {
             return;
         }
 
-        if ("admin123456".equals(adminPassword)) {
+        if (bootstrapAdminEnabled && (adminPassword == null || adminPassword.isBlank())) {
+            throw new IllegalStateException("Bootstrap admin is enabled but PLATFORM_BOOTSTRAP_ADMIN_PASSWORD is not set.");
+        }
+
+        if (bootstrapAdminEnabled && "admin123456".equals(adminPassword)) {
             throw new IllegalStateException("Insecure admin password detected. Please set PLATFORM_BOOTSTRAP_ADMIN_PASSWORD.");
         }
 
-        if (jwtSecret == null || jwtSecret.length() < 32 || jwtSecret.contains("change-this-in-dev-only")) {
+        if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.length() < 32 || jwtSecret.contains("change-this-in-dev-only")) {
             throw new IllegalStateException("Insecure JWT secret detected. Please set SECURITY_JWT_SECRET with a strong value.");
         }
     }

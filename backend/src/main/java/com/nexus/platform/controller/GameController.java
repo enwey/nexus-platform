@@ -1,6 +1,5 @@
 package com.nexus.platform.controller;
 
-import com.nexus.platform.config.AuthInterceptor;
 import com.nexus.platform.dto.GameMetadataUpdateRequest;
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
@@ -12,13 +11,14 @@ import com.nexus.platform.service.GameOpsProfileService;
 import com.nexus.platform.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,17 +36,18 @@ public class GameController {
     private String downloadMode;
 
     @PostMapping("/upload")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_UPLOAD)")
     public Result<Game> uploadGame(
             @RequestParam("file") MultipartFile file,
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         return gameService.uploadGame(file, name, description, currentUser);
     }
 
     @GetMapping("/list")
     public Result<java.util.List<Game>> getGameList(
-            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         return gameService.getGameList(currentUser);
     }
 
@@ -70,7 +71,7 @@ public class GameController {
 
     @GetMapping("/list/page")
     public Result<PageResult<Game>> getGameListPaged(
-            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return gameService.getGameListPaged(currentUser, page, size);
@@ -87,47 +88,51 @@ public class GameController {
     }
 
     @org.springframework.web.bind.annotation.PutMapping("/{gameId}/metadata")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
     public Result<Game> updateGameMetadata(
             @PathVariable Long gameId,
             @RequestBody GameMetadataUpdateRequest request,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         return gameService.updateGameMetadata(gameId, request, currentUser);
     }
 
     @GetMapping("/developer/{developerId}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
     public Result<java.util.List<Game>> getDeveloperGames(
             @PathVariable Long developerId,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         return gameService.getDeveloperGames(developerId, currentUser);
     }
 
     @GetMapping("/developer/{developerId}/page")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
     public Result<PageResult<Game>> getDeveloperGamesPaged(
             @PathVariable Long developerId,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return gameService.getDeveloperGamesPaged(developerId, currentUser, page, size);
     }
 
     @GetMapping("/{gameId}/versions")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
     public Result<java.util.List<com.nexus.platform.entity.GameVersion>> getGameVersions(
             @PathVariable Long gameId,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         return gameService.getGameVersions(gameId, currentUser);
     }
 
     @GetMapping("/download-url/{appId}")
     public Result<String> getDownloadUrl(
             @PathVariable String appId,
-            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         return gameService.getPresignedDownloadUrl(appId, currentUser);
     }
 
     @GetMapping("/download/{appId}")
     public ResponseEntity<StreamingResponseBody> downloadGame(
             @PathVariable String appId,
-            @RequestAttribute(value = AuthInterceptor.AUTH_USER_ATTRIBUTE, required = false) User currentUser) {
+            @AuthenticationPrincipal User currentUser) {
         if ("redirect".equalsIgnoreCase(downloadMode)) {
             Result<String> redirect = gameService.getPresignedDownloadUrl(appId, currentUser);
             if (redirect.getCode() != 0 || redirect.getData() == null) {
@@ -155,9 +160,10 @@ public class GameController {
     }
 
     @PostMapping("/approve/{id}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_AUDIT_APPROVE)")
     public Result<Void> approveGame(
             @PathVariable Long id,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) AuditDecisionRequest decision) {
         String reason = decision == null ? null : decision.reason();
@@ -165,9 +171,10 @@ public class GameController {
     }
 
     @PostMapping("/submit/{id}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_AUDIT_SUBMIT)")
     public Result<Void> submitGame(
             @PathVariable Long id,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) SubmitAuditRequest decision) {
         String note = decision == null ? null : decision.note();
@@ -176,10 +183,11 @@ public class GameController {
     }
 
     @PostMapping("/{gameId}/submit-version/{versionId}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_AUDIT_SUBMIT)")
     public Result<Void> submitGameVersion(
             @PathVariable Long gameId,
             @PathVariable Long versionId,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) SubmitAuditRequest decision) {
         String note = decision == null ? null : decision.note();
@@ -195,10 +203,11 @@ public class GameController {
     }
 
     @PostMapping("/{gameId}/rollback/{versionId}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_VERSION_ROLLBACK)")
     public Result<Void> rollbackVersion(
             @PathVariable Long gameId,
             @PathVariable Long versionId,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) RollbackVersionRequest decision) {
         String reason = decision == null ? null : decision.reason();
@@ -206,9 +215,10 @@ public class GameController {
     }
 
     @PostMapping("/reject/{id}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_AUDIT_REJECT)")
     public Result<Void> rejectGame(
             @PathVariable Long id,
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User currentUser,
+            @AuthenticationPrincipal User currentUser,
             jakarta.servlet.http.HttpServletRequest request,
             @RequestBody(required = false) AuditDecisionRequest decision) {
         String reason = decision == null ? null : decision.reason();

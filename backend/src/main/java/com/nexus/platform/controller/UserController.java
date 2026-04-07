@@ -1,6 +1,5 @@
 package com.nexus.platform.controller;
 
-import com.nexus.platform.config.AuthInterceptor;
 import com.nexus.platform.dto.AuthResponse;
 import com.nexus.platform.dto.DeviceSessionDto;
 import com.nexus.platform.dto.Result;
@@ -14,10 +13,11 @@ import com.nexus.platform.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,6 +47,7 @@ public class UserController {
     }
 
     @PostMapping("/logout")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_LOGOUT)")
     public Result<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
         String token = extractBearerToken(authorization);
         if (token != null) {
@@ -66,15 +67,17 @@ public class UserController {
     }
 
     @PostMapping("/password/change")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
     public Result<Void> changePassword(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @AuthenticationPrincipal User user,
             @RequestBody ChangePasswordRequest request) {
         return accountOpsService.changePassword(user, request.oldPassword(), request.newPassword());
     }
 
     @GetMapping("/devices")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
     public Result<List<DeviceSessionDto>> devices(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @AuthenticationPrincipal User user,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         String token = extractBearerToken(authorization);
         String currentDeviceId = token == null ? null : accountService.resolveDeviceIdFromToken(token);
@@ -82,15 +85,17 @@ public class UserController {
     }
 
     @PostMapping("/devices/{deviceId}/kick")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
     public Result<Void> kickDevice(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @AuthenticationPrincipal User user,
             @PathVariable String deviceId) {
         return accountOpsService.kickDevice(user.getId(), deviceId);
     }
 
     @PostMapping("/logout-all")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_LOGOUT)")
     public Result<Void> logoutAll(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @AuthenticationPrincipal User user,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         String token = extractBearerToken(authorization);
         String currentDeviceId = token == null ? null : accountService.resolveDeviceIdFromToken(token);
@@ -98,26 +103,30 @@ public class UserController {
     }
 
     @PostMapping("/terminate")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
     public Result<Void> terminate(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @AuthenticationPrincipal User user,
             @RequestBody TerminateRequest request) {
         return accountOpsService.terminateAccount(user, request.confirmText());
     }
 
     @GetMapping("/me")
-    public Result<UserProfileDto> getCurrentUser(@RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user) {
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<UserProfileDto> getCurrentUser(@AuthenticationPrincipal User user) {
         return Result.success(UserProfileDto.from(user));
     }
 
     @GetMapping("/profile")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
     public Result<UserProfileDetailDto> getProfile(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user) {
+            @AuthenticationPrincipal User user) {
         return accountService.getProfile(user);
     }
 
     @PostMapping("/profile")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
     public Result<UserProfileDetailDto> updateProfile(
-            @RequestAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE) User user,
+            @AuthenticationPrincipal User user,
             @RequestBody UpdateProfileRequest request) {
         return accountService.updateProfile(
                 user,

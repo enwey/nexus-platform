@@ -8,6 +8,7 @@
       <div class="actions">
         <el-input-number v-model="limit" :min="10" :max="200" :step="10" />
         <el-button type="primary" @click="loadLogs">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
+        <el-button @click="$router.push('/android-console')">Android Console</el-button>
         <el-button @click="$router.push('/runtime-ops')">Runtime Ops Console</el-button>
         <el-button @click="$router.push('/audit')">{{ lt('返回审核台', '返回審核台', 'Back to Review') }}</el-button>
       </div>

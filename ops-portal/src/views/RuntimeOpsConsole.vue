@@ -6,6 +6,7 @@
         <p>{{ lt('管理运行时配置、游戏元数据及发现页运营配置。', '管理運行時配置、遊戲中繼資料與發現頁營運配置。', 'Manage runtime config, game metadata, and discover operation settings.') }}</p>
       </div>
       <div class="actions">
+        <el-button @click="$router.push('/android-console')">Android Console</el-button>
         <el-button @click="$router.push('/audit')">{{ lt('返回审核台', '返回審核台', 'Back To Audit') }}</el-button>
         <el-button type="primary" @click="loadAll">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
       </div>
