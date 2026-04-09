@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-shell">
     <header class="page-header">
       <div>
@@ -23,8 +23,9 @@
         <el-table-column prop="status" :label="lt('状态', '狀態', 'Status')" width="140">
           <template #default="{ row }"><el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag></template>
         </el-table-column>
-        <el-table-column :label="lt('操作', '操作', 'Actions')" width="190" fixed="right">
+        <el-table-column :label="lt('操作', '操作', 'Actions')" width="220" fixed="right">
           <template #default="{ row }">
+            <el-button v-if="row.status === 'DRAFT' || row.status === 'REJECTED'" type="warning" size="small" @click="handleSubmit(row)">{{ lt('提交审核', '提交審核', 'Submit For Review') }}</el-button>
             <el-button v-if="row.status === 'PENDING'" type="success" size="small" @click="handleApprove(row)">{{ lt('通过', '通過', 'Approve') }}</el-button>
             <el-button v-if="row.status === 'PENDING'" type="danger" size="small" @click="handleReject(row)">{{ lt('拒绝', '拒絕', 'Reject') }}</el-button>
           </template>
@@ -38,7 +39,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { approveGame, getGameList, logoutSession, rejectGame } from '../api'
+import { approveGame, getGameList, logoutSession, rejectGame, submitGameForAudit } from '../api'
 import { useUserStore } from '../stores/user'
 import { useI18nLite } from '../i18n'
 
@@ -64,7 +65,7 @@ const loadGames = async () => {
   loading.value = true
   try {
     const res = await getGameList()
-    games.value = (res.data || []).filter((game) => ['PROCESSING', 'PENDING', 'APPROVED', 'REJECTED'].includes(game.status))
+    games.value = (res.data || []).filter((game) => ['PROCESSING', 'DRAFT', 'PENDING', 'APPROVED', 'REJECTED'].includes(game.status))
   } catch (error) {
     ElMessage.error(error.message || lt('加载审核列表失败', '載入審核列表失敗', 'Failed to load review list'))
   } finally {
@@ -105,6 +106,16 @@ const handleReject = async (row) => {
     await loadGames()
   } catch (error) {
     if (error !== 'cancel') ElMessage.error(error.message || lt('审核操作失败', '審核操作失敗', 'Review action failed'))
+  }
+}
+
+const handleSubmit = async (row) => {
+  try {
+    await submitGameForAudit(row.id, lt('运营后台提交审核', '營運後台提交審核', 'Submitted from ops portal'))
+    ElMessage.success(lt('已提交审核', '已提交審核', 'Submitted for review'))
+    await loadGames()
+  } catch (error) {
+    ElMessage.error(error.message || lt('提交审核失败', '提交審核失敗', 'Failed to submit for review'))
   }
 }
 

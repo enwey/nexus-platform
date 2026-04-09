@@ -189,9 +189,24 @@ class LibraryViewModel(
         if (serverHome != null) {
             val merged = (games + serverHome.recentGames + serverHome.myGames + listOfNotNull(serverHome.currentPlayingGame))
                 .associateBy { it.id }
-            val recent = serverHome.recentGames.mapNotNull { merged[it.id] }
-            val myGames = serverHome.myGames.mapNotNull { merged[it.id] }
-            val current = serverHome.currentPlayingGame?.let { merged[it.id] } ?: recent.firstOrNull()
+
+            val localRecentIds = engagementStore.getRecentPlayedGameIdsDesc()
+            val localFavoriteIds = engagementStore.getFavoriteGameIdsDesc()
+
+            val recentIds = linkedSetOf<String>().apply {
+                addAll(serverHome.recentGames.map { it.id })
+                addAll(localRecentIds)
+            }
+            val myGameIds = linkedSetOf<String>().apply {
+                addAll(serverHome.myGames.map { it.id })
+                addAll(localFavoriteIds)
+            }
+
+            val recent = recentIds.mapNotNull { merged[it] }
+            val myGames = myGameIds.mapNotNull { merged[it] }
+            val current = serverHome.currentPlayingGame?.let { merged[it.id] }
+                ?: engagementStore.getCurrentPlayingGameId()?.let { merged[it] }
+                ?: recent.firstOrNull()
             return DisplayData(
                 currentPlaying = current,
                 recent = recent,

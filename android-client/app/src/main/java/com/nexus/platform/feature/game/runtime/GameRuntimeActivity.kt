@@ -276,6 +276,9 @@ class GameRuntimeActivity : AppCompatActivity() {
 
     private fun loadGame(game: GameItem, forceRefresh: Boolean) {
         engagementStore.markPlayed(game.id)
+        scope.launch(Dispatchers.IO) {
+            runCatching { backendApi.markPlayed(game.id) }
+        }
         loadJob?.cancel()
         loadJob = scope.launch {
             try {

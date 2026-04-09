@@ -61,6 +61,13 @@ export const rejectGame = (id, reason) =>
     data: { reason }
   })
 
+export const submitGameForAudit = (id, note = '') =>
+  request({
+    url: `/game/submit/${id}`,
+    method: 'post',
+    data: { note }
+  })
+
 export const getAuditLogs = (limit = 50) =>
   request({
     url: '/audit/logs',
