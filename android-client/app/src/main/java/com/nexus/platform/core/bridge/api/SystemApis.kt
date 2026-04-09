@@ -1,16 +1,28 @@
 ﻿package com.nexus.platform.core.bridge.api
 
 import android.content.Context
+import com.nexus.platform.data.local.AuthSessionStore
 import com.google.gson.JsonObject
 import com.nexus.platform.core.bridge.RuntimeMetricsProvider
+import java.security.SecureRandom
+import kotlin.math.absoluteValue
 
 /**
  * Handle wx.login.
  */
 class LoginApi(private val context: Context) : ApiHandler {
+    private val sessionStore = AuthSessionStore(context)
+    private val random = SecureRandom()
+
     override suspend fun handle(api: String, params: JsonObject): Any? {
+        val token = sessionStore.accessToken().orEmpty()
+        val generated = if (token.isNotBlank()) {
+            "nxs_${token.hashCode().absoluteValue}_${System.currentTimeMillis()}"
+        } else {
+            "nxs_guest_${random.nextInt(1_000_000)}_${System.currentTimeMillis()}"
+        }
         return mapOf(
-            "code" to "mock_code_${System.currentTimeMillis()}",
+            "code" to generated,
             "errMsg" to "login:ok"
         )
     }

@@ -55,11 +55,15 @@ public class AccountService {
         if (languageTag != null && !languageTag.isBlank()) {
             profile.setLanguageTag(languageTag.trim());
         }
-        if (email != null) {
-            user.setEmail(trimToNull(email, 255));
+        if (email != null && !email.isBlank()) {
+            String normalized = email.trim().toLowerCase();
+            String current = user.getEmail() == null ? null : user.getEmail().trim().toLowerCase();
+            if (current == null || !current.equals(normalized)) {
+                return Result.error("Email update is not supported here, please use verification flow");
+            }
         }
-        if (phone != null) {
-            user.setPhone(trimToNull(phone, 255));
+        if (phone != null && !phone.isBlank()) {
+            return Result.error("Phone account is no longer supported");
         }
 
         userRepository.save(user);

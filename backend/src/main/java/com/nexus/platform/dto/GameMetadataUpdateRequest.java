@@ -8,6 +8,7 @@ public record GameMetadataUpdateRequest(
         String iconUrl,
         String category,
         List<String> tags,
-        String version
+        String version,
+        Boolean requiresOnline
 ) {
 }

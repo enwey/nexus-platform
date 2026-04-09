@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.NexusPlatformTheme
@@ -73,10 +75,15 @@ private fun ForgotPasswordScreen(
     val backendApi = remember(context) { PlatformBackendApi(context) }
     val scope = rememberCoroutineScope()
     val accountLabel = stringResource(R.string.forgot_account_label)
-    var phoneOrEmail by remember { mutableStateOf("") }
+    val forgotCodeSentText = stringResource(R.string.forgot_code_sent)
+    val changePasswordIncompleteText = stringResource(R.string.change_password_error_incomplete)
+    val changePasswordSuccessText = stringResource(R.string.change_password_success)
+    var email by remember { mutableStateOf("") }
     var verificationCode by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var codeCountdown by remember { mutableIntStateOf(0) }
+    var feedbackMessage by remember { mutableStateOf<String?>(null) }
+    var feedbackIsError by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -90,14 +97,19 @@ private fun ForgotPasswordScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-        Text(text = stringResource(R.string.forgot_title), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        Text(
+            text = stringResource(R.string.forgot_title),
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Black,
+            color = Color.White
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = stringResource(R.string.forgot_subtitle), color = TextMuted)
         Spacer(modifier = Modifier.height(30.dp))
 
         OutlinedTextField(
-            value = phoneOrEmail,
-            onValueChange = { phoneOrEmail = it },
+            value = email,
+            onValueChange = { email = it },
             label = { Text(accountLabel) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -131,22 +143,34 @@ private fun ForgotPasswordScreen(
             ActionButton(
                 text = if (codeCountdown > 0) "${codeCountdown}s" else stringResource(R.string.forgot_get_code),
                 onClick = {
-                    if (phoneOrEmail.isBlank()) {
+                    if (email.isBlank()) {
                         Toast.makeText(context, accountLabel, Toast.LENGTH_SHORT).show()
+                        return@ActionButton
+                    }
+                    if (!email.contains("@")) {
+                        Toast.makeText(context, context.getString(R.string.auth_error_invalid_email), Toast.LENGTH_SHORT).show()
                         return@ActionButton
                     }
                     if (codeCountdown <= 0) {
                         scope.launch {
-                            val sent = backendApi.sendVerificationCode(phoneOrEmail.trim(), "RESET_PASSWORD")
-                            if (sent) {
+                            val result = backendApi.sendVerificationCodeResult(email.trim(), "RESET_PASSWORD", "AUTH_FORGOT_PASSWORD")
+                            if (result.success) {
                                 codeCountdown = 60
                                 while (codeCountdown > 0) {
                                     kotlinx.coroutines.delay(1000)
                                     codeCountdown -= 1
                                 }
-                                Toast.makeText(context, "Code sent", Toast.LENGTH_SHORT).show()
+                                feedbackMessage = forgotCodeSentText
+                                feedbackIsError = false
+                                Toast.makeText(context, feedbackMessage, Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(context, "Failed to send code", Toast.LENGTH_SHORT).show()
+                                feedbackMessage = ApiErrorLocalizer.localize(
+                                    context = context,
+                                    rawMessage = result.message,
+                                    fallbackRes = R.string.forgot_code_failed
+                                )
+                                feedbackIsError = true
+                                Toast.makeText(context, feedbackMessage, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -177,32 +201,59 @@ private fun ForgotPasswordScreen(
         ActionButton(
             text = stringResource(R.string.forgot_action),
             onClick = {
-                if (phoneOrEmail.isBlank() || verificationCode.isBlank() || newPassword.length < 8) {
-                    Toast.makeText(context, "Please fill all fields and use >=8 chars password", Toast.LENGTH_SHORT).show()
+                if (email.isBlank() || verificationCode.isBlank() || newPassword.length < 8) {
+                    feedbackMessage = changePasswordIncompleteText
+                    feedbackIsError = true
+                    Toast.makeText(context, feedbackMessage, Toast.LENGTH_SHORT).show()
+                    return@ActionButton
+                }
+                if (!email.contains("@")) {
+                    Toast.makeText(context, context.getString(R.string.auth_error_invalid_email), Toast.LENGTH_SHORT).show()
                     return@ActionButton
                 }
                 scope.launch {
-                    val ok = backendApi.resetPassword(
-                        account = phoneOrEmail.trim(),
+                    val result = backendApi.resetPasswordResult(
+                        email = email.trim(),
                         code = verificationCode.trim(),
                         newPassword = newPassword
                     )
+                    feedbackMessage = if (result.success) {
+                        changePasswordSuccessText
+                    } else {
+                        ApiErrorLocalizer.localize(
+                            context = context,
+                            rawMessage = result.message,
+                            fallbackRes = R.string.change_password_failed
+                        )
+                    }
+                    feedbackIsError = !result.success
                     Toast.makeText(
                         context,
-                        if (ok) "Password reset success" else "Reset password failed",
+                        feedbackMessage,
                         Toast.LENGTH_LONG
                     ).show()
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp)
         )
+        if (!feedbackMessage.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = feedbackMessage.orEmpty(),
+                color = if (feedbackIsError) MaterialTheme.colorScheme.error else Primary
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             Text(text = stringResource(R.string.forgot_existing_user), color = TextMuted)
-            TextButton(onClick = onLoginClick) {
-                Text(text = stringResource(R.string.forgot_login), color = Color.White, fontWeight = FontWeight.Bold)
-            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.forgot_login),
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onLoginClick)
+            )
         }
     }
 }

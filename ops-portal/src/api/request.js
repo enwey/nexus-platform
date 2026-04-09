@@ -6,6 +6,30 @@ const TOKEN_KEY = 'ops_token'
 const USER_KEY = 'ops_user'
 const REFRESH_TOKEN_KEY = 'ops_refresh_token'
 
+function safeGet(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSet(key, value) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Ignore storage write failures in private mode.
+  }
+}
+
+function safeRemove(key) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // Ignore storage removal failures in private mode.
+  }
+}
+
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
   timeout: 30000
@@ -26,9 +50,9 @@ function redirectToLogin(message = msgAuthExpired()) {
   if (redirectingToLogin) return
   redirectingToLogin = true
 
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(USER_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  safeRemove(TOKEN_KEY)
+  safeRemove(USER_KEY)
+  safeRemove(REFRESH_TOKEN_KEY)
   ElMessage.warning(message)
 
   const current = `${window.location.pathname}${window.location.search}`
@@ -37,7 +61,7 @@ function redirectToLogin(message = msgAuthExpired()) {
 
 request.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = safeGet(TOKEN_KEY)
     if (token) {
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${token}`
@@ -48,7 +72,7 @@ request.interceptors.request.use(
 )
 
 async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+  const refreshToken = safeGet(REFRESH_TOKEN_KEY)
   if (!refreshToken) throw new Error('Missing refresh token')
 
   if (!refreshPromise) {
@@ -62,14 +86,14 @@ async function refreshAccessToken() {
         throw new Error(res?.message || 'Refresh failed')
       }
 
-      localStorage.setItem(TOKEN_KEY, res.data.token)
+      safeSet(TOKEN_KEY, res.data.token)
       if (res.data.refreshToken) {
-        localStorage.setItem(REFRESH_TOKEN_KEY, res.data.refreshToken)
+        safeSet(REFRESH_TOKEN_KEY, res.data.refreshToken)
       } else {
-        localStorage.removeItem(REFRESH_TOKEN_KEY)
+        safeRemove(REFRESH_TOKEN_KEY)
       }
       if (res.data.user) {
-        localStorage.setItem(USER_KEY, JSON.stringify(res.data.user))
+        safeSet(USER_KEY, JSON.stringify(res.data.user))
       }
       return res.data.token
     }).finally(() => {
@@ -81,7 +105,7 @@ async function refreshAccessToken() {
 }
 
 async function retryWithRefresh(config, message) {
-  if (config?.skipAuthRefresh || config?._retry || !localStorage.getItem(REFRESH_TOKEN_KEY)) {
+  if (config?.skipAuthRefresh || config?._retry || !safeGet(REFRESH_TOKEN_KEY)) {
     return null
   }
 

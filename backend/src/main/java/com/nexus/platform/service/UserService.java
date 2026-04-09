@@ -18,21 +18,27 @@ public class UserService {
     private final AccountOpsService accountOpsService;
     private final PasswordEncoder passwordEncoder;
 
-    public Result<AuthResponse> register(String username, String password, String email) {
-        if (username == null || username.trim().length() < 3) {
-            return Result.error("Username length must be at least 3");
+    public Result<AuthResponse> register(String email, String password, String code) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) {
+            return Result.error("Email is required");
         }
         if (!isStrongPassword(password)) {
             return Result.error("Password must be at least 8 chars and include letters and digits");
         }
-        if (userRepository.existsByUsername(username.trim())) {
-            return Result.error("Username already exists");
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            return Result.error("Email already registered");
+        }
+        Result<Void> verifyResult = accountOpsService.verifyRegisterCode(normalizedEmail, code);
+        if (verifyResult.getCode() != 0) {
+            return Result.error(verifyResult.getCode(), verifyResult.getMessage());
         }
 
         User user = new User();
-        user.setUsername(username.trim());
+        user.setUsername(normalizedEmail);
         user.setPassword(passwordEncoder.encode(password));
-        user.setEmail(email);
+        user.setEmail(normalizedEmail);
+        user.setPhone(null);
 
         User savedUser = userRepository.save(user);
         String accessToken = authTokenService.issueAccessToken(savedUser);
@@ -40,24 +46,28 @@ public class UserService {
         return Result.success(new AuthResponse(accessToken, refreshToken, UserProfileDto.from(savedUser)));
     }
 
-    public Result<AuthResponse> login(String username, String password, String clientIp) {
-        String blockedReason = loginSecurityService.getBlockReason(username, clientIp);
+    public Result<AuthResponse> login(String email, String password, String clientIp) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) {
+            return Result.error("Email is required");
+        }
+        String blockedReason = loginSecurityService.getBlockReason(normalizedEmail, clientIp);
         if (blockedReason != null) {
             return Result.error(429, blockedReason);
         }
 
-        User user = userRepository.findByUsername(username).orElse(null);
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
         if (user == null) {
-            loginSecurityService.onLoginFailed(username, clientIp);
+            loginSecurityService.onLoginFailed(normalizedEmail, clientIp);
             return Result.error("User not found");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            loginSecurityService.onLoginFailed(username, clientIp);
+            loginSecurityService.onLoginFailed(normalizedEmail, clientIp);
             return Result.error("Incorrect password");
         }
 
-        loginSecurityService.onLoginSuccess(username, clientIp);
+        loginSecurityService.onLoginSuccess(normalizedEmail, clientIp);
         String accessToken = authTokenService.issueAccessToken(user);
         String refreshToken = authTokenService.issueRefreshToken(user);
         accountOpsService.recordDeviceLogin(user, clientIp, authTokenService.extractDeviceId(accessToken));
@@ -98,5 +108,13 @@ public class UserService {
             }
         }
         return hasLetter && hasDigit;
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        String value = email.trim().toLowerCase();
+        return value.isEmpty() ? null : value;
     }
 }

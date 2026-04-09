@@ -205,6 +205,9 @@ public class GameService {
                     .collect(Collectors.joining(","));
             game.setTagsJson(serialized);
         }
+        if (request.requiresOnline() != null) {
+            game.setRequiresOnline(Boolean.TRUE.equals(request.requiresOnline()));
+        }
 
         game = gameRepository.save(game);
         normalizeClientUrls(game);
@@ -668,6 +671,9 @@ public class GameService {
     private void normalizeClientUrls(Game game) {
         if (game == null || game.getAppId() == null) {
             return;
+        }
+        if (game.getRequiresOnline() == null) {
+            game.setRequiresOnline(false);
         }
         String downloadUrl = game.getDownloadUrl();
         if (downloadUrl == null || downloadUrl.isBlank()

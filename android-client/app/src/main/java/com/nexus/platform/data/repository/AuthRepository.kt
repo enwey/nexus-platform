@@ -10,27 +10,27 @@ class AuthRepository(context: Context) {
     private val authApi = BackendAuthApi()
     private val sessionStore = AuthSessionStore(context)
 
-    suspend fun login(username: String, password: String): AuthSession {
+    suspend fun login(email: String, password: String): AuthSession {
         val session = if (BuildConfig.USE_MOCK_DATA) {
             AuthSession(
                 accessToken = "local-demo-token",
                 refreshToken = "local-demo-refresh-token"
             )
         } else {
-            authApi.login(username, password)
+            authApi.login(email, password)
         }
         sessionStore.save(session)
         return session
     }
 
-    suspend fun register(username: String, password: String, email: String?): AuthSession {
+    suspend fun register(email: String, password: String, code: String): AuthSession {
         val session = if (BuildConfig.USE_MOCK_DATA) {
             AuthSession(
                 accessToken = "local-demo-token",
                 refreshToken = "local-demo-refresh-token"
             )
         } else {
-            authApi.register(username, password, email)
+            authApi.register(email, password, code)
         }
         sessionStore.save(session)
         return session

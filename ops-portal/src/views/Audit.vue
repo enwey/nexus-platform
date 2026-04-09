@@ -9,6 +9,7 @@
         <el-button type="primary" plain @click="$router.push('/android-console')">Android Console</el-button>
         <el-button type="primary" plain @click="$router.push('/runtime-ops')">Runtime Ops Console</el-button>
         <el-button @click="$router.push('/audit/logs')">{{ lt('查看审计日志', '查看審計日誌', 'View Audit Logs') }}</el-button>
+        <el-button @click="$router.push('/verification-codes')">{{ lt('验证码记录', '驗證碼記錄', 'Verification Codes') }}</el-button>
         <el-button @click="handleLogout">{{ lt('退出登录', '登出', 'Sign Out') }}</el-button>
       </div>
     </header>

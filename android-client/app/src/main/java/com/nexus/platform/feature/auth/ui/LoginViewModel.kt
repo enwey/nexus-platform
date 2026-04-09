@@ -10,14 +10,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class LoginUiState(
-    val username: String = "",
+    val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
+    val emailError: String? = null,
+    val passwordError: String? = null,
     val errorMessage: String? = null
 )
 
-private const val ERROR_EMPTY_CREDENTIALS = "__error_empty_credentials__"
 private const val ERROR_LOGIN_FAILED = "__error_login_failed__"
+private const val ERROR_EMAIL_REQUIRED = "__error_email_required__"
+private const val ERROR_PASSWORD_REQUIRED = "__error_password_required__"
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase
@@ -25,28 +28,43 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun updateUsername(value: String) {
-        _uiState.update { it.copy(username = value) }
+    fun updateEmail(value: String) {
+        _uiState.update { it.copy(email = value, emailError = null) }
     }
 
     fun updatePassword(value: String) {
-        _uiState.update { it.copy(password = value) }
+        _uiState.update { it.copy(password = value, passwordError = null) }
     }
 
     fun login(onSuccess: () -> Unit) {
         val snapshot = _uiState.value
-        val username = snapshot.username.trim()
+        val email = snapshot.email.trim()
         val password = snapshot.password
 
-        if (username.isBlank() || password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = ERROR_EMPTY_CREDENTIALS) }
+        val emailError = if (email.isBlank()) ERROR_EMAIL_REQUIRED else null
+        val passwordError = if (password.isBlank()) ERROR_PASSWORD_REQUIRED else null
+        if (emailError != null || passwordError != null) {
+            _uiState.update {
+                it.copy(
+                    emailError = emailError,
+                    passwordError = passwordError,
+                    errorMessage = null
+                )
+            }
             return
         }
 
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                emailError = null,
+                passwordError = null,
+                errorMessage = null
+            )
+        }
         viewModelScope.launch {
             runCatching {
-                loginUseCase(username, password)
+                loginUseCase(email, password)
             }.onSuccess {
                 onSuccess()
             }.onFailure { e ->

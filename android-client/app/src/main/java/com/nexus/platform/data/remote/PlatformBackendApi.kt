@@ -32,6 +32,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class PlatformBackendApi(context: Context) {
+    data class ApiActionResult(
+        val success: Boolean,
+        val message: String? = null
+    )
+
+    data class LegalLinks(
+        val termsUrl: String,
+        val privacyUrl: String
+    )
+
     private val gson = Gson()
     private val sessionStore = AuthSessionStore(context)
     private val refreshMutex = Mutex()
@@ -74,7 +84,8 @@ class PlatformBackendApi(context: Context) {
             downloadUrl = normalizeDownloadUrl(stringOrEmpty("downloadUrl")),
             version = stringOrDefault("version", "1.0.0"),
             md5 = stringOrEmpty("md5"),
-            category = stringOrEmpty("category")
+            category = stringOrEmpty("category"),
+            requiresOnline = get("requiresOnline")?.asBoolean ?: false
         )
     }
 
@@ -328,29 +339,46 @@ class PlatformBackendApi(context: Context) {
         } ?: return@withContext null
     }
 
-    suspend fun sendVerificationCode(account: String, purpose: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun sendVerificationCode(email: String, purpose: String, scene: String? = null): Boolean = withContext(Dispatchers.IO) {
+        return@withContext sendVerificationCodeResult(email, purpose, scene).success
+    }
+
+    suspend fun sendVerificationCodeResult(email: String, purpose: String, scene: String? = null): ApiActionResult = withContext(Dispatchers.IO) {
         return@withContext runCatching {
             val payload = JsonObject().apply {
-                addProperty("account", account)
+                addProperty("email", email)
                 addProperty("purpose", purpose)
+                if (!scene.isNullOrBlank()) {
+                    addProperty("scene", scene)
+                }
             }
             val body = gson.toJson(payload).toRequestBody("application/json; charset=utf-8".toMediaType())
             val request = Request.Builder()
                 .url("${BackendConfig.apiBaseUrl}/user/send-code")
+                .addHeader("X-Client-Source", "android-client")
+                .addHeader("X-Client-Scene", scene ?: "")
                 .post(body)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@use false
-                val root = gson.fromJson(response.body?.string().orEmpty(), JsonObject::class.java)
-                (root?.get("code")?.asInt ?: -1) == 0
+                val raw = response.body?.string().orEmpty()
+                val root = gson.fromJson(raw, JsonObject::class.java)
+                val message = root?.get("message")?.asString
+                val success = response.isSuccessful && (root?.get("code")?.asInt ?: -1) == 0
+                ApiActionResult(success = success, message = message)
             }
-        }.getOrDefault(false)
+        }.getOrElse { e ->
+            ApiActionResult(success = false, message = e.message)
+        }
     }
 
-    suspend fun resetPassword(account: String, code: String, newPassword: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun resetPassword(email: String, code: String, newPassword: String): Boolean = withContext(Dispatchers.IO) {
+        return@withContext resetPasswordResult(email, code, newPassword).success
+    }
+
+    suspend fun resetPasswordResult(email: String, code: String, newPassword: String): ApiActionResult = withContext(Dispatchers.IO) {
         return@withContext runCatching {
             val payload = JsonObject().apply {
-                addProperty("account", account)
+                addProperty("email", email)
                 addProperty("code", code)
                 addProperty("newPassword", newPassword)
             }
@@ -360,18 +388,49 @@ class PlatformBackendApi(context: Context) {
                 .post(body)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@use false
-                val root = gson.fromJson(response.body?.string().orEmpty(), JsonObject::class.java)
-                (root?.get("code")?.asInt ?: -1) == 0
+                val raw = response.body?.string().orEmpty()
+                val root = gson.fromJson(raw, JsonObject::class.java)
+                val message = root?.get("message")?.asString
+                val success = response.isSuccessful && (root?.get("code")?.asInt ?: -1) == 0
+                ApiActionResult(success = success, message = message)
             }
-        }.getOrDefault(false)
+        }.getOrElse { e ->
+            ApiActionResult(success = false, message = e.message)
+        }
     }
 
-    suspend fun changePassword(oldPassword: String, newPassword: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun getLegalLinks(): LegalLinks = withContext(Dispatchers.IO) {
+        return@withContext runCatching {
+            val request = Request.Builder()
+                .url("${BackendConfig.apiBaseUrl}/public/legal/config")
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@use fallbackLegalLinks()
+                }
+                val root = gson.fromJson(response.body?.string().orEmpty(), JsonObject::class.java)
+                val code = root?.get("code")?.asInt ?: -1
+                if (code != 0) {
+                    return@use fallbackLegalLinks()
+                }
+                val data = root.getAsJsonObject("data")
+                val termsUrl = data?.get("termsUrl")?.asString
+                val privacyUrl = data?.get("privacyUrl")?.asString
+                if (termsUrl.isNullOrBlank() || privacyUrl.isNullOrBlank()) {
+                    fallbackLegalLinks()
+                } else {
+                    LegalLinks(termsUrl = termsUrl, privacyUrl = privacyUrl)
+                }
+            }
+        }.getOrElse { fallbackLegalLinks() }
+    }
+
+    suspend fun changePassword(email: String, code: String, newPassword: String): Boolean = withContext(Dispatchers.IO) {
         return@withContext runCatching {
             executeRequestWithRequiredAuthRetry { token ->
                 val payload = JsonObject().apply {
-                    addProperty("oldPassword", oldPassword)
+                    addProperty("email", email)
+                    addProperty("code", code)
                     addProperty("newPassword", newPassword)
                 }
                 Request.Builder()
@@ -670,5 +729,12 @@ class PlatformBackendApi(context: Context) {
                 .replace("http://127.0.0.1", "http://${BackendConfig.localHost}")
                 .replace("https://127.0.0.1", "https://${BackendConfig.localHost}")
         }
+    }
+
+    private fun fallbackLegalLinks(): LegalLinks {
+        return LegalLinks(
+            termsUrl = "${BackendConfig.apiBaseUrl}/public/legal/terms",
+            privacyUrl = "${BackendConfig.apiBaseUrl}/public/legal/privacy"
+        )
     }
 }

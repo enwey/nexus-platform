@@ -1,4 +1,4 @@
-﻿package com.nexus.platform.feature.profile.ui
+package com.nexus.platform.feature.profile.ui
 
 import android.os.Bundle
 import android.widget.Toast
@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +26,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,6 +53,7 @@ import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ChangePasswordActivity : ComponentActivity() {
@@ -73,10 +76,13 @@ private fun ChangePasswordScreen(
     val context = LocalContext.current
     val backendApi = remember(context) { PlatformBackendApi(context) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    var currentPassword by remember { mutableStateOf("") }
+
+    var email by remember { mutableStateOf("") }
+    var verificationCode by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var codeCountdown by remember { mutableIntStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -119,14 +125,73 @@ private fun ChangePasswordScreen(
                     modifier = Modifier.padding(20.dp)
                 ) {
                     InputField(
-                        label = stringResource(R.string.change_password_current),
-                        value = currentPassword,
-                        onValueChange = { currentPassword = it },
-                        placeholder = stringResource(R.string.change_password_current_hint),
-                        isPassword = true,
-                        passwordVisible = passwordVisible,
-                        onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
+                        label = stringResource(R.string.change_password_email),
+                        value = email,
+                        onValueChange = { email = it },
+                        placeholder = stringResource(R.string.change_password_email_hint),
+                        keyboardType = KeyboardType.Email
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            InputField(
+                                label = stringResource(R.string.change_password_code),
+                                value = verificationCode,
+                                onValueChange = { verificationCode = it },
+                                placeholder = stringResource(R.string.change_password_code_hint),
+                                showDivider = false
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .width(110.dp)
+                                .height(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(BackgroundBase)
+                                .border(1.dp, BorderLight, RoundedCornerShape(12.dp))
+                                .clickable {
+                                    if (codeCountdown > 0) return@clickable
+                                    if (email.isBlank() || !email.contains("@")) {
+                                        Toast.makeText(context, context.getString(R.string.auth_error_invalid_email), Toast.LENGTH_SHORT).show()
+                                        return@clickable
+                                    }
+                                    scope.launch {
+                                        val sent = backendApi.sendVerificationCode(email.trim(), "CHANGE_PASSWORD", "PROFILE_CHANGE_PASSWORD")
+                                        if (sent) {
+                                            codeCountdown = 60
+                                            while (codeCountdown > 0) {
+                                                delay(1000)
+                                                codeCountdown -= 1
+                                            }
+                                            Toast.makeText(context, context.getString(R.string.change_password_code_sent), Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, context.getString(R.string.change_password_code_failed), Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (codeCountdown > 0) "${codeCountdown}s" else stringResource(R.string.change_password_send_code),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMain
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(BorderLight.copy(alpha = 0.08f), RoundedCornerShape(0.dp))
+                    )
+
                     InputField(
                         label = stringResource(R.string.change_password_new),
                         value = newPassword,
@@ -187,8 +252,11 @@ private fun ChangePasswordScreen(
                     )
                     .clickable {
                         when {
-                            currentPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank() -> {
+                            email.isBlank() || verificationCode.isBlank() || newPassword.isBlank() || confirmPassword.isBlank() -> {
                                 Toast.makeText(context, context.getString(R.string.change_password_error_incomplete), Toast.LENGTH_SHORT).show()
+                            }
+                            !email.contains("@") -> {
+                                Toast.makeText(context, context.getString(R.string.auth_error_invalid_email), Toast.LENGTH_SHORT).show()
                             }
                             newPassword.length < 8 -> {
                                 Toast.makeText(context, context.getString(R.string.change_password_error_too_short), Toast.LENGTH_SHORT).show()
@@ -199,7 +267,8 @@ private fun ChangePasswordScreen(
                             else -> {
                                 scope.launch {
                                     val ok = backendApi.changePassword(
-                                        oldPassword = currentPassword,
+                                        email = email.trim(),
+                                        code = verificationCode.trim(),
                                         newPassword = newPassword
                                     )
                                     Toast.makeText(
@@ -231,6 +300,7 @@ private fun InputField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
     passwordVisible: Boolean = false,
     onPasswordVisibilityChange: () -> Unit = {},
     showDivider: Boolean = true
@@ -267,7 +337,7 @@ private fun InputField(
                 )
             },
             visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text),
+            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,

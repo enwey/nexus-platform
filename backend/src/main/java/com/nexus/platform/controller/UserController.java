@@ -33,12 +33,12 @@ public class UserController {
 
     @PostMapping("/register")
     public Result<AuthResponse> register(@RequestBody RegisterRequest request) {
-        return userService.register(request.username(), request.password(), request.email());
+        return userService.register(request.email(), request.password(), request.code());
     }
 
     @PostMapping("/login")
     public Result<AuthResponse> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        return userService.login(request.username(), request.password(), extractClientIp(httpRequest));
+        return userService.login(request.email(), request.password(), extractClientIp(httpRequest));
     }
 
     @PostMapping("/refresh")
@@ -57,13 +57,27 @@ public class UserController {
     }
 
     @PostMapping("/send-code")
-    public Result<VerificationCodeResponse> sendCode(@RequestBody SendCodeRequest request) {
-        return accountOpsService.sendCode(request.account(), request.purpose());
+    public Result<VerificationCodeResponse> sendCode(
+            @RequestBody SendCodeRequest request,
+            @AuthenticationPrincipal User user,
+            HttpServletRequest httpRequest) {
+        return accountOpsService.sendCode(
+                request.email(),
+                request.purpose(),
+                new AccountOpsService.VerificationCodeIssueContext(
+                        user,
+                        extractClientIp(httpRequest),
+                        httpRequest.getRequestURI(),
+                        firstNotBlank(request.source(), httpRequest.getHeader("X-Client-Source")),
+                        firstNotBlank(request.scene(), httpRequest.getHeader("X-Client-Scene")),
+                        httpRequest.getHeader("User-Agent")
+                )
+        );
     }
 
     @PostMapping("/password/reset")
     public Result<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
-        return accountOpsService.resetPassword(request.account(), request.code(), request.newPassword());
+        return accountOpsService.resetPassword(request.email(), request.code(), request.newPassword());
     }
 
     @PostMapping("/password/change")
@@ -71,7 +85,7 @@ public class UserController {
     public Result<Void> changePassword(
             @AuthenticationPrincipal User user,
             @RequestBody ChangePasswordRequest request) {
-        return accountOpsService.changePassword(user, request.oldPassword(), request.newPassword());
+        return accountOpsService.changePassword(user, request.email(), request.code(), request.newPassword());
     }
 
     @GetMapping("/devices")
@@ -164,14 +178,24 @@ public class UserController {
         }
         return authorization.substring("Bearer ".length()).trim();
     }
+
+    private String firstNotBlank(String first, String second) {
+        if (first != null && !first.isBlank()) {
+            return first.trim();
+        }
+        if (second != null && !second.isBlank()) {
+            return second.trim();
+        }
+        return null;
+    }
 }
 
-record RegisterRequest(String username, String password, String email) {}
-record LoginRequest(String username, String password) {}
+record RegisterRequest(String email, String password, String code) {}
+record LoginRequest(String email, String password) {}
 record RefreshRequest(String refreshToken) {}
-record SendCodeRequest(String account, String purpose) {}
-record ResetPasswordRequest(String account, String code, String newPassword) {}
-record ChangePasswordRequest(String oldPassword, String newPassword) {}
+record SendCodeRequest(String email, String purpose, String source, String scene) {}
+record ResetPasswordRequest(String email, String code, String newPassword) {}
+record ChangePasswordRequest(String email, String code, String newPassword) {}
 record TerminateRequest(String confirmText) {}
 record UpdateProfileRequest(
         String displayName,

@@ -53,6 +53,11 @@ security:
 platform:
   public-base-url: ${PLATFORM_PUBLIC_BASE_URL:http://localhost:8080/api/v1}
   cdn-base-url: ${PLATFORM_CDN_BASE_URL:}
+  legal:
+    terms-title: ${PLATFORM_LEGAL_TERMS_TITLE:Nexus User Agreement}
+    terms-html: ${PLATFORM_LEGAL_TERMS_HTML:<p>Welcome to Nexus Platform.</p><p>This is the default user agreement content.</p>}
+    privacy-title: ${PLATFORM_LEGAL_PRIVACY_TITLE:Nexus Privacy Policy}
+    privacy-html: ${PLATFORM_LEGAL_PRIVACY_HTML:<p>Welcome to Nexus Platform.</p><p>This is the default privacy policy content.</p>}
   security:
     allow-insecure-defaults: ${PLATFORM_ALLOW_INSECURE_DEFAULTS:false}
   bootstrap-admin:

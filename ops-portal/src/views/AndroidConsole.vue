@@ -8,6 +8,7 @@
       <div class="actions">
         <el-button @click="$router.push('/runtime-ops')">{{ lt('运营控制台', '營運控制台', 'Runtime Ops') }}</el-button>
         <el-button @click="$router.push('/audit/logs')">{{ lt('审计日志', '審計日誌', 'Audit Logs') }}</el-button>
+        <el-button @click="$router.push('/verification-codes')">{{ lt('验证码记录', '驗證碼記錄', 'Verification Codes') }}</el-button>
         <el-button @click="$router.push('/audit')">{{ lt('返回审核台', '返回審核台', 'Back To Audit') }}</el-button>
         <el-button type="primary" :loading="loading" @click="loadConsole">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
       </div>

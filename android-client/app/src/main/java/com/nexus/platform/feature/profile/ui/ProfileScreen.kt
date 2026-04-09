@@ -117,21 +117,21 @@ fun ProfileScreen(
             ),
             onItemClick = { index ->
                 when (index) {
-                    0 -> requireLogin { context.startActivity(Intent(context, AccountSecurityActivity::class.java)) }
+                    0 -> context.startActivity(Intent(context, AccountSecurityActivity::class.java))
                     1 -> requireLogin { context.startActivity(Intent(context, DeviceManagementActivity::class.java)) }
                     2 -> Toast.makeText(context, context.getString(R.string.profile_cache_cleared), Toast.LENGTH_SHORT).show()
                     3 -> showLanguageDialog = true
                 }
             }
         )
-        MenuGroup(
-            items = listOf(if (isLoggedIn) stringResource(R.string.profile_logout) else stringResource(R.string.profile_login_account)),
-            rightTexts = listOf(null),
-            isLogout = true,
-            onLogoutClick = {
-                if (isLoggedIn) onLogoutClick() else onRequestLogin()
-            }
-        )
+        if (isLoggedIn) {
+            MenuGroup(
+                items = listOf(stringResource(R.string.profile_logout)),
+                rightTexts = listOf(null),
+                isLogout = true,
+                onLogoutClick = onLogoutClick
+            )
+        }
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(
                 stringResource(R.string.profile_system_hint),

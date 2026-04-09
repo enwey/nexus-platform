@@ -48,6 +48,9 @@ public class Game {
     @Column(name = "tags_json")
     private String tagsJson;
 
+    @Column(name = "requires_online", nullable = false)
+    private Boolean requiresOnline = false;
+
     @Enumerated(EnumType.STRING)
     private GameStatus status;
 

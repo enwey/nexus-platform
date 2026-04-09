@@ -14,8 +14,8 @@
     <string name="onboarding_start">Start Now</string>
 
     <string name="login_welcome">Welcome Back</string>
-    <string name="login_subtitle">Sign in to your Nexus account and sync your assets and saves.</string>
-    <string name="login_account_label">Phone / Email</string>
+    <string name="login_subtitle">Sign in to your Nexus account and sweep boredom away.</string>
+    <string name="login_account_label">Email</string>
     <string name="login_password_label">Password</string>
     <string name="login_forgot_password">Forgot password?</string>
     <string name="login_action">Secure Sign In</string>
@@ -24,7 +24,9 @@
     <string name="login_quick">Quick Login</string>
     <string name="login_quick_google">Google</string>
     <string name="login_quick_wechat">WeChat</string>
-    <string name="login_error_empty_credentials">Please enter username and password</string>
+    <string name="login_error_empty_credentials">Please enter email and password</string>
+    <string name="login_error_email_required">Please enter your email</string>
+    <string name="login_error_password_required">Please enter your password</string>
     <string name="login_error_failed">Login failed</string>
 
     <string name="discover_title">Discover New Games</string>
@@ -84,6 +86,7 @@
     <string name="runtime_error_entry_missing">Game entry file is missing. Please try again.</string>
     <string name="runtime_error_webview">Game page failed to load. Please try again.</string>
     <string name="runtime_error_startup">Game failed to start. Please try again.</string>
+    <string name="runtime_error_requires_online">This game requires online services and is temporarily unavailable offline.</string>
     <string name="runtime_retry">Retry</string>
     <string name="runtime_capsule_menu">路路路</string>
     <string name="runtime_capsule_close">脳</string>
@@ -122,6 +125,12 @@
     <string name="language_english">English</string>
     <string name="common_confirm">Confirm</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_loading">Submitting...</string>
+    <string name="common_error_network">Network error, please try again later</string>
+    <string name="common_error_server">Server is busy, please try again later</string>
+    <string name="common_error_invalid_parameters">Please check your input</string>
+    <string name="common_error_user_not_found">User not found</string>
+    <string name="common_error_email_mismatch">Email does not match the current account</string>
     <string name="profile_cache_cleared">Cache cleared</string>
 
     <string name="community_title">Game Community</string>
@@ -142,11 +151,22 @@
     <string name="device_management_status_current">Current</string>
     <string name="device_management_status_offline">Sign out</string>
 
-    <string name="change_password_error_incomplete">Please complete all password fields</string>
+    <string name="change_password_error_incomplete">Please complete all required fields</string>
     <string name="change_password_error_too_short">New password must be at least 8 characters</string>
     <string name="change_password_error_mismatch">New password entries do not match</string>
     <string name="change_password_success">Password changed successfully</string>
     <string name="change_password_failed">Failed to change password</string>
+    <string name="auth_error_invalid_email">Please enter a valid email address</string>
+    <string name="auth_error_code_invalid_or_expired">Verification code is invalid or expired</string>
+    <string name="register_error_email_registered">This email is already registered</string>
+    <string name="register_error_email_not_registered">This email is not registered</string>
+    <string name="change_password_email">Email</string>
+    <string name="change_password_email_hint">Enter your registered email</string>
+    <string name="change_password_code">Verification code</string>
+    <string name="change_password_code_hint">Enter email verification code</string>
+    <string name="change_password_send_code">Send code</string>
+    <string name="change_password_code_sent">Verification code sent</string>
+    <string name="change_password_code_failed">Failed to send verification code</string>
 
     <string name="account_security_gray_opening">This feature is being gradually rolled out</string>
     <string name="account_security_logout_all_success">Other devices have been signed out</string>
@@ -166,20 +186,31 @@
     <string name="onboarding_subtitle_3">無論是手機、PC 還是小程序，您的遊戲存檔與成就資產實時雲端同步。</string>
     <string name="onboarding_next">下一步</string>
     <string name="register_title">創建帳號</string>
-    <string name="register_subtitle">只需 30 秒，開啟你的雲遊戲之旅。</string>
-    <string name="register_account_label">手機號碼 / 電子郵件</string>
+    <string name="register_subtitle">Just 30 seconds to start your game journey.</string>
+    <string name="register_account_label">電子郵件</string>
     <string name="register_password_label">設置密碼</string>
     <string name="register_code_label">驗證碼</string>
     <string name="register_get_code">獲取驗證碼</string>
     <string name="register_action">完成註冊</string>
-    <string name="register_terms">我已閱讀並同意用戶協議與隱私政策</string>
+    <string name="register_terms">I have read and agree to the User Agreement and Privacy Policy</string>
+    <string name="register_terms_prefix">I have read and agree to </string>
+    <string name="register_terms_user_agreement">User Agreement</string>
+    <string name="register_terms_connector"> and </string>
+    <string name="register_terms_privacy_policy">Privacy Policy</string>
+    <string name="register_terms_required">Please agree to the User Agreement and Privacy Policy</string>
+    <string name="register_code_sent">Verification code sent</string>
+    <string name="register_code_failed">Failed to get verification code</string>
+    <string name="register_success">Registration successful</string>
+    <string name="register_failed">Registration failed</string>
     <string name="register_existing_user">已有帳號？</string>
     <string name="register_login">立即登入</string>
     <string name="forgot_title">重置密碼</string>
-    <string name="forgot_subtitle">輸入你的註冊資訊，驗證後即可設定新密碼。</string>
-    <string name="forgot_account_label">手機號碼 / 電子郵件</string>
+    <string name="forgot_subtitle">Enter your email to get a verification code and reset password.</string>
+    <string name="forgot_account_label">電子郵件</string>
     <string name="forgot_code_label">驗證碼</string>
     <string name="forgot_get_code">獲取驗證碼</string>
+    <string name="forgot_code_sent">Verification code sent</string>
+    <string name="forgot_code_failed">Failed to get verification code</string>
     <string name="forgot_new_password_label">設置新密碼</string>
     <string name="forgot_action">確認重置</string>
     <string name="forgot_existing_user">想起密碼了？</string>
@@ -294,8 +325,6 @@
     <string name="account_security_logout_all">強製註銷所有其他設備</string>
     <string name="account_security_logout_all_subtitle">操作不可撤銷，將下線所有非本機設備</string>
     <string name="change_password_title">修改密碼</string>
-    <string name="change_password_current">當前密碼</string>
-    <string name="change_password_current_hint">請輸入當前密碼</string>
     <string name="change_password_new">新密碼</string>
     <string name="change_password_new_hint">長度不少於 8 位，必須包含大小寫字母</string>
     <string name="change_password_confirm">確認新密碼</string>
@@ -334,6 +363,3 @@
     <string name="account_termination_footer">NEXUS RUNTIME SECURED</string>
 
 </resources>
-
-
-

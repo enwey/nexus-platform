@@ -94,6 +94,11 @@
             android:name=".feature.profile.ui.ReferralActivity"
             android:exported="false"
             android:theme="@style/Theme.NexusPlatform.Fullscreen" />
+
+        <activity
+            android:name=".feature.common.ui.LegalWebViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
     </application>
 
 </manifest>

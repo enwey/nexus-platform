@@ -3,8 +3,24 @@
 const STORAGE_KEY = 'ops_portal_locale'
 const SUPPORTED = ['zh-CN', 'zh-TW', 'en']
 
+function safeGet(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSet(key, value) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Ignore storage write failures in private mode.
+  }
+}
+
 function detectLocale() {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const saved = safeGet(STORAGE_KEY)
   if (saved && SUPPORTED.includes(saved)) return saved
 
   const nav = navigator.language || 'zh-CN'
@@ -18,7 +34,7 @@ export const locale = ref(detectLocale())
 export function setLocale(next) {
   if (!SUPPORTED.includes(next)) return
   locale.value = next
-  localStorage.setItem(STORAGE_KEY, next)
+  safeSet(STORAGE_KEY, next)
 }
 
 export function useI18nLite() {

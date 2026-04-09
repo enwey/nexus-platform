@@ -17,8 +17,8 @@
     <string name="onboarding_next">下一步</string>
     <string name="onboarding_start">立即開啟旅程</string>
     <string name="login_welcome">歡迎回來</string>
-    <string name="login_subtitle">登入你的 Nexus 帳號，同步資產與存檔。</string>
-    <string name="login_account_label">手機號碼 / 電子郵件</string>
+    <string name="login_subtitle">登入你的Nexus帳號，掃除一切無聊</string>
+    <string name="login_account_label">電子郵件</string>
     <string name="login_password_label">輸入密碼</string>
     <string name="login_forgot_password">忘記密碼？</string>
     <string name="login_action">安全登入</string>
@@ -27,23 +27,40 @@
     <string name="login_quick">快捷登入</string>
     <string name="login_quick_google">Google</string>
     <string name="login_quick_wechat">微信</string>
-    <string name="login_error_empty_credentials">請輸入帳號和密碼</string>
+    <string name="login_error_empty_credentials">請輸入郵箱和密碼</string>
+    <string name="login_error_email_required">請輸入郵箱</string>
+    <string name="login_error_password_required">請輸入密碼</string>
     <string name="login_error_failed">登入失敗</string>
     <string name="register_title">創建帳號</string>
-    <string name="register_subtitle">只需 30 秒，開啟你的雲遊戲之旅。</string>
-    <string name="register_account_label">手機號碼 / 電子郵件</string>
+    <string name="register_subtitle">只需30秒，開啟的遊戲之旅</string>
+    <string name="register_account_label">電子郵件</string>
     <string name="register_password_label">設置密碼</string>
     <string name="register_code_label">驗證碼</string>
     <string name="register_get_code">獲取驗證碼</string>
     <string name="register_action">完成註冊</string>
     <string name="register_terms">我已閱讀并同意用戶協議與隱私政策</string>
+    <string name="register_terms_prefix">我已閱讀並同意</string>
+    <string name="register_terms_user_agreement">用戶協議</string>
+    <string name="register_terms_connector">與</string>
+    <string name="register_terms_privacy_policy">隱私政策</string>
+    <string name="register_terms_required">請先同意用戶協議與隱私政策</string>
+    <string name="register_code_sent">驗證碼已發送</string>
+    <string name="register_code_failed">獲取驗證碼失敗</string>
+    <string name="register_success">註冊成功</string>
+    <string name="register_failed">註冊失敗</string>
     <string name="register_existing_user">已有帳號？</string>
     <string name="register_login">立即登入</string>
     <string name="forgot_title">重置密碼</string>
-    <string name="forgot_subtitle">輸入你的註冊信息，驗證后即可設置新密碼。</string>
-    <string name="forgot_account_label">手機號碼 / 電子郵件</string>
+    <string name="forgot_subtitle">輸入你的郵箱獲取驗證碼重置密碼</string>
+    <string name="forgot_account_label">電子郵件</string>
+    <string name="auth_error_invalid_email">請輸入正確的郵箱地址</string>
+    <string name="auth_error_code_invalid_or_expired">驗證碼無效或已過期</string>
+    <string name="register_error_email_registered">該郵箱已註冊</string>
+    <string name="register_error_email_not_registered">該郵箱未註冊</string>
     <string name="forgot_code_label">驗證碼</string>
     <string name="forgot_get_code">獲取驗證碼</string>
+    <string name="forgot_code_sent">驗證碼已發送</string>
+    <string name="forgot_code_failed">獲取驗證碼失敗</string>
     <string name="forgot_new_password_label">設置新密碼</string>
     <string name="forgot_action">確認重置</string>
     <string name="forgot_existing_user">想起密碼了？</string>
@@ -135,6 +152,7 @@
     <string name="runtime_error_entry_missing">遊戲入口文件缺失，請重試</string>
     <string name="runtime_error_webview">遊戲頁面載入失敗，請重試</string>
     <string name="runtime_error_startup">遊戲啟動失敗，請重試</string>
+    <string name="runtime_error_requires_online">該遊戲需要連接在線服務，離線時暫不可用</string>
     <string name="runtime_retry">重試</string>
     <string name="runtime_capsule_menu">···</string>
     <string name="runtime_capsule_close">×</string>
@@ -238,8 +256,13 @@
     <string name="account_security_logout_all">強制退出其他設備</string>
     <string name="account_security_logout_all_subtitle">此操作不可撤銷，將下線所有非本機設備</string>
     <string name="change_password_title">修改密碼</string>
-    <string name="change_password_current">當前密碼</string>
-    <string name="change_password_current_hint">請輸入當前密碼</string>
+    <string name="change_password_email">郵箱</string>
+    <string name="change_password_email_hint">請輸入註冊郵箱</string>
+    <string name="change_password_code">驗證碼</string>
+    <string name="change_password_code_hint">請輸入郵箱驗證碼</string>
+    <string name="change_password_send_code">發送驗證碼</string>
+    <string name="change_password_code_sent">驗證碼已發送</string>
+    <string name="change_password_code_failed">驗證碼發送失敗</string>
     <string name="change_password_new">新密碼</string>
     <string name="change_password_new_hint">長度不少于 8 位，需包含大小寫字母和數字</string>
     <string name="change_password_confirm">確認新密碼</string>
@@ -322,6 +345,10 @@
     <string name="profile_not_logged_in">未登入</string>
 
     <string name="common_confirm">確認</string>
+    <string name="common_loading">提交中...</string>
+    <string name="common_error_network">網路異常，請稍後重試</string>
+    <string name="common_error_server">服務繁忙，請稍後重試</string>
+    <string name="common_error_invalid_parameters">請檢查輸入內容</string>
+    <string name="common_error_user_not_found">用戶不存在</string>
+    <string name="common_error_email_mismatch">郵箱與當前帳號不匹配</string>
 </resources>
-
-

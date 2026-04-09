@@ -9,6 +9,7 @@ const routes = [
   { path: '/login', name: 'OpsLogin', component: () => import('../views/Login.vue') },
   { path: '/audit', name: 'OpsAudit', component: () => import('../views/Audit.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/audit/logs', name: 'OpsAuditLogs', component: () => import('../views/AuditLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/verification-codes', name: 'VerificationCodeLogs', component: () => import('../views/VerificationCodeLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/android-console', name: 'AndroidConsole', component: () => import('../views/AndroidConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/runtime-ops', name: 'OpsRuntime', component: () => import('../views/RuntimeOpsConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/android', redirect: '/android-console' }

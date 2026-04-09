@@ -36,8 +36,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nexus.platform.NexusApplication
 import com.nexus.platform.R
 import com.nexus.platform.data.remote.PlatformBackendApi
+import com.nexus.platform.feature.auth.ui.LoginActivity
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
@@ -45,15 +47,22 @@ import com.nexus.platform.ui.theme.BorderLight
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
+import com.nexus.platform.ui.components.ActionButton
 import kotlinx.coroutines.launch
 
 class AccountSecurityActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val authRepository = (application as NexusApplication).container.authRepository
+        val isLoggedIn = authRepository.currentSession() != null
         setContent {
             NexusPlatformTheme {
                 AccountSecurityScreen(
-                    onBackClick = { finish() }
+                    isLoggedIn = isLoggedIn,
+                    onBackClick = { finish() },
+                    onRequestLogin = {
+                        startActivity(Intent(this, LoginActivity::class.java))
+                    }
                 )
             }
         }
@@ -62,7 +71,9 @@ class AccountSecurityActivity : ComponentActivity() {
 
 @Composable
 private fun AccountSecurityScreen(
-    onBackClick: () -> Unit
+    isLoggedIn: Boolean,
+    onBackClick: () -> Unit,
+    onRequestLogin: () -> Unit
 ) {
     val context = LocalContext.current
     val backendApi = remember(context) { PlatformBackendApi(context) }
@@ -195,6 +206,17 @@ private fun AccountSecurityScreen(
                         .clip(RoundedCornerShape(10.dp))
                         .background(BackgroundBase)
                         .align(Alignment.TopEnd)
+                )
+            }
+
+            if (!isLoggedIn) {
+                Spacer(modifier = Modifier.height(20.dp))
+                ActionButton(
+                    text = stringResource(R.string.profile_login_account),
+                    onClick = onRequestLogin,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
                 )
             }
         }

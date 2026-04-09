@@ -10,8 +10,10 @@ import com.nexus.platform.dto.Result;
 import com.nexus.platform.dto.VerificationCodeResponse;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.entity.UserGameActionLog;
+import com.nexus.platform.entity.VerificationCodeLog;
 import com.nexus.platform.repository.UserGameActionLogRepository;
 import com.nexus.platform.repository.UserRepository;
+import com.nexus.platform.repository.VerificationCodeLogRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,7 +24,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,50 +38,88 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountOpsService {
     private static final String CODE_PURPOSE_REGISTER = "REGISTER";
     private static final String CODE_PURPOSE_RESET = "RESET_PASSWORD";
+    private static final String CODE_PURPOSE_CHANGE_PASSWORD = "CHANGE_PASSWORD";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
     private final StringRedisTemplate redisTemplate;
     private final UserRepository userRepository;
     private final UserGameActionLogRepository actionLogRepository;
+    private final VerificationCodeLogRepository verificationCodeLogRepository;
     private final AuthTokenService authTokenService;
     private final PasswordEncoder passwordEncoder;
 
-    public Result<VerificationCodeResponse> sendCode(String account, String purpose) {
-        String normalizedAccount = normalizeAccount(account);
-        if (normalizedAccount == null) {
-            return Result.error("Account is required");
+    public Result<VerificationCodeResponse> sendCode(String email, String purpose, VerificationCodeIssueContext context) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) {
+            Result<VerificationCodeResponse> result = Result.error("Email is required");
+            recordVerificationCodeLog(email, normalizePurpose(purpose), null, context, false, result.getMessage());
+            return result;
         }
         String normalizedPurpose = normalizePurpose(purpose);
+        if (!EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
+            Result<VerificationCodeResponse> result = Result.error("Invalid email format");
+            recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
+            return result;
+        }
+        boolean emailExists = userRepository.existsByEmail(normalizedEmail);
+        if (CODE_PURPOSE_REGISTER.equals(normalizedPurpose) && emailExists) {
+            Result<VerificationCodeResponse> result = Result.error("Email already registered");
+            recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
+            return result;
+        }
+        if (!CODE_PURPOSE_REGISTER.equals(normalizedPurpose) && !emailExists) {
+            Result<VerificationCodeResponse> result = Result.error("Email is not registered");
+            recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
+            return result;
+        }
         String code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
-        redisTemplate.opsForValue().set(codeKey(normalizedPurpose, normalizedAccount), code, java.time.Duration.ofMinutes(5));
-        return Result.success(new VerificationCodeResponse(normalizedAccount, normalizedPurpose, 300, code));
+        redisTemplate.opsForValue().set(codeKey(normalizedPurpose, normalizedEmail), code, java.time.Duration.ofMinutes(5));
+        Result<VerificationCodeResponse> result = Result.success(new VerificationCodeResponse(normalizedEmail, normalizedPurpose, 300, code));
+        recordVerificationCodeLog(normalizedEmail, normalizedPurpose, code, context, true, null);
+        return result;
+    }
+
+    public Result<List<VerificationCodeLog>> listVerificationCodeLogs(String email, String purpose, String source, int limit) {
+        int normalizedLimit = limit <= 0 || limit > 500 ? 100 : limit;
+        String normalizedEmail = normalizeEmail(email);
+        String normalizedPurpose = normalizePurposeFilter(purpose);
+        String normalizedSource = normalizeFilter(source);
+        List<VerificationCodeLog> logs = verificationCodeLogRepository.findRecent(
+                normalizedEmail,
+                normalizedPurpose,
+                normalizedSource,
+                PageRequest.of(0, normalizedLimit, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return Result.success(logs);
     }
 
     @Transactional
-    public Result<Void> resetPassword(String account, String code, String newPassword) {
-        String normalizedAccount = normalizeAccount(account);
-        if (normalizedAccount == null || code == null || code.isBlank()) {
+    public Result<Void> resetPassword(String email, String code, String newPassword) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null || code == null || code.isBlank()) {
             return Result.error("Invalid parameters");
         }
         if (!isStrongPassword(newPassword)) {
             return Result.error("Password must be at least 8 chars and include letters and digits");
         }
-        if (!verifyCode(CODE_PURPOSE_RESET, normalizedAccount, code)) {
+        if (!verifyCode(CODE_PURPOSE_RESET, normalizedEmail, code)) {
             return Result.error("Verification code is invalid or expired");
         }
 
-        User user = findUserByAccount(normalizedAccount);
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
         if (user == null) {
             return Result.error("User not found");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        redisTemplate.delete(codeKey(CODE_PURPOSE_RESET, normalizedAccount));
+        redisTemplate.delete(codeKey(CODE_PURPOSE_RESET, normalizedEmail));
         return Result.success();
     }
 
     @Transactional
-    public Result<Void> changePassword(User currentUser, String oldPassword, String newPassword) {
-        if (oldPassword == null || oldPassword.isBlank() || newPassword == null || newPassword.isBlank()) {
+    public Result<Void> changePassword(User currentUser, String email, String code, String newPassword) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null || code == null || code.isBlank() || newPassword == null || newPassword.isBlank()) {
             return Result.error("Invalid parameters");
         }
         if (!isStrongPassword(newPassword)) {
@@ -86,11 +129,28 @@ public class AccountOpsService {
         if (user == null) {
             return Result.error("User not found");
         }
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            return Result.error("Current password is incorrect");
+        String currentEmail = normalizeEmail(user.getEmail());
+        if (currentEmail == null || !currentEmail.equals(normalizedEmail)) {
+            return Result.error("Email does not match current account");
+        }
+        if (!verifyCode(CODE_PURPOSE_CHANGE_PASSWORD, normalizedEmail, code)) {
+            return Result.error("Verification code is invalid or expired");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        redisTemplate.delete(codeKey(CODE_PURPOSE_CHANGE_PASSWORD, normalizedEmail));
+        return Result.success();
+    }
+
+    public Result<Void> verifyRegisterCode(String email, String code) {
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null || code == null || code.isBlank()) {
+            return Result.error("Invalid parameters");
+        }
+        if (!verifyCode(CODE_PURPOSE_REGISTER, normalizedEmail, code)) {
+            return Result.error("Verification code is invalid or expired");
+        }
+        redisTemplate.delete(codeKey(CODE_PURPOSE_REGISTER, normalizedEmail));
         return Result.success();
     }
 
@@ -269,11 +329,11 @@ public class AccountOpsService {
         );
     }
 
-    private String normalizeAccount(String account) {
-        if (account == null) {
+    private String normalizeEmail(String email) {
+        if (email == null) {
             return null;
         }
-        String value = account.trim();
+        String value = email.trim();
         return value.isEmpty() ? null : value.toLowerCase();
     }
 
@@ -285,24 +345,93 @@ public class AccountOpsService {
         if (CODE_PURPOSE_REGISTER.equals(normalized)) {
             return CODE_PURPOSE_REGISTER;
         }
+        if (CODE_PURPOSE_CHANGE_PASSWORD.equals(normalized)) {
+            return CODE_PURPOSE_CHANGE_PASSWORD;
+        }
         return CODE_PURPOSE_RESET;
     }
+
+    private String normalizePurposeFilter(String purpose) {
+        if (purpose == null || purpose.isBlank()) {
+            return null;
+        }
+        return normalizePurpose(purpose);
+    }
+
+    private String normalizeFilter(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private void recordVerificationCodeLog(
+            String account,
+            String purpose,
+            String code,
+            VerificationCodeIssueContext context,
+            boolean success,
+            String failureReason
+    ) {
+        VerificationCodeLog log = new VerificationCodeLog();
+        log.setAccount(normalizeEmail(account) == null ? "unknown" : normalizeEmail(account));
+        log.setPurpose(normalizePurpose(purpose));
+        log.setDebugCode(code);
+        log.setSuccess(success);
+        log.setFailureReason(truncate(failureReason, 256));
+
+        if (context != null) {
+            if (context.requester() != null) {
+                log.setRequesterUserId(context.requester().getId());
+                log.setRequesterRole(context.requester().getRole() == null ? null : context.requester().getRole().name());
+            }
+            log.setRequestIp(truncate(context.requestIp(), 64));
+            log.setRequestUri(truncate(context.requestUri(), 256));
+            log.setRequestSource(truncate(detectSource(context.requestSource(), context.userAgent()), 64));
+            log.setRequestScene(truncate(context.requestScene(), 64));
+            log.setUserAgent(truncate(context.userAgent(), 512));
+        }
+        verificationCodeLogRepository.save(log);
+    }
+
+    private String detectSource(String source, String userAgent) {
+        String normalized = normalizeFilter(source);
+        if (normalized != null) {
+            return normalized;
+        }
+        String ua = userAgent == null ? "" : userAgent.toLowerCase();
+        if (ua.contains("okhttp") || ua.contains("android")) {
+            return "android-app";
+        }
+        if (ua.contains("mozilla") || ua.contains("chrome") || ua.contains("safari")) {
+            return "web-browser";
+        }
+        return "unknown";
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        if (value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
+    }
+
+    public record VerificationCodeIssueContext(
+            User requester,
+            String requestIp,
+            String requestUri,
+            String requestSource,
+            String requestScene,
+            String userAgent
+    ) {}
 
     private boolean verifyCode(String purpose, String account, String code) {
         String expected = redisTemplate.opsForValue().get(codeKey(purpose, account));
         return expected != null && expected.equals(code.trim());
-    }
-
-    private User findUserByAccount(String account) {
-        User byUsername = userRepository.findByUsername(account).orElse(null);
-        if (byUsername != null) {
-            return byUsername;
-        }
-        User byEmail = userRepository.findByEmail(account).orElse(null);
-        if (byEmail != null) {
-            return byEmail;
-        }
-        return userRepository.findByPhone(account).orElse(null);
     }
 
     private boolean isStrongPassword(String password) {

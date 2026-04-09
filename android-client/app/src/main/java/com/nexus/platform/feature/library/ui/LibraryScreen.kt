@@ -38,12 +38,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.ui.components.GameLogo
 import com.nexus.platform.ui.theme.AccentGreen
@@ -376,10 +378,15 @@ private fun LoadingState() {
 
 @Composable
 private fun ErrorState(message: String) {
+    val context = LocalContext.current
     val resolvedMessage = if (message == "__error_load_games_failed__") {
         stringResource(R.string.load_games_failed)
     } else {
-        message
+        ApiErrorLocalizer.localize(
+            context = context,
+            rawMessage = message,
+            fallbackRes = R.string.load_games_failed
+        )
     }
     Column(
         modifier = Modifier

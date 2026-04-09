@@ -7,6 +7,7 @@
       </div>
       <div class="actions">
         <el-button @click="$router.push('/android-console')">Android Console</el-button>
+        <el-button @click="$router.push('/verification-codes')">{{ lt('验证码记录', '驗證碼記錄', 'Verification Codes') }}</el-button>
         <el-button @click="$router.push('/audit')">{{ lt('返回审核台', '返回審核台', 'Back To Audit') }}</el-button>
         <el-button type="primary" @click="loadAll">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
       </div>

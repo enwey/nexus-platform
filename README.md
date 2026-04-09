@@ -25,6 +25,12 @@ npm run build:dev-portal
 npm run build:ops-portal
 ```
 
+macOS / Linux 一键启动（后台运行）：
+
+```bash
+./scripts/start-local.sh
+```
+
 后端启动：
 
 ```bash

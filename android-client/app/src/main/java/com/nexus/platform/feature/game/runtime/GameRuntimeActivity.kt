@@ -280,12 +280,34 @@ class GameRuntimeActivity : AppCompatActivity() {
         loadJob = scope.launch {
             try {
                 showLoading(message = getString(R.string.runtime_status_preparing), showRetry = false)
-                val update = withContext(Dispatchers.IO) {
-                    gameManager.checkForUpdate(game = game, blockOnForce = true)
+
+                if (game.requiresOnline) {
+                    val backendReachable = withContext(Dispatchers.IO) {
+                        gameManager.isBackendReachable()
+                    }
+                    if (!backendReachable) {
+                        throw IOException("Game requires online service")
+                    }
                 }
-                if (update.forceUpdate && !update.ready) {
-                    throw IOException("Game download failed: force update required")
+
+                val hasLocalBundle = withContext(Dispatchers.IO) {
+                    gameManager.isGameDownloaded(game.id)
                 }
+
+                // For offline-capable games with local package, avoid blocking startup on update checks.
+                if (!game.requiresOnline && hasLocalBundle && !forceRefresh) {
+                    withContext(Dispatchers.IO) {
+                        runCatching { gameManager.checkForUpdate(game = game, blockOnForce = false) }
+                    }
+                } else {
+                    val update = withContext(Dispatchers.IO) {
+                        gameManager.checkForUpdate(game = game, blockOnForce = true)
+                    }
+                    if (update.forceUpdate && !update.ready) {
+                        throw IOException("Game download failed: force update required")
+                    }
+                }
+
                 val prepared = withContext(Dispatchers.IO) {
                     gameManager.prepareGame(game = game, forceRefresh = forceRefresh)
                 }
@@ -552,6 +574,7 @@ class GameRuntimeActivity : AppCompatActivity() {
     private fun userVisibleError(error: Throwable): String {
         val msg = error.message.orEmpty()
         return when {
+            msg.contains("requires online service", ignoreCase = true) -> getString(R.string.runtime_error_requires_online)
             msg.contains("checksum", ignoreCase = true) -> getString(R.string.runtime_error_checksum)
             msg.contains("download", ignoreCase = true) -> getString(R.string.runtime_error_download)
             msg.contains("entry", ignoreCase = true) -> getString(R.string.runtime_error_entry_missing)

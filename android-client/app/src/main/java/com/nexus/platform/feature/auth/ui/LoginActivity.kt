@@ -5,10 +5,8 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,9 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +35,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.nexus.platform.NexusApplication
+import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.domain.usecase.LoginUseCase
 import com.nexus.platform.feature.main.ui.MainActivity
@@ -45,8 +43,6 @@ import com.nexus.platform.R
 import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
-import com.nexus.platform.ui.theme.PrimaryEnd
-import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMuted
 
 class LoginActivity : ComponentActivity() {
@@ -74,8 +70,14 @@ class LoginActivity : ComponentActivity() {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 LoginScreen(
                     uiState = state,
-                    onUsernameChange = viewModel::updateUsername,
+                    onEmailChange = viewModel::updateEmail,
                     onPasswordChange = viewModel::updatePassword,
+                    onSignupClick = {
+                        startActivity(Intent(this, RegisterActivity::class.java))
+                    },
+                    onForgotPasswordClick = {
+                        startActivity(Intent(this, ForgotPasswordActivity::class.java))
+                    },
                     onLoginClick = {
                         viewModel.login {
                             startActivity(Intent(this, MainActivity::class.java))
@@ -100,10 +102,13 @@ private class LoginViewModelFactory(
 @Composable
 private fun LoginScreen(
     uiState: LoginUiState,
-    onUsernameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onSignupClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -125,9 +130,19 @@ private fun LoginScreen(
         Spacer(modifier = Modifier.height(40.dp))
 
         OutlinedTextField(
-            value = uiState.username,
-            onValueChange = onUsernameChange,
+            value = uiState.email,
+            onValueChange = onEmailChange,
             label = { Text(stringResource(R.string.login_account_label)) },
+            isError = !uiState.emailError.isNullOrBlank(),
+            supportingText = {
+                if (!uiState.emailError.isNullOrBlank()) {
+                    val resolvedError = when (uiState.emailError) {
+                        "__error_email_required__" -> stringResource(R.string.login_error_email_required)
+                        else -> uiState.emailError.orEmpty()
+                    }
+                    Text(text = resolvedError)
+                }
+            },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
@@ -146,6 +161,16 @@ private fun LoginScreen(
             value = uiState.password,
             onValueChange = onPasswordChange,
             label = { Text(stringResource(R.string.login_password_label)) },
+            isError = !uiState.passwordError.isNullOrBlank(),
+            supportingText = {
+                if (!uiState.passwordError.isNullOrBlank()) {
+                    val resolvedError = when (uiState.passwordError) {
+                        "__error_password_required__" -> stringResource(R.string.login_error_password_required)
+                        else -> uiState.passwordError.orEmpty()
+                    }
+                    Text(text = resolvedError)
+                }
+            },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
@@ -164,7 +189,7 @@ private fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            TextButton(onClick = {}) {
+            TextButton(onClick = onForgotPasswordClick) {
                 Text(
                     text = stringResource(R.string.login_forgot_password),
                     color = Primary
@@ -175,9 +200,12 @@ private fun LoginScreen(
         if (!uiState.errorMessage.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(8.dp))
             val resolvedError = when (uiState.errorMessage) {
-                "__error_empty_credentials__" -> stringResource(R.string.login_error_empty_credentials)
                 "__error_login_failed__" -> stringResource(R.string.login_error_failed)
-                else -> uiState.errorMessage.orEmpty()
+                else -> ApiErrorLocalizer.localize(
+                    context = context,
+                    rawMessage = uiState.errorMessage,
+                    fallbackRes = R.string.login_error_failed
+                )
             }
             Text(
                 text = resolvedError,
@@ -210,67 +238,9 @@ private fun LoginScreen(
             Text(
                 text = stringResource(R.string.login_signup),
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onSignupClick)
             )
         }
-
-        Spacer(modifier = Modifier.height(60.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(1.dp)
-                    .background(TextMuted.copy(alpha = 0.08f))
-            )
-            Text(
-                text = "  ${stringResource(R.string.login_quick)}  ",
-                color = TextMuted
-            )
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(1.dp)
-                    .background(TextMuted.copy(alpha = 0.08f))
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            QuickLoginBox(
-                label = stringResource(R.string.login_quick_google),
-                modifier = Modifier.weight(1f)
-            )
-            QuickLoginBox(
-                label = stringResource(R.string.login_quick_wechat),
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickLoginBox(label: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(50.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0x0D15161D))
-            .border(
-                width = 1.dp,
-                color = Color(0x14FFFFFF),
-                shape = RoundedCornerShape(12.dp)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontWeight = FontWeight.Bold
-        )
     }
 }

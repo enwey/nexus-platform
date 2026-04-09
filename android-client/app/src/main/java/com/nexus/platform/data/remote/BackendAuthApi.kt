@@ -21,38 +21,38 @@ class BackendAuthApi {
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    suspend fun login(username: String, password: String): AuthSession = withContext(Dispatchers.IO) {
+    suspend fun login(email: String, password: String): AuthSession = withContext(Dispatchers.IO) {
         authWithCredential(
             path = "/user/login",
-            username = username,
+            email = email,
             password = password,
-            email = null,
+            code = null,
             errorPrefix = "Login"
         )
     }
 
-    suspend fun register(username: String, password: String, email: String?): AuthSession = withContext(Dispatchers.IO) {
+    suspend fun register(email: String, password: String, code: String): AuthSession = withContext(Dispatchers.IO) {
         authWithCredential(
             path = "/user/register",
-            username = username,
-            password = password,
             email = email,
+            password = password,
+            code = code,
             errorPrefix = "Register"
         )
     }
 
     private fun authWithCredential(
         path: String,
-        username: String,
+        email: String,
         password: String,
-        email: String?,
+        code: String?,
         errorPrefix: String
     ): AuthSession {
         val payload = JsonObject().apply {
-            addProperty("username", username)
+            addProperty("email", email)
             addProperty("password", password)
-            if (!email.isNullOrBlank()) {
-                addProperty("email", email)
+            if (!code.isNullOrBlank()) {
+                addProperty("code", code)
             }
         }
         val body = gson.toJson(payload).toRequestBody("application/json; charset=utf-8".toMediaType())

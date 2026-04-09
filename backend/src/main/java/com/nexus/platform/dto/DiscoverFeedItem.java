@@ -13,6 +13,7 @@ public record DiscoverFeedItem(
         String downloadUrl,
         String version,
         String md5,
+        boolean requiresOnline,
         long hotScore,
         String category,
         List<String> tags
@@ -28,6 +29,7 @@ public record DiscoverFeedItem(
                 game.getDownloadUrl(),
                 game.getVersion(),
                 game.getMd5(),
+                Boolean.TRUE.equals(game.getRequiresOnline()),
                 hotScore,
                 category,
                 tags
@@ -45,6 +47,7 @@ public record DiscoverFeedItem(
                 downloadUrl,
                 version,
                 md5,
+                requiresOnline,
                 hotScore,
                 category,
                 tags

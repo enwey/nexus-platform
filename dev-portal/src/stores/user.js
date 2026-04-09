@@ -5,8 +5,32 @@ const STORAGE_USER_KEY = 'portal_user'
 const STORAGE_TOKEN_KEY = 'token'
 const STORAGE_REFRESH_TOKEN_KEY = 'refresh_token'
 
+function safeGet(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSet(key, value) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Ignore storage write failures in private mode.
+  }
+}
+
+function safeRemove(key) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // Ignore storage removal failures in private mode.
+  }
+}
+
 function readStoredUser() {
-  const raw = localStorage.getItem(STORAGE_USER_KEY)
+  const raw = safeGet(STORAGE_USER_KEY)
   if (!raw) {
     return null
   }
@@ -14,42 +38,42 @@ function readStoredUser() {
   try {
     return JSON.parse(raw)
   } catch {
-    localStorage.removeItem(STORAGE_USER_KEY)
+    safeRemove(STORAGE_USER_KEY)
     return null
   }
 }
 
 export const useUserStore = defineStore('user', () => {
   const user = ref(readStoredUser())
-  const token = ref(localStorage.getItem(STORAGE_TOKEN_KEY) || '')
-  const refreshToken = ref(localStorage.getItem(STORAGE_REFRESH_TOKEN_KEY) || '')
+  const token = ref(safeGet(STORAGE_TOKEN_KEY) || '')
+  const refreshToken = ref(safeGet(STORAGE_REFRESH_TOKEN_KEY) || '')
   const isLoggedIn = computed(() => Boolean(user.value || token.value))
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
 
   function setUser(userData) {
     user.value = userData
     if (userData) {
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userData))
+      safeSet(STORAGE_USER_KEY, JSON.stringify(userData))
     } else {
-      localStorage.removeItem(STORAGE_USER_KEY)
+      safeRemove(STORAGE_USER_KEY)
     }
   }
 
   function setToken(tokenValue) {
     token.value = tokenValue || ''
     if (token.value) {
-      localStorage.setItem(STORAGE_TOKEN_KEY, token.value)
+      safeSet(STORAGE_TOKEN_KEY, token.value)
     } else {
-      localStorage.removeItem(STORAGE_TOKEN_KEY)
+      safeRemove(STORAGE_TOKEN_KEY)
     }
   }
 
   function setRefreshToken(refreshTokenValue) {
     refreshToken.value = refreshTokenValue || ''
     if (refreshToken.value) {
-      localStorage.setItem(STORAGE_REFRESH_TOKEN_KEY, refreshToken.value)
+      safeSet(STORAGE_REFRESH_TOKEN_KEY, refreshToken.value)
     } else {
-      localStorage.removeItem(STORAGE_REFRESH_TOKEN_KEY)
+      safeRemove(STORAGE_REFRESH_TOKEN_KEY)
     }
   }
 

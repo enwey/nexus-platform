@@ -74,6 +74,21 @@ class GameManager(private val context: Context) {
         return resolveEntryPath(getGameDir(gameId)) != null
     }
 
+    suspend fun isBackendReachable(): Boolean = withContext(Dispatchers.IO) {
+        val healthUrl = "${BackendConfig.apiBaseUrl}/actuator/health"
+        val request = Request.Builder().url(healthUrl).build()
+        val probeClient = client.newBuilder()
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(3, TimeUnit.SECONDS)
+            .writeTimeout(3, TimeUnit.SECONDS)
+            .build()
+        return@withContext runCatching {
+            probeClient.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        }.getOrDefault(false)
+    }
+
     suspend fun checkForUpdate(game: GameItem, blockOnForce: Boolean = false): UpdateCheckResult = withContext(Dispatchers.IO) {
         val state = updateStateMap.getOrPut(game.id) { UpdateState() }
         if (state.ready) {

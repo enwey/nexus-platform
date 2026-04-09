@@ -68,6 +68,13 @@ export const getAuditLogs = (limit = 50) =>
     params: { limit }
   })
 
+export const getVerificationCodeLogs = (params = {}) =>
+  request({
+    url: '/admin/ops/verification-codes',
+    method: 'get',
+    params
+  })
+
 export const getAndroidConsole = () =>
   request({
     url: '/admin/android/console',
