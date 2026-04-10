@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Nexus Platform</string>
 
-    <string name="tab_library">Library</string>
+    <string name="tab_library">Games</string>
     <string name="tab_discover">Discover</string>
     <string name="tab_community">Community</string>
     <string name="tab_profile">Profile</string>
@@ -69,7 +69,7 @@
     <string name="library_coldstart_pick_2">Popular Competitive</string>
     <string name="library_coldstart_pick_3">Casual Chill</string>
     <string name="library_coldstart_pick_4">Strategy Picks</string>
-    <string name="library_coldstart_hero_title">Welcome to Nexus Library</string>
+    <string name="library_coldstart_hero_title">Welcome to Nexus Games</string>
     <string name="library_coldstart_hero_subtitle">Start with hand-picked trending games</string>
     <string name="library_coldstart_cta">Start Exploring</string>
     <string name="library_coldstart_empty_icon">🎮</string>

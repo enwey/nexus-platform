@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Nexus Platform</string>
 
-    <string name="tab_library">遊戲庫</string>
+    <string name="tab_library">遊戲</string>
     <string name="tab_discover">發現</string>
     <string name="tab_community">社群</string>
     <string name="tab_profile">帳號</string>
@@ -109,7 +109,7 @@
     <string name="library_coldstart_pick_2">熱門競技</string>
     <string name="library_coldstart_pick_3">休閒解壓</string>
     <string name="library_coldstart_pick_4">策略精選</string>
-    <string name="library_coldstart_hero_title">歡迎來到 Nexus 遊戲庫</string>
+    <string name="library_coldstart_hero_title">歡迎來到 Nexus 遊戲</string>
     <string name="library_coldstart_hero_subtitle">首次進入，先從熱門精選開始</string>
     <string name="library_coldstart_cta">開始探索</string>
     <string name="library_coldstart_empty_icon">🎮</string>

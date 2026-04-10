@@ -3,6 +3,7 @@ package com.nexus.platform.feature.library.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,11 +25,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,8 +40,8 @@ import com.nexus.platform.ui.components.GameLogo
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
 import com.nexus.platform.ui.theme.BorderLight
-import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
+
 private const val GRID_COLUMNS = 4
 
 @Composable
@@ -111,10 +113,14 @@ private fun TopBar(title: Int, onBackClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = androidx.compose.ui.res.stringResource(R.string.game_back),
-            color = Primary,
-            modifier = Modifier.clickable { onBackClick() }
+        Image(
+            painter = painterResource(id = R.drawable.ic_back),
+            contentDescription = "返回",
+            modifier = Modifier
+                .size(48.dp)
+                .padding(10.dp)
+                .offset(x = (-4).dp)
+                .clickable { onBackClick() }
         )
         Spacer(modifier = Modifier.size(12.dp))
         Text(

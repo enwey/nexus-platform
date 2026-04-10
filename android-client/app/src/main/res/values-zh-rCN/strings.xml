@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nexus Platform</string>
-    <string name="tab_library">游戏库</string>
+    <string name="tab_library">游戏</string>
     <string name="tab_discover">发现</string>
     <string name="tab_community">社区</string>
     <string name="tab_profile">账号</string>
@@ -136,7 +136,7 @@
     <string name="library_coldstart_pick_2">热门竞技</string>
     <string name="library_coldstart_pick_3">休闲解压</string>
     <string name="library_coldstart_pick_4">策略精选</string>
-    <string name="library_coldstart_hero_title">欢迎来到 Nexus 游戏库</string>
+    <string name="library_coldstart_hero_title">欢迎来到 Nexus 游戏</string>
     <string name="library_coldstart_hero_subtitle">首次进入，先从热门精选开始</string>
     <string name="library_coldstart_cta">开始探索</string>
     <string name="library_coldstart_empty_icon">🎮</string>
