@@ -3,6 +3,7 @@ package com.nexus.platform.feature.game.runtime
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,6 +25,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
 import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
@@ -62,6 +65,13 @@ class GameRuntimeActivity : AppCompatActivity() {
     private var runtimeProfile: GameRuntimeProfile? = null
     private var statusBarInsetPx: Int = 0
     private var navBarBottomInsetPx: Int = 0
+    private var capsuleBottomInsetPx: Int = 0
+    private val capsuleBaseTopPx by lazy {
+        resources.getDimensionPixelSize(R.dimen.runtime_capsule_margin_top)
+    }
+    private val capsuleHeightPx by lazy {
+        resources.getDimensionPixelSize(R.dimen.runtime_capsule_height)
+    }
 
     companion object {
         private const val EXTRA_GAME = "game"
@@ -80,6 +90,11 @@ class GameRuntimeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
         setContentView(R.layout.activity_game)
 
         val game = readGameFromIntent()
@@ -125,7 +140,7 @@ class GameRuntimeActivity : AppCompatActivity() {
     }
 
     private fun initWindowInsets() {
-        val baseTop = resources.getDimensionPixelSize(R.dimen.runtime_capsule_margin_top)
+        val baseTop = capsuleBaseTopPx
         ViewCompat.setOnApplyWindowInsetsListener(capsuleMenu) { view, insets ->
             val statusTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
             statusBarInsetPx = statusTop
@@ -136,6 +151,12 @@ class GameRuntimeActivity : AppCompatActivity() {
                 lp.topMargin = targetTop
                 view.layoutParams = lp
             }
+            val capsuleHeight = if (view.height > 0) {
+                view.height
+            } else {
+                capsuleHeightPx
+            }
+            capsuleBottomInsetPx = targetTop + capsuleHeight
             insets
         }
         ViewCompat.requestApplyInsets(capsuleMenu)
@@ -155,6 +176,7 @@ class GameRuntimeActivity : AppCompatActivity() {
         settings.builtInZoomControls = false
         settings.displayZoomControls = false
 
+        webView.setBackgroundColor(Color.TRANSPARENT)
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView.webChromeClient = WebChromeClient()
     }
@@ -168,6 +190,9 @@ class GameRuntimeActivity : AppCompatActivity() {
                 val windowWidth = windowWidthPx / density
                 val windowHeight = windowHeightPx / density
                 val statusBarHeight = statusBarInsetPx / density
+                val defaultSafeTopPx = statusBarInsetPx + capsuleBaseTopPx + capsuleHeightPx
+                val safeTopPx = maxOf(defaultSafeTopPx, capsuleBottomInsetPx)
+                val safeTop = safeTopPx / density
                 val safeBottom = windowHeight - (navBarBottomInsetPx / density)
 
                 return mapOf(
@@ -182,7 +207,7 @@ class GameRuntimeActivity : AppCompatActivity() {
                     "safeArea" to mapOf(
                         "left" to 0f,
                         "right" to windowWidth,
-                        "top" to statusBarHeight,
+                        "top" to safeTop,
                         "bottom" to safeBottom
                     ),
                     "language" to java.util.Locale.getDefault().language,

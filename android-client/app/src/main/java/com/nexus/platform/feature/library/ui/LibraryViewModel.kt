@@ -2,6 +2,7 @@ package com.nexus.platform.feature.library.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nexus.platform.data.local.GameCatalogCacheStore
 import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.GameItem
@@ -34,7 +35,8 @@ private const val ERROR_LOAD_GAMES_FAILED = "__error_load_games_failed__"
 
 class LibraryViewModel(
     private val getApprovedGamesUseCase: GetApprovedGamesUseCase,
-    private val engagementStore: GameEngagementStore
+    private val engagementStore: GameEngagementStore,
+    private val catalogCacheStore: GameCatalogCacheStore
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
@@ -53,6 +55,7 @@ class LibraryViewModel(
                         runCatching { getApprovedGamesUseCase.getDiscoverGames(category = "all") }.getOrDefault(emptyList())
                     }
                     val discoverGames = if (discoverGamesRaw.isNotEmpty()) discoverGamesRaw else games
+                    catalogCacheStore.saveGames(games + discoverGames)
                     val display = buildDisplayData(games, serverHome)
                     val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
                         display.newbieMustPlay
@@ -90,7 +93,8 @@ class LibraryViewModel(
                     } else {
                         runCatching { getApprovedGamesUseCase.getDiscoverGames(category = "all") }.getOrDefault(emptyList())
                     }
-                    val fallbackGames = discoverGamesRaw
+                    val cachedGames = catalogCacheStore.loadGames()
+                    val fallbackGames = (discoverGamesRaw + cachedGames).distinctBy { it.id }
                     val display = buildDisplayData(fallbackGames, serverHome = null)
                     val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
                         display.newbieMustPlay

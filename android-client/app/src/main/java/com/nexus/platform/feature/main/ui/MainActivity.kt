@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import com.nexus.platform.NexusApplication
 import com.nexus.platform.core.i18n.AppLanguage
 import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.data.local.GameCatalogCacheStore
 import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.usecase.GetApprovedGamesUseCase
@@ -50,7 +51,8 @@ class MainActivity : ComponentActivity() {
         val logoutUseCase = container.logoutUseCase
         val libraryFactory = LibraryViewModelFactory(
             container.getApprovedGamesUseCase,
-            GameEngagementStore(this)
+            GameEngagementStore(this),
+            GameCatalogCacheStore(this)
         )
         libraryViewModel = ViewModelProvider(this, libraryFactory)[LibraryViewModel::class.java]
 
@@ -97,10 +99,11 @@ class MainActivity : ComponentActivity() {
 
 private class LibraryViewModelFactory(
     private val useCase: GetApprovedGamesUseCase,
-    private val engagementStore: GameEngagementStore
+    private val engagementStore: GameEngagementStore,
+    private val catalogCacheStore: GameCatalogCacheStore
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        return LibraryViewModel(useCase, engagementStore) as T
+        return LibraryViewModel(useCase, engagementStore, catalogCacheStore) as T
     }
 }
 

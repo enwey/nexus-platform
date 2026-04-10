@@ -36,6 +36,13 @@ export interface SystemInfo {
   fontSizeSetting: number
   SDKVersion: string
   benchmarkLevel: number
+  statusBarHeight?: number
+  safeArea?: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+  }
   albumAuthorized: boolean
   cameraAuthorized: boolean
   locationAuthorized: boolean

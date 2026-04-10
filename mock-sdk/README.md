@@ -12,6 +12,29 @@
 - 异步桥接主链路
 - Android 同步桥接支持（部分 sync API）
 - UpdateManager 基础能力映射
+- 安全区与胶囊布局辅助（`wx.nexusLayout.*`）
+
+## 安全区快速接入
+
+```js
+const safeArea = wx.nexusLayout.getSafeArea()
+const viewport = wx.nexusLayout.getGameViewport()
+
+// 背景全屏
+renderBackground(0, 0, window.innerWidth, window.innerHeight)
+
+// 交互内容避让胶囊
+contentRoot.x = viewport.x
+contentRoot.y = viewport.y
+contentRoot.width = viewport.width
+contentRoot.height = viewport.height
+```
+
+Canvas 项目可直接：
+
+```js
+wx.nexusLayout.applyCanvasSafeArea(canvas)
+```
 
 ## 构建
 

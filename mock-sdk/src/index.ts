@@ -1,5 +1,6 @@
 import * as baseAPI from './api/base'
 import * as extendedAPI from './api/extended'
+import * as layoutAPI from './api/layout'
 import { nexusBridge } from './core/NexusBridge'
 
 declare global {
@@ -12,6 +13,7 @@ const wx = {
   login: baseAPI.login,
   getSystemInfo: baseAPI.getSystemInfo,
   getSystemInfoSync: baseAPI.getSystemInfoSync,
+  getMenuButtonBoundingClientRect: layoutAPI.getMenuButtonBoundingClientRect,
   request: baseAPI.request,
   setStorage: baseAPI.setStorage,
   setStorageSync: baseAPI.setStorageSync,
@@ -52,6 +54,12 @@ const wx = {
   onCompassChange: extendedAPI.onCompassChange,
   startCompass: extendedAPI.startCompass,
   stopCompass: extendedAPI.stopCompass
+}
+
+;(wx as any).nexusLayout = {
+  getSafeArea: layoutAPI.getSafeArea,
+  getGameViewport: layoutAPI.getGameViewport,
+  applyCanvasSafeArea: layoutAPI.applyCanvasSafeArea
 }
 
 if (typeof window !== 'undefined') {

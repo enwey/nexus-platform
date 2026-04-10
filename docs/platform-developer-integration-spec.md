@@ -87,3 +87,51 @@ my-game.zip
 ### 发现页不显示
 
 确认游戏已审核通过，且分类/运营配置中存在可展示数据。
+
+## 9. 安全区与背景适配（必做）
+
+目标：
+
+- 让开发者可以完整控制游戏背景视觉。
+- 确保交互内容不被宿主胶囊遮挡。
+
+### 9.1 统一布局原则
+
+1. 背景层（Background Layer）全屏绘制，可覆盖状态栏区域。
+2. 内容层（Content Layer）必须从 `safeArea.top` 开始布局。
+3. 禁止写死顶部偏移（如 `top=20/44`），必须读取运行时安全区。
+
+### 9.2 推荐接入 API
+
+- `wx.getSystemInfoSync()`：读取 `safeArea` / `windowWidth` / `windowHeight`
+- `wx.getMenuButtonBoundingClientRect()`：读取胶囊矩形
+- `wx.nexusLayout.getSafeArea()`：SDK 提供的统一安全区计算
+- `wx.nexusLayout.getGameViewport()`：SDK 提供的内容视口
+- `wx.nexusLayout.applyCanvasSafeArea(canvas)`：SDK Canvas 快速适配
+
+### 9.3 最小示例（JS）
+
+```js
+const viewport = wx.nexusLayout.getGameViewport()
+
+// 背景层：全屏
+renderBackground({
+  x: 0,
+  y: 0,
+  width: window.innerWidth,
+  height: window.innerHeight
+})
+
+// 内容层：避开胶囊安全区
+contentRoot.x = viewport.x
+contentRoot.y = viewport.y
+contentRoot.width = viewport.width
+contentRoot.height = viewport.height
+```
+
+### 9.4 提审前必检
+
+1. 顶部按钮、标题、分数条不与胶囊区域重叠。
+2. 背景可延伸到状态栏，不出现割裂色块。
+3. 横竖屏切换后，安全区重新计算并生效。
+4. 至少在一台刘海屏机型和一台常规机型通过验证。

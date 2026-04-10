@@ -61,3 +61,29 @@
 3. 胶囊区无遮挡
 4. 断网与重试可用
 5. 更新提示可触发
+
+## 布局适配模板（推荐）
+
+为避免“内容被胶囊遮挡、背景割裂”，建议所有引擎统一采用双层布局：
+
+1. 背景层全屏绘制（可延伸到状态栏）
+2. 内容层使用 `safeArea` 视口布局
+
+```js
+const safeArea = wx.nexusLayout.getSafeArea()
+const viewport = wx.nexusLayout.getGameViewport()
+
+// 背景：全屏
+bg.setSize(window.innerWidth, window.innerHeight)
+bg.setPosition(0, 0)
+
+// 交互内容：安全区
+uiRoot.setPosition(viewport.x, viewport.y)
+uiRoot.setSize(viewport.width, viewport.height)
+```
+
+Canvas 项目可直接：
+
+```js
+wx.nexusLayout.applyCanvasSafeArea(canvas)
+```
