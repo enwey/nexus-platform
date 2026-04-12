@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.ReferralRecord
 import com.nexus.platform.domain.model.ReferralSummary
@@ -43,6 +44,10 @@ import com.nexus.platform.ui.theme.TextMuted
 import kotlinx.coroutines.launch
 
 class ReferralActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -96,7 +101,7 @@ private fun ReferralScreen(onBackClick: () -> Unit) {
                 text = stringResource(R.string.referral_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp)
+                modifier = Modifier.padding(start = 0.dp)
             )
         }
         Spacer(modifier = Modifier.height(16.dp))

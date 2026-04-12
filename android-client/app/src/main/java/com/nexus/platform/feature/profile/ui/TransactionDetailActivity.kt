@@ -1,5 +1,6 @@
 package com.nexus.platform.feature.profile.ui
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.BillingDetail
 import com.nexus.platform.ui.theme.BackgroundBase
@@ -33,6 +35,10 @@ import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.TextMuted
 
 class TransactionDetailActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val billingId = intent.getLongExtra("billing_id", 0L)
@@ -80,21 +86,21 @@ private fun TransactionDetailScreen(
                 text = stringResource(R.string.transaction_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp)
+                modifier = Modifier.padding(start = 0.dp)
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
         if (detail == null) {
-            Text("No detail", color = TextMuted)
+            Text(stringResource(R.string.transaction_empty), color = TextMuted)
         } else {
             Text(detail!!.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(detail!!.subtitle, color = TextMuted)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Amount: ${detail!!.amount}")
-            Text("Type: ${detail!!.type}")
-            Text("Time: ${detail!!.createdAt}")
-            Text("Receipt: ${detail!!.receiptUrl}", color = TextMuted)
+            Text(stringResource(R.string.transaction_amount_format, detail!!.amount))
+            Text(stringResource(R.string.transaction_type_format, detail!!.type))
+            Text(stringResource(R.string.transaction_time_format, detail!!.createdAt))
+            Text(stringResource(R.string.transaction_receipt_format, detail!!.receiptUrl), color = TextMuted)
         }
     }
 }

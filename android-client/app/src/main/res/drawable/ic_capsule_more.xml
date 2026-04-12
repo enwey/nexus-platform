@@ -4,7 +4,25 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M18,10c-1.1,0 -2,0.9 -2,2s0.9,2 2,2s2,-0.9 2,-2s-0.9,-2 -2,-2zM6,10c-1.1,0 -2,0.9 -2,2s0.9,2 2,2s2,-0.9 2,-2s-0.9,-2 -2,-2zM12,10c-1.1,0 -2,0.9 -2,2s0.9,2 2,2s2,-0.9 2,-2s-0.9,-2 -2,-2z" />
+
+    <!-- 保持 1.5 倍縮放，確保在 34px 高度的膠囊內視覺飽滿 -->
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:scaleX="1.5"
+        android:scaleY="1.5">
+
+        <!-- 左點：直徑 2dp -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M6,12m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+        <!-- 中點：直徑 2dp -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M12,12m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+        <!-- 右點：直徑 2dp -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M18,12m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+    </group>
 </vector>

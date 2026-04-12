@@ -29,4 +29,8 @@ class GetApprovedGamesUseCase(private val gameRepository: GameRepository) {
     suspend fun markShared(appId: String) {
         gameRepository.markShared(appId)
     }
+
+    suspend fun setFavorite(appId: String, favorite: Boolean): Boolean {
+        return gameRepository.setFavorite(appId, favorite)
+    }
 }

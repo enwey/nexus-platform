@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- pivotX 設為 24，確保縮放時向左側生長，右側釘死在邊緣 -->
+    <!-- pivotY 設為 12，垂直居中 -->
+    <group
+        android:pivotX="24"
+        android:pivotY="12"
+        android:scaleX="1.5"
+        android:scaleY="1.5">
+
+        <!-- 路徑重繪：頂點在 23 (貼近右邊緣)，兩端向左延伸 -->
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M17,6 L23,12 L17,18" />
+
+    </group>
+</vector>

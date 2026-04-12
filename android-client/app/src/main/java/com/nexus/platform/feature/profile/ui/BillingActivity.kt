@@ -1,6 +1,7 @@
 package com.nexus.platform.feature.profile.ui
 
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.BillingRecord
 import com.nexus.platform.ui.theme.BackgroundBase
@@ -36,6 +38,10 @@ import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.TextMuted
 
 class BillingActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -71,24 +77,25 @@ private fun BillingScreen(
             .padding(horizontal = 24.dp)
     ) {
         Spacer(modifier = Modifier.height(20.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
             Text(
                 text = "<",
                 style = MaterialTheme.typography.headlineMedium,
                 color = TextMuted,
                 modifier = Modifier.clickable { onBackClick() }
             )
-            Spacer(modifier = Modifier.height(0.dp).weight(1f))
             Text(
                 text = stringResource(R.string.billing_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(0.dp).weight(1f))
         }
         Spacer(modifier = Modifier.height(18.dp))
         if (records.isEmpty()) {
-            Text("No billing records", color = TextMuted)
+            Text(stringResource(R.string.billing_empty), color = TextMuted)
         } else {
             records.forEach { record ->
                 Row(

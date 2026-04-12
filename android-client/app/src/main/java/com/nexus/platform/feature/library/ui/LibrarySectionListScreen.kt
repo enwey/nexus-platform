@@ -122,7 +122,7 @@ private fun TopBar(title: Int, onBackClick: () -> Unit) {
                 .offset(x = (-4).dp)
                 .clickable { onBackClick() }
         )
-        Spacer(modifier = Modifier.size(12.dp))
+        Spacer(modifier = Modifier.size(0.dp))
         Text(
             text = androidx.compose.ui.res.stringResource(title),
             style = MaterialTheme.typography.titleLarge,

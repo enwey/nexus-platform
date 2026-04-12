@@ -58,6 +58,11 @@ platform:
     terms-html: ${PLATFORM_LEGAL_TERMS_HTML:<p>Welcome to Nexus Platform.</p><p>This is the default user agreement content.</p>}
     privacy-title: ${PLATFORM_LEGAL_PRIVACY_TITLE:Nexus Privacy Policy}
     privacy-html: ${PLATFORM_LEGAL_PRIVACY_HTML:<p>Welcome to Nexus Platform.</p><p>This is the default privacy policy content.</p>}
+  share:
+    app-scheme-template: ${PLATFORM_SHARE_APP_SCHEME_TEMPLATE:bringbox://game/%s}
+    android-install-url: ${PLATFORM_SHARE_ANDROID_INSTALL_URL:https://play.google.com/store/apps/details?id=com.nexus.platform}
+    ios-install-url: ${PLATFORM_SHARE_IOS_INSTALL_URL:https://apps.apple.com}
+    other-install-url: ${PLATFORM_SHARE_OTHER_INSTALL_URL:https://bringbox.com/download}
   security:
     allow-insecure-defaults: ${PLATFORM_ALLOW_INSECURE_DEFAULTS:false}
   bootstrap-admin:

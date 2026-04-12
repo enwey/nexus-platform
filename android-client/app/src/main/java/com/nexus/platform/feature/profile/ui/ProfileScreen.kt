@@ -1,10 +1,10 @@
 package com.nexus.platform.feature.profile.ui
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,11 +37,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.AppLanguage
+import com.nexus.platform.core.ui.showCenterToast
+import com.nexus.platform.data.local.CloudSyncStore
+import com.nexus.platform.data.local.GameCatalogCacheStore
+import com.nexus.platform.data.local.GameEngagementStore
+import com.nexus.platform.data.local.LocalCacheManager
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.UserProfileDetail
 import com.nexus.platform.domain.model.WalletSummary
@@ -52,6 +65,7 @@ import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import kotlinx.coroutines.launch
 
 private val TopLevelBottomPadding = 96.dp
 
@@ -65,17 +79,38 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val backendApi = remember(context) { PlatformBackendApi(context) }
+    val cloudSyncStore = remember(context) { CloudSyncStore(context) }
+    val engagementStore = remember(context) { GameEngagementStore(context) }
+    val catalogCacheStore = remember(context) { GameCatalogCacheStore(context) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var profile by remember { mutableStateOf<UserProfileDetail?>(null) }
     var wallet by remember { mutableStateOf<WalletSummary?>(null) }
+    var cloudSyncEnabled by remember { mutableStateOf(false) }
+    var cacheSizeText by remember { mutableStateOf("0 B") }
 
     LaunchedEffect(isLoggedIn) {
+        cacheSizeText = LocalCacheManager.formatBytes(LocalCacheManager.computeCacheBytes(context))
         if (isLoggedIn) {
             profile = runCatching { backendApi.getUserProfile() }.getOrNull()
             wallet = runCatching { backendApi.getWalletSummary() }.getOrNull()
+            cloudSyncEnabled = cloudSyncStore.isEnabled()
+            if (cloudSyncEnabled) {
+                runCatching { backendApi.getLibraryHome() }.getOrNull()?.let { home ->
+                    val mergedGames = (home.recentGames + home.myGames + listOfNotNull(home.currentPlayingGame))
+                        .distinctBy { it.id }
+                    catalogCacheStore.saveGames(mergedGames)
+                    engagementStore.applyCloudState(
+                        currentPlayingGameId = home.currentPlayingGame?.id,
+                        recentGameIds = home.recentGames.map { it.id },
+                        favoriteGameIds = home.myGames.map { it.id }
+                    )
+                }
+            }
         } else {
             profile = null
             wallet = null
+            cloudSyncEnabled = false
         }
     }
 
@@ -83,7 +118,7 @@ fun ProfileScreen(
         if (isLoggedIn) {
             action()
         } else {
-            Toast.makeText(context, context.getString(R.string.profile_login_required), Toast.LENGTH_SHORT).show()
+            showCenterToast(context, context.getString(R.string.profile_login_required))
             onRequestLogin()
         }
     }
@@ -95,11 +130,15 @@ fun ProfileScreen(
             .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = TopLevelBottomPadding),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        UserCard(profile = profile, isLoggedIn = isLoggedIn)
+        UserCard(
+            profile = profile,
+            isLoggedIn = isLoggedIn,
+            onLoginClick = onRequestLogin
+        )
         WalletCard(
             wallet = wallet,
             onBillClick = { requireLogin { context.startActivity(Intent(context, BillingActivity::class.java)) } },
-            onHowToEarnClick = { requireLogin { context.startActivity(Intent(context, ReferralActivity::class.java)) } }
+            onHowToEarnClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
         )
         ReferralCard(onClick = { requireLogin { context.startActivity(Intent(context, ReferralActivity::class.java)) } })
         MenuGroup(
@@ -111,15 +150,47 @@ fun ProfileScreen(
             ),
             rightTexts = listOf(
                 null,
-                if (isLoggedIn) stringResource(R.string.profile_sync_enabled) else stringResource(R.string.profile_sync_disabled),
-                stringResource(R.string.profile_cache_size),
+                if (isLoggedIn && cloudSyncEnabled) stringResource(R.string.profile_sync_enabled) else stringResource(R.string.profile_sync_disabled),
+                cacheSizeText,
                 stringResource(currentLanguage.labelRes)
             ),
             onItemClick = { index ->
                 when (index) {
-                    0 -> context.startActivity(Intent(context, AccountSecurityActivity::class.java))
-                    1 -> requireLogin { context.startActivity(Intent(context, DeviceManagementActivity::class.java)) }
-                    2 -> Toast.makeText(context, context.getString(R.string.profile_cache_cleared), Toast.LENGTH_SHORT).show()
+                    0 -> requireLogin { context.startActivity(Intent(context, AccountSecurityActivity::class.java)) }
+                    1 -> requireLogin {
+                        val targetEnabled = !cloudSyncEnabled
+                        cloudSyncStore.setEnabled(targetEnabled)
+                        cloudSyncEnabled = targetEnabled
+                        if (targetEnabled) {
+                            scope.launch {
+                                val synced = runCatching { backendApi.getLibraryHome() }.getOrNull()
+                                if (synced != null) {
+                                    val mergedGames = (synced.recentGames + synced.myGames + listOfNotNull(synced.currentPlayingGame))
+                                        .distinctBy { it.id }
+                                    catalogCacheStore.saveGames(mergedGames)
+                                    engagementStore.applyCloudState(
+                                        currentPlayingGameId = synced.currentPlayingGame?.id,
+                                        recentGameIds = synced.recentGames.map { it.id },
+                                        favoriteGameIds = synced.myGames.map { it.id }
+                                    )
+                                    showCenterToast(context, context.getString(R.string.profile_sync_enabled))
+                                } else {
+                                    showCenterToast(context, context.getString(R.string.common_error_network))
+                                }
+                            }
+                        } else {
+                            showCenterToast(context, context.getString(R.string.profile_sync_disabled))
+                        }
+                    }
+                    2 -> {
+                        scope.launch {
+                            val cleared = LocalCacheManager.clearLocalCaches(context)
+                            cacheSizeText = LocalCacheManager.formatBytes(LocalCacheManager.computeCacheBytes(context))
+                            cloudSyncEnabled = if (isLoggedIn) cloudSyncStore.isEnabled() else false
+                            val msg = "${context.getString(R.string.profile_cache_cleared)} (${LocalCacheManager.formatBytes(cleared)})"
+                            showCenterToast(context, msg)
+                        }
+                    }
                     3 -> showLanguageDialog = true
                 }
             }
@@ -130,13 +201,6 @@ fun ProfileScreen(
                 rightTexts = listOf(null),
                 isLogout = true,
                 onLogoutClick = onLogoutClick
-            )
-        }
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text(
-                stringResource(R.string.profile_system_hint),
-                color = TextMuted.copy(alpha = 0.5f),
-                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -157,7 +221,8 @@ fun ProfileScreen(
                         ) {
                             Text(
                                 text = stringResource(language.labelRes),
-                                color = if (language == currentLanguage) Primary else TextMain
+                                color = if (language == currentLanguage) Primary else TextMain,
+                                style = MaterialTheme.typography.bodyLarge
                             )
                         }
                     }
@@ -174,14 +239,18 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun UserCard(profile: UserProfileDetail?, isLoggedIn: Boolean) {
+private fun UserCard(
+    profile: UserProfileDetail?,
+    isLoggedIn: Boolean,
+    onLoginClick: () -> Unit
+) {
     val displayName = if (isLoggedIn) {
         profile?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.profile_header_title)
     } else {
         stringResource(R.string.profile_guest_mode)
     }
     val accountIdText = if (isLoggedIn) {
-        profile?.id?.let { "Nexus ID: $it" } ?: stringResource(R.string.profile_account_id)
+        profile?.id?.let { stringResource(R.string.profile_account_id_format, it) } ?: stringResource(R.string.profile_account_id)
     } else {
         stringResource(R.string.profile_not_logged_in)
     }
@@ -203,10 +272,17 @@ private fun UserCard(profile: UserProfileDetail?, isLoggedIn: Boolean) {
                     .fillMaxSize()
                     .clip(CircleShape)
                     .background(BackgroundSurface)
-            )
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_default_avatar),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+            Spacer(modifier = Modifier.height(6.dp))
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -214,6 +290,23 @@ private fun UserCard(profile: UserProfileDetail?, isLoggedIn: Boolean) {
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(accountIdText, color = TextMuted, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+        if (!isLoggedIn) {
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(Primary)
+                    .clickable { onLoginClick() }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.profile_login_account),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -225,7 +318,10 @@ private fun WalletCard(
     onBillClick: () -> Unit,
     onHowToEarnClick: () -> Unit
 ) {
-    val balanceText = wallet?.balance?.takeIf { it.isNotBlank() }?.let { "¥ $it" }
+    val balanceText = wallet?.balance?.takeIf { it.isNotBlank() }?.trim()
+        ?.removePrefix("¥")
+        ?.removePrefix("￥")
+        ?.trim()
         ?: stringResource(R.string.profile_wallet_value)
 
     Box(
@@ -233,18 +329,51 @@ private fun WalletCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(Brush.linearGradient(listOf(PrimaryStart, PrimaryEnd)))
-            .padding(24.dp)
-            .height(140.dp)
+            .height(164.dp)
+            .padding(20.dp)
     ) {
-        Column {
-            Text(
-                stringResource(R.string.profile_wallet_title),
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodySmall
-            )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 16.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    stringResource(R.string.profile_wallet_title),
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodySmall.merge(
+                        TextStyle(
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        )
+                    ),
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(balanceText, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
-            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    balanceText,
+                    style = MaterialTheme.typography.displaySmall.copy(fontFamily = FontFamily.Monospace),
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     modifier = Modifier
@@ -303,26 +432,37 @@ private fun ReferralCard(onClick: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = TextMain
                 )
-                Text(
-                    text = stringResource(R.string.profile_referral_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Primary)
-                    .clickable { onClick() }
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.profile_referral_button),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMain
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_referral_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Primary)
+                            .clickable { onClick() }
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.profile_referral_button),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextMain
+                        )
+                    }
+                }
             }
         }
     }
@@ -363,7 +503,11 @@ private fun MenuGroup(
                 if (rightTexts.getOrNull(index) != null) {
                     Text(rightTexts[index].orEmpty(), color = TextMuted, style = MaterialTheme.typography.bodyMedium)
                 } else if (!isLogout) {
-                    Text(">", color = TextMuted, style = MaterialTheme.typography.bodyMedium)
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_more),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
             }
             if (index != items.lastIndex) {

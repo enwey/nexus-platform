@@ -48,7 +48,7 @@
     <string name="library_section_favorites">Favorites</string>
     <string name="library_section_my_games">My Games</string>
     <string name="library_section_recent">Recently Played</string>
-    <string name="library_more_with_arrow">More ></string>
+    <string name="library_more_with_arrow">More</string>
     <string name="library_manage">Manage</string>
     <string name="library_running">Running (Background)</string>
     <string name="library_resume_title">Cyber Blade: Origin</string>
@@ -62,6 +62,8 @@
     <string name="library_next_page">Next</string>
     <string name="library_page_info">Page %1$d/%2$d</string>
     <string name="library_load_end">No more games</string>
+    <string name="library_add_my_game_confirm">Add this game to My Games?</string>
+    <string name="library_remove_my_game_confirm">Remove this game from My Games?</string>
     <string name="library_coldstart_new_player_tag">New Player Picks</string>
     <string name="library_coldstart_trending">Everyone Is Playing</string>
     <string name="library_coldstart_refresh">Refresh</string>
@@ -96,6 +98,7 @@
 
     <string name="profile_header_title">Pro Player 007</string>
     <string name="profile_account_id">Nexus ID: 88293041</string>
+    <string name="profile_account_id_format">Nexus ID: %1$s</string>
     <string name="profile_security">Account &amp; Security</string>
     <string name="profile_cloud_sync">Cloud Save Sync</string>
     <string name="profile_clear_cache">Clear Local Game Cache</string>
@@ -104,9 +107,10 @@
     <string name="profile_sync_enabled">Enabled</string>
     <string name="profile_cache_size">1.4 GB</string>
     <string name="profile_logout">Log Out</string>
+    <string name="profile_logout_confirm">Are you sure you want to log out?</string>
     <string name="profile_system_hint">Account System</string>
     <string name="profile_wallet_title">Wallet Balance (Platform Coin)</string>
-    <string name="profile_wallet_value">楼 1,250.00</string>
+    <string name="profile_wallet_value">1,250.00</string>
     <string name="profile_charge">Top Up</string>
     <string name="profile_bill">Bills</string>
 
@@ -120,11 +124,12 @@
     <string name="game_version_label">Version</string>
 
     <string name="community_coming_soon">Community features are coming soon</string>
-    <string name="language_traditional_chinese">Traditional Chinese</string>
-    <string name="language_simplified_chinese">Simplified Chinese</string>
+    <string name="language_traditional_chinese">繁體中文</string>
+    <string name="language_simplified_chinese">简体中文</string>
     <string name="language_english">English</string>
     <string name="common_confirm">Confirm</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
     <string name="common_loading">Submitting...</string>
     <string name="common_error_network">Network error, please try again later</string>
     <string name="common_error_server">Server is busy, please try again later</string>
@@ -176,6 +181,7 @@
     <string name="referral_summary_invites">Invites: %1$d</string>
     <string name="referral_summary_reward">Rewards: %1$s</string>
     <string name="referral_no_records">No referral records</string>
+    <string name="legal_empty_url">Empty URL</string>
 
     <!-- Fallback strings copied from default locale to keep key parity -->
     <string name="onboarding_title_1">告別下載，\n秒開即玩。</string>
@@ -219,20 +225,21 @@
     <string name="discover_page_info">第 %1$d/%2$d 頁（每頁 30 款）</string>
     <string name="discover_prev_page">上一頁</string>
     <string name="discover_next_page">下一頁</string>
-    <string name="profile_sync_disabled">未登入</string>
-    <string name="profile_login_account">登入帳號</string>
-    <string name="profile_login_required">請先登入後使用此功能</string>
-    <string name="profile_guest_mode">訪客模式</string>
-    <string name="profile_not_logged_in">未登入</string>
-    <string name="profile_how_to_earn">如何賺取</string>
-    <string name="profile_referral_title">邀請好友，各得 🪙500</string>
-    <string name="profile_referral_subtitle">每成功邀請一位新人，獎勵立顯</string>
-    <string name="profile_referral_button">去邀請</string>
+    <string name="profile_sync_disabled">Not Logged In</string>
+    <string name="profile_login_account">Sign In</string>
+    <string name="profile_login_required">Please sign in first</string>
+    <string name="profile_guest_mode">Guest Mode</string>
+    <string name="profile_not_logged_in">Not Logged In</string>
+    <string name="profile_how_to_earn">How to Earn?</string>
+    <string name="profile_referral_title">Invite Friends to Get 500 Platform Coins</string>
+    <string name="profile_referral_subtitle">Platform coins can be used to buy in-game items, services, and redeem gifts.</string>
+    <string name="profile_referral_button">Invite</string>
     <string name="runtime_menu_remove_favorite">從我的遊戲移除</string>
     <string name="runtime_favorite_added">已加入我的遊戲</string>
     <string name="runtime_favorite_removed">已從我的遊戲移除</string>
     <string name="runtime_favorite_sync_failed">同步收藏狀態失敗</string>
     <string name="runtime_feedback_todo">反饋功能即將上線</string>
+    <string name="runtime_share_copied">Share text copied</string>
     <string name="runtime_menu_game_title">賽博之刃：源起</string>
     <string name="runtime_menu_game_players">👥 240萬+ 玩過</string>
     <string name="runtime_menu_game_studio">🛠️ Nexus Studio</string>
@@ -241,10 +248,11 @@
     <string name="runtime_menu_share_facebook">Facebook</string>
     <string name="runtime_menu_share_xiaohongshu">小紅書</string>
     <string name="runtime_menu_share_link">複製鏈接</string>
-    <string name="runtime_menu_add_favorite">加入我的遊戲 (收藏)</string>
+    <string name="runtime_menu_add_favorite">Add to My Games</string>
     <string name="runtime_menu_restart">重新進入遊戲</string>
     <string name="runtime_menu_feedback">反饋與投訴</string>
-    <string name="billing_title">賬單明細</string>
+    <string name="billing_title">Billing Details</string>
+    <string name="billing_empty">No billing records</string>
     <string name="billing_income_title">本月累計收入</string>
     <string name="billing_income_value">+4,200</string>
     <string name="billing_expense_title">本月累計支出</string>
@@ -267,7 +275,12 @@
     <string name="billing_item_item_subtitle">消消樂: 無限體力(2h)</string>
     <string name="billing_item_item_amount">-380</string>
     <string name="billing_item_item_time">10-22 10:45</string>
-    <string name="transaction_title">賬單詳情</string>
+    <string name="transaction_title">Billing Detail</string>
+    <string name="transaction_empty">No detail</string>
+    <string name="transaction_amount_format">Amount: %1$s</string>
+    <string name="transaction_type_format">Type: %1$s</string>
+    <string name="transaction_time_format">Time: %1$s</string>
+    <string name="transaction_receipt_format">Receipt: %1$s</string>
     <string name="transaction_complaint">投訴</string>
     <string name="transaction_amount_label">交易金額</string>
     <string name="transaction_amount_value">-1,200</string>

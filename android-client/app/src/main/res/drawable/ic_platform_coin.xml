@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- 核心路徑：外圓順時針 + 內盒逆時針 = 物理鏤空 -->
+    <path
+        android:fillColor="#F2A238"
+        android:pathData="
+            /* 1. 外圈大圓 (順時針方向繪製) */
+            M 100,10
+            A 90,90 0 1 1 99.9,10
+            Z
+
+            /* 2. 盒子頂面鏤空 (逆時針方向) */
+            M 100,94 L 66,79 L 100,64 L 134,79 Z
+
+            /* 3. 盒子左側面鏤空 (逆時針方向) */
+            M 97,101 L 64,86 L 64,123 L 97,138 Z
+
+            /* 4. 盒子右側面鏤空 (逆時針方向) */
+            M 103,138 L 136,123 L 136,86 L 103,101 Z" />
+
+    <!-- 增加一個微弱的白色高光，防止在全黑背景下看不清圓形輪廓 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.15"
+        android:strokeWidth="2"
+        android:pathData="M 100,15 A 85,85 0 0,1 185,100" />
+
+</vector>

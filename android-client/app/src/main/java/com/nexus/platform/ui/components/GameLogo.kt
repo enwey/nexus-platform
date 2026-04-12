@@ -56,7 +56,6 @@ fun GameLogo(
     val state = painter.state
 
     Box(modifier = modifier) {
-        GradientLogoPlaceholder(seed = safeSeed, modifier = Modifier.fillMaxSize())
         if (state is AsyncImagePainter.State.Success) {
             Image(
                 painter = painter,
@@ -77,10 +76,9 @@ fun GameLogo(
                     )
             )
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.02f))
+            EmptyLogoPlaceholder(
+                seed = safeSeed,
+                modifier = Modifier.fillMaxSize()
             )
         }
         Box(
@@ -92,6 +90,22 @@ fun GameLogo(
                     Color.White,
                     shape = RoundedCornerShape(12.dp)
                 )
+        )
+    }
+}
+
+@Composable
+private fun EmptyLogoPlaceholder(seed: String, modifier: Modifier = Modifier) {
+    val hash = remember(seed) { seed.hashCode() and Int.MAX_VALUE }
+    val overlayAlpha = remember(hash) { if (hash % 2 == 0) 0.03f else 0.04f }
+    Box(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.04f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = overlayAlpha))
         )
     }
 }

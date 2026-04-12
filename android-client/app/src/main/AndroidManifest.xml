@@ -34,16 +34,6 @@
             android:name=".feature.auth.ui.LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.NexusPlatform.Fullscreen" />
-
-        <activity
-            android:name=".feature.auth.ui.RegisterActivity"
-            android:exported="false"
-            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
-
-        <activity
-            android:name=".feature.auth.ui.ForgotPasswordActivity"
-            android:exported="false"
-            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
         
         <activity
             android:name=".feature.main.ui.MainActivity"

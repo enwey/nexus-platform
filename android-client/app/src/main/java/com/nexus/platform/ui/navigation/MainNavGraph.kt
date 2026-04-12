@@ -32,6 +32,7 @@ import androidx.navigation.compose.composable
 import com.nexus.platform.core.i18n.AppLanguage
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.feature.community.ui.CommunityScreen
+import com.nexus.platform.feature.discover.ui.DiscoverRankingScreen
 import com.nexus.platform.feature.discover.ui.DiscoverScreen
 import com.nexus.platform.feature.game.ui.GameDetailScreen
 import com.nexus.platform.feature.library.ui.LibrarySection
@@ -55,6 +56,7 @@ private fun AnimatedContentTransitionScope<*>.initialRoute(): String? {
 
 private fun isHierarchyRoute(route: String?): Boolean {
     return route == MainRoutes.GAME_DETAIL || route == MainRoutes.LIBRARY_SECTION
+        || route == MainRoutes.DISCOVER_RANKING
 }
 
 private fun AnimatedContentTransitionScope<*>.hierarchyEnter() =
@@ -89,6 +91,8 @@ private fun MainHomeScreen(
     onDiscoverCategoryChange: (String) -> Unit,
     onLibraryGameClick: (GameItem) -> Unit,
     onLibraryMoreClick: (LibrarySection) -> Unit,
+    onToggleMyGame: (GameItem) -> Unit,
+    onDiscoverRankingClick: () -> Unit,
     onDiscoverGameClick: (GameItem) -> Unit,
     onDiscoverQuickPlayClick: (GameItem) -> Unit,
     onRequestLogin: () -> Unit,
@@ -106,7 +110,9 @@ private fun MainHomeScreen(
                     uiState = libraryState,
                     onLoad = onLoadLibrary,
                     onGameClick = onLibraryGameClick,
-                    onMoreClick = onLibraryMoreClick
+                    onMoreClick = onLibraryMoreClick,
+                    onToggleMyGame = onToggleMyGame,
+                    onGoDiscoverClick = { selected = MainDestination.Discover }
                 )
 
                 MainDestination.Discover -> DiscoverScreen(
@@ -114,7 +120,8 @@ private fun MainHomeScreen(
                     hero = libraryState.discoverHero,
                     onCategoryChange = onDiscoverCategoryChange,
                     onGameClick = onDiscoverGameClick,
-                    onQuickPlayClick = onDiscoverQuickPlayClick
+                    onQuickPlayClick = onDiscoverQuickPlayClick,
+                    onRankingClick = { onDiscoverRankingClick() }
                 )
                 MainDestination.Community -> CommunityScreen(
                     games = libraryState.discoverGames,
@@ -151,6 +158,8 @@ fun MainNavGraph(
     onLibraryGameClick: (GameItem) -> Unit,
     onLibraryMoreClick: (LibrarySection) -> Unit,
     onPlayGame: (GameItem) -> Unit,
+    onToggleMyGame: (GameItem) -> Unit,
+    onDiscoverRankingClick: () -> Unit,
     isLoggedIn: Boolean,
     onRequestLogin: () -> Unit,
     currentLanguage: AppLanguage,
@@ -187,6 +196,8 @@ fun MainNavGraph(
                 onDiscoverCategoryChange = onDiscoverCategoryChange,
                 onLibraryGameClick = onLibraryGameClick,
                 onLibraryMoreClick = onLibraryMoreClick,
+                onToggleMyGame = onToggleMyGame,
+                onDiscoverRankingClick = onDiscoverRankingClick,
                 onDiscoverGameClick = { game ->
                     navController.currentBackStackEntry
                         ?.savedStateHandle
@@ -198,6 +209,24 @@ fun MainNavGraph(
                 currentLanguage = currentLanguage,
                 onChangeLanguage = onChangeLanguage,
                 onLogout = onLogout
+            )
+        }
+        composable(
+            route = MainRoutes.DISCOVER_RANKING,
+            enterTransition = { hierarchyEnter() },
+            exitTransition = { hierarchyExit() },
+            popEnterTransition = { hierarchyPopEnter() },
+            popExitTransition = { hierarchyPopExit() }
+        ) {
+            DiscoverRankingScreen(
+                games = libraryState.discoverGames,
+                onBackClick = { navController.popBackStack() },
+                onGameClick = { game ->
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(MainRoutes.GAME_DETAIL_KEY, game)
+                    navController.navigate(MainRoutes.GAME_DETAIL)
+                }
             )
         }
         composable(

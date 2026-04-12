@@ -5,8 +5,17 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,29 +23,42 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.nexus.platform.NexusApplication
 import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.core.ui.showCenterToast
 import com.nexus.platform.domain.usecase.LoginUseCase
 import com.nexus.platform.feature.main.ui.MainActivity
 import com.nexus.platform.R
@@ -44,6 +66,7 @@ import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
+import com.nexus.platform.ui.theme.BackgroundBase
 
 class LoginActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
@@ -57,7 +80,6 @@ class LoginActivity : ComponentActivity() {
         val authRepository = container.authRepository
         if (authRepository.currentSession() != null) {
             startActivity(Intent(this, MainActivity::class.java))
-            overridePendingTransition(0, 0)
             finish()
             return
         }
@@ -68,28 +90,132 @@ class LoginActivity : ComponentActivity() {
         setContent {
             NexusPlatformTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                LoginScreen(
-                    uiState = state,
-                    onEmailChange = viewModel::updateEmail,
-                    onPasswordChange = viewModel::updatePassword,
-                    onSignupClick = {
-                        startActivity(Intent(this, RegisterActivity::class.java))
-                    },
-                    onForgotPasswordClick = {
-                        startActivity(Intent(this, ForgotPasswordActivity::class.java))
-                    },
-                    onLoginClick = {
-                        viewModel.login {
-                            startActivity(Intent(this, MainActivity::class.java))
-                            overridePendingTransition(0, 0)
-                            finish()
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = AuthRoutes.LOGIN,
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None },
+                    popExitTransition = { ExitTransition.None }
+                ) {
+                    composable(
+                        route = AuthRoutes.LOGIN,
+                        exitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(AUTH_EXIT_MS, easing = FastOutLinearInEasing)
+                            )
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = tween(AUTH_ENTER_MS, easing = LinearOutSlowInEasing)
+                            )
                         }
+                    ) {
+                        LoginScreen(
+                            uiState = state,
+                            onEmailChange = viewModel::updateEmail,
+                            onPasswordChange = viewModel::updatePassword,
+                            onCloseClick = { finish() },
+                            onSignupClick = {
+                                navController.navigate(AuthRoutes.REGISTER) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onForgotPasswordClick = {
+                                navController.navigate(AuthRoutes.FORGOT) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onLoginClick = {
+                                viewModel.login {
+                                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                                    finish()
+                                }
+                            }
+                        )
                     }
-                )
+                    composable(
+                        route = AuthRoutes.REGISTER,
+                        enterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(AUTH_ENTER_MS, easing = LinearOutSlowInEasing)
+                            )
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(AUTH_EXIT_MS, easing = FastOutLinearInEasing)
+                            )
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = tween(AUTH_ENTER_MS, easing = LinearOutSlowInEasing)
+                            )
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(AUTH_EXIT_MS, easing = FastOutLinearInEasing)
+                            )
+                        }
+                    ) {
+                        RegisterScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onLoginClick = { navController.popBackStack(AuthRoutes.LOGIN, false) },
+                            onRegisterSuccess = { navController.popBackStack(AuthRoutes.LOGIN, false) }
+                        )
+                    }
+                    composable(
+                        route = AuthRoutes.FORGOT,
+                        enterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(AUTH_ENTER_MS, easing = LinearOutSlowInEasing)
+                            )
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(AUTH_EXIT_MS, easing = FastOutLinearInEasing)
+                            )
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = tween(AUTH_ENTER_MS, easing = LinearOutSlowInEasing)
+                            )
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(AUTH_EXIT_MS, easing = FastOutLinearInEasing)
+                            )
+                        }
+                    ) {
+                        ForgotPasswordScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onLoginClick = { navController.popBackStack(AuthRoutes.LOGIN, false) }
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+private object AuthRoutes {
+    const val LOGIN = "auth_login"
+    const val REGISTER = "auth_register"
+    const val FORGOT = "auth_forgot"
+}
+
+private const val AUTH_ENTER_MS = 280
+private const val AUTH_EXIT_MS = 240
 
 private class LoginViewModelFactory(
     private val loginUseCase: LoginUseCase
@@ -104,35 +230,79 @@ private fun LoginScreen(
     uiState: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onCloseClick: () -> Unit,
     onSignupClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
     val context = LocalContext.current
-    Column(
+    val inputTextStyle = TextStyle(
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        platformStyle = PlatformTextStyle(includeFontPadding = true)
+    )
+    val textFieldColors = TextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedIndicatorColor = Primary,
+        unfocusedIndicatorColor = Color(0x33FFFFFF),
+        cursorColor = Primary
+    )
+
+    LaunchedEffect(uiState.errorMessage) {
+        if (!uiState.errorMessage.isNullOrBlank()) {
+            val resolvedError = when (uiState.errorMessage) {
+                "__error_login_failed__" -> context.getString(R.string.login_error_failed)
+                else -> ApiErrorLocalizer.localize(
+                    context = context,
+                    rawMessage = uiState.errorMessage,
+                    fallbackRes = R.string.login_error_failed
+                )
+            }
+            showCenterToast(context, resolvedError)
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top
+            .background(BackgroundBase)
     ) {
-        Spacer(modifier = Modifier.height(72.dp))
-        Text(
-            text = stringResource(R.string.login_welcome),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Black,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.login_subtitle),
-            color = TextMuted
-        )
-        Spacer(modifier = Modifier.height(40.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Top
+        ) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                IconButton(onClick = onCloseClick, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.common_close),
+                        tint = Color.White
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(R.string.login_welcome),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.login_subtitle),
+                color = TextMuted
+            )
+            Spacer(modifier = Modifier.height(40.dp))
 
-        OutlinedTextField(
+            OutlinedTextField(
             value = uiState.email,
             onValueChange = onEmailChange,
-            label = { Text(stringResource(R.string.login_account_label)) },
+            label = { Text(stringResource(R.string.login_account_label), style = MaterialTheme.typography.bodyLarge) },
+            textStyle = inputTextStyle,
             isError = !uiState.emailError.isNullOrBlank(),
             supportingText = {
                 if (!uiState.emailError.isNullOrBlank()) {
@@ -148,19 +318,14 @@ private fun LoginScreen(
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0x0DFFFFFF),
-                unfocusedContainerColor = Color(0x08FFFFFF),
-                focusedIndicatorColor = Primary,
-                unfocusedIndicatorColor = Color(0x14FFFFFF),
-                cursorColor = Primary
-            )
+            colors = textFieldColors
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
             value = uiState.password,
             onValueChange = onPasswordChange,
-            label = { Text(stringResource(R.string.login_password_label)) },
+            label = { Text(stringResource(R.string.login_password_label), style = MaterialTheme.typography.bodyLarge) },
+            textStyle = inputTextStyle,
             isError = !uiState.passwordError.isNullOrBlank(),
             supportingText = {
                 if (!uiState.passwordError.isNullOrBlank()) {
@@ -176,71 +341,58 @@ private fun LoginScreen(
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0x0DFFFFFF),
-                unfocusedContainerColor = Color(0x08FFFFFF),
-                focusedIndicatorColor = Primary,
-                unfocusedIndicatorColor = Color(0x14FFFFFF),
-                cursorColor = Primary
-            )
+            colors = textFieldColors
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            TextButton(onClick = onForgotPasswordClick) {
-                Text(
-                    text = stringResource(R.string.login_forgot_password),
-                    color = Primary
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onForgotPasswordClick) {
+                    Text(
+                        text = stringResource(R.string.login_forgot_password),
+                        color = Primary
+                    )
+                }
             }
-        }
 
-        if (!uiState.errorMessage.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            val resolvedError = when (uiState.errorMessage) {
-                "__error_login_failed__" -> stringResource(R.string.login_error_failed)
-                else -> ApiErrorLocalizer.localize(
-                    context = context,
-                    rawMessage = uiState.errorMessage,
-                    fallbackRes = R.string.login_error_failed
-                )
-            }
-            Text(
-                text = resolvedError,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-        } else {
-            ActionButton(
-                text = stringResource(R.string.login_action),
-                onClick = onLoginClick,
+            Spacer(modifier = Modifier.height(32.dp))
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-            )
-        }
+                    .height(56.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    ActionButton(
+                        text = stringResource(R.string.login_action),
+                        onClick = onLoginClick,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                    )
+                }
+            }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = stringResource(R.string.login_new_user),
-                color = TextMuted
-            )
-            Text(
-                text = stringResource(R.string.login_signup),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable(onClick = onSignupClick)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.login_new_user),
+                    color = TextMuted
+                )
+                Text(
+                    text = stringResource(R.string.login_signup),
+                    color = Primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable(onClick = onSignupClick)
+                )
+            }
         }
     }
 }

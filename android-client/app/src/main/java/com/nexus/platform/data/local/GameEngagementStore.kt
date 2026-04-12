@@ -58,6 +58,29 @@ class GameEngagementStore(context: Context) {
             )
     }
 
+    fun applyCloudState(
+        currentPlayingGameId: String?,
+        recentGameIds: List<String>,
+        favoriteGameIds: List<String>,
+        syncedAt: Long = System.currentTimeMillis()
+    ) {
+        val snapshot = loadSnapshot()
+        snapshot.lastPlayedAt.clear()
+        snapshot.favorites.clear()
+
+        recentGameIds.distinct().forEachIndexed { index, gameId ->
+            snapshot.lastPlayedAt[gameId] = syncedAt - index
+        }
+        favoriteGameIds.distinct().forEachIndexed { index, gameId ->
+            snapshot.favorites[gameId] = syncedAt - index
+        }
+        snapshot.currentPlayingGameId = currentPlayingGameId
+            ?: recentGameIds.firstOrNull()
+            ?: snapshot.currentPlayingGameId
+
+        saveSnapshot(snapshot)
+    }
+
     private fun loadSnapshot(): Snapshot {
         val raw = prefs.getString(snapshotKey(), null).orEmpty()
         if (raw.isBlank()) {

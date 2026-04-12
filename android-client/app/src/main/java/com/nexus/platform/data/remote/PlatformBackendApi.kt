@@ -193,7 +193,8 @@ class PlatformBackendApi(context: Context) {
                 runtimeLogoUrl = data.stringOrDefault("runtimeLogoUrl", ""),
                 shareTitle = data.stringOrDefault("shareTitle", ""),
                 shareSubtitle = data.stringOrDefault("shareSubtitle", ""),
-                shareImageUrl = data.stringOrDefault("shareImageUrl", "")
+                shareImageUrl = data.stringOrDefault("shareImageUrl", ""),
+                capsuleTheme = data.stringOrDefault("capsuleTheme", "")
             )
         }
     }

@@ -1,11 +1,5 @@
 package com.nexus.platform.feature.auth.ui
 
-import android.content.Context
-import android.content.Intent
-import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -39,47 +35,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nexus.platform.NexusApplication
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.ApiErrorLocalizer
-import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.core.ui.showCenterToast
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.feature.common.ui.LegalWebViewActivity
 import com.nexus.platform.ui.components.ActionButton
-import com.nexus.platform.ui.theme.NexusPlatformTheme
+import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class RegisterActivity : ComponentActivity() {
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(AppLanguageManager.wrap(newBase))
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            NexusPlatformTheme {
-                RegisterScreen(
-                    onBackClick = { finish() },
-                    onLoginClick = {
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        finish()
-                    }
-                )
-            }
-        }
-    }
-}
-
 @Composable
-private fun RegisterScreen(
+fun RegisterScreen(
     onBackClick: () -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    onRegisterSuccess: () -> Unit
 ) {
     val context = LocalContext.current
     val authRepository = remember(context) { (context.applicationContext as NexusApplication).container.authRepository }
@@ -109,42 +90,72 @@ private fun RegisterScreen(
 
     var termsUrl by remember { mutableStateOf("") }
     var privacyUrl by remember { mutableStateOf("") }
+    val inputTextStyle = TextStyle(
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        platformStyle = PlatformTextStyle(includeFontPadding = true)
+    )
+    val textFieldColors = TextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedIndicatorColor = Primary,
+        unfocusedIndicatorColor = Color(0x33FFFFFF),
+        cursorColor = Primary
+    )
 
     LaunchedEffect(Unit) {
-        val links = backendApi.getLegalLinks()
-        termsUrl = links.termsUrl
-        privacyUrl = links.privacyUrl
+        delay(320)
+        runCatching { backendApi.getLegalLinks() }
+            .onSuccess { links ->
+                termsUrl = links.termsUrl
+                privacyUrl = links.privacyUrl
+            }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top
+            .background(BackgroundBase)
     ) {
-        Spacer(modifier = Modifier.height(10.dp))
-        TextButton(onClick = onBackClick, modifier = Modifier.padding(start = 0.dp)) {
-            Text(text = "<", style = MaterialTheme.typography.headlineMedium, color = TextMuted)
-        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Top
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBackClick, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_back),
+                        contentDescription = stringResource(R.string.game_back),
+                        tint = Color.White
+                    )
+                }
+            }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = stringResource(R.string.register_title),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Black,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = stringResource(R.string.register_subtitle), color = TextMuted)
-        Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(R.string.register_title),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = stringResource(R.string.register_subtitle), color = TextMuted)
+            Spacer(modifier = Modifier.height(40.dp))
 
-        OutlinedTextField(
+            OutlinedTextField(
             value = email,
             onValueChange = {
                 email = it
                 emailError = null
             },
-            label = { Text(stringResource(R.string.register_account_label)) },
+            label = { Text(stringResource(R.string.register_account_label), style = MaterialTheme.typography.bodyLarge) },
+            textStyle = inputTextStyle,
             singleLine = true,
             isError = !emailError.isNullOrBlank(),
             supportingText = {
@@ -154,24 +165,19 @@ private fun RegisterScreen(
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0x0DFFFFFF),
-                unfocusedContainerColor = Color(0x08FFFFFF),
-                focusedIndicatorColor = Primary,
-                unfocusedIndicatorColor = Color(0x14FFFFFF),
-                cursorColor = Primary
-            )
+            colors = textFieldColors
         )
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = verificationCode,
                 onValueChange = {
                     verificationCode = it
                     codeError = null
                 },
-                label = { Text(codeLabel) },
+                label = { Text(codeLabel, style = MaterialTheme.typography.bodyLarge) },
+                textStyle = inputTextStyle,
                 singleLine = true,
                 isError = !codeError.isNullOrBlank(),
                 supportingText = {
@@ -181,13 +187,7 @@ private fun RegisterScreen(
                 },
                 modifier = Modifier.weight(1f).height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0x0DFFFFFF),
-                    unfocusedContainerColor = Color(0x08FFFFFF),
-                    focusedIndicatorColor = Primary,
-                    unfocusedIndicatorColor = Color(0x14FFFFFF),
-                    cursorColor = Primary
-                )
+                colors = textFieldColors
             )
             ActionButton(
                 text = if (codeCountdown > 0) "${codeCountdown}s" else stringResource(R.string.register_get_code),
@@ -214,7 +214,7 @@ private fun RegisterScreen(
                                     kotlinx.coroutines.delay(1000)
                                     codeCountdown -= 1
                                 }
-                                Toast.makeText(context, registerCodeSentText, Toast.LENGTH_SHORT).show()
+                                showCenterToast(context, registerCodeSentText)
                             } else {
                                 feedbackMessage = ApiErrorLocalizer.localize(
                                     context = context,
@@ -222,7 +222,7 @@ private fun RegisterScreen(
                                     fallbackRes = R.string.register_code_failed
                                 )
                                 feedbackIsError = true
-                                Toast.makeText(context, feedbackMessage, Toast.LENGTH_SHORT).show()
+                                showCenterToast(context, feedbackMessage.orEmpty())
                             }
                         }
                     }
@@ -230,16 +230,17 @@ private fun RegisterScreen(
                 primary = false,
                 modifier = Modifier.width(110.dp).height(56.dp)
             )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
+            OutlinedTextField(
             value = password,
             onValueChange = {
                 password = it
                 passwordError = null
             },
-            label = { Text(stringResource(R.string.register_password_label)) },
+            label = { Text(stringResource(R.string.register_password_label), style = MaterialTheme.typography.bodyLarge) },
+            textStyle = inputTextStyle,
             singleLine = true,
             isError = !passwordError.isNullOrBlank(),
             supportingText = {
@@ -249,17 +250,11 @@ private fun RegisterScreen(
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0x0DFFFFFF),
-                unfocusedContainerColor = Color(0x08FFFFFF),
-                focusedIndicatorColor = Primary,
-                unfocusedIndicatorColor = Color(0x14FFFFFF),
-                cursorColor = Primary
-            )
+            colors = textFieldColors
         )
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
+            Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
@@ -307,10 +302,10 @@ private fun RegisterScreen(
                     )
                 }
             )
-        }
+            }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        ActionButton(
+            Spacer(modifier = Modifier.height(24.dp))
+            ActionButton(
             text = if (isSubmitting) stringResource(R.string.common_loading) else stringResource(R.string.register_action),
             onClick = {
                 if (isSubmitting) return@ActionButton
@@ -348,7 +343,7 @@ private fun RegisterScreen(
                     hasError = true
                 }
                 if (hasError) {
-                    feedbackMessage?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                    feedbackMessage?.let { showCenterToast(context, it) }
                     return@ActionButton
                 }
 
@@ -363,8 +358,8 @@ private fun RegisterScreen(
                     }.onSuccess {
                         feedbackMessage = registerSuccessText
                         feedbackIsError = false
-                        Toast.makeText(context, registerSuccessText, Toast.LENGTH_SHORT).show()
-                        context.startActivity(Intent(context, LoginActivity::class.java))
+                        showCenterToast(context, registerSuccessText)
+                        onRegisterSuccess()
                     }.onFailure {
                         feedbackMessage = ApiErrorLocalizer.localize(
                             context = context,
@@ -372,37 +367,38 @@ private fun RegisterScreen(
                             fallbackRes = R.string.register_failed
                         )
                         feedbackIsError = true
-                        Toast.makeText(context, feedbackMessage, Toast.LENGTH_SHORT).show()
+                        showCenterToast(context, feedbackMessage.orEmpty())
                     }
                     isSubmitting = false
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp)
-        )
-
-        if (isSubmitting) {
-            Spacer(modifier = Modifier.height(14.dp))
-            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-        }
-
-        if (!feedbackMessage.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = feedbackMessage.orEmpty(),
-                color = if (feedbackIsError) MaterialTheme.colorScheme.error else Primary
             )
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Text(text = stringResource(R.string.register_existing_user), color = TextMuted)
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = stringResource(R.string.register_login),
-                color = Primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable(onClick = onLoginClick)
-            )
+            if (isSubmitting) {
+                Spacer(modifier = Modifier.height(14.dp))
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            }
+
+            if (!feedbackMessage.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = feedbackMessage.orEmpty(),
+                    color = if (feedbackIsError) MaterialTheme.colorScheme.error else Primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                Text(text = stringResource(R.string.register_existing_user), color = TextMuted)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.register_login),
+                    color = Primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable(onClick = onLoginClick)
+                )
+            }
         }
     }
 }

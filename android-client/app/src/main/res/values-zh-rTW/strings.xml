@@ -92,6 +92,7 @@
     <string name="no_games_available">當前沒有可體驗的遊戲</string>
     <string name="profile_header_title">超級玩家 007</string>
     <string name="profile_account_id">Nexus ID: 88293041</string>
+    <string name="profile_account_id_format">Nexus ID: %1$s</string>
     <string name="profile_security">帳戶與安全</string>
     <string name="profile_cloud_sync">雲存檔同步</string>
     <string name="profile_clear_cache">清除本地遊戲緩存</string>
@@ -100,14 +101,14 @@
     <string name="profile_sync_enabled">已開啟</string>
     <string name="profile_cache_size">1.4 GB</string>
     <string name="profile_logout">退出當前帳號</string>
-    <string name="profile_system_hint">帳號系統</string>
+    <string name="profile_logout_confirm">確認要退出當前帳號嗎？</string>
     <string name="profile_wallet_title">錢包餘額（平台幣）</string>
-    <string name="profile_wallet_value">￥ 1,250.00</string>
+    <string name="profile_wallet_value">1,250.00</string>
     <string name="profile_charge">充值</string>
     <string name="profile_bill">賬單</string>
-    <string name="profile_how_to_earn">如何賺取</string>
-    <string name="profile_referral_title">邀請好友，各得 🪙500</string>
-    <string name="profile_referral_subtitle">每成功邀請一位新用戶，獎勵即時到賬</string>
+    <string name="profile_how_to_earn">如何獲取？</string>
+    <string name="profile_referral_title">邀請好友獲得500平台幣</string>
+    <string name="profile_referral_subtitle">平台幣可用於遊戲內購買商品、服務以及兌換周邊禮品</string>
     <string name="profile_referral_button">去邀請</string>
     <string name="game_back">返回</string>
     <string name="game_editor_pick">Nexus 官方精選</string>
@@ -119,16 +120,19 @@
     <string name="game_version_label">版本</string>
     <string name="community_coming_soon">社區功能即將上線</string>
     <string name="language_traditional_chinese">繁體中文</string>
-    <string name="language_simplified_chinese">簡體中文</string>
+    <string name="language_simplified_chinese">简体中文</string>
     <string name="language_english">English</string>
     <string name="common_cancel">取消</string>
+    <string name="common_close">關閉</string>
     <string name="library_section_my_games">我的遊戲</string>
-    <string name="library_more_with_arrow">更多 &gt;</string>
+    <string name="library_more_with_arrow">更多</string>
     <string name="library_empty_section">該欄目暫無遊戲</string>
     <string name="library_prev_page">上一頁</string>
     <string name="library_next_page">下一頁</string>
     <string name="library_page_info">第 %1$d/%2$d 頁</string>
     <string name="library_load_end">沒有更多遊戲了</string>
+    <string name="library_add_my_game_confirm">確認將此遊戲加入我的遊戲嗎？</string>
+    <string name="library_remove_my_game_confirm">確認將此遊戲從我的遊戲移除嗎？</string>
     <string name="library_coldstart_new_player_tag">新手必玩推薦</string>
     <string name="library_coldstart_hero_title">賽博之刃：源起</string>
     <string name="library_coldstart_hero_subtitle">動作冒險 · 240萬人正在遊玩</string>
@@ -167,7 +171,7 @@
     <string name="runtime_menu_share_facebook">Facebook</string>
     <string name="runtime_menu_share_xiaohongshu">小紅書</string>
     <string name="runtime_menu_share_link">復制鏈接</string>
-    <string name="runtime_menu_add_favorite">加入我的遊戲（收藏）</string>
+    <string name="runtime_menu_add_favorite">加入我的遊戲</string>
     <string name="runtime_menu_remove_favorite">移出我的遊戲（取消收藏）</string>
     <string name="runtime_menu_restart">重新進入遊戲</string>
     <string name="runtime_menu_feedback">反饋與投訴</string>
@@ -175,7 +179,9 @@
     <string name="runtime_favorite_removed">已從我的遊戲移除</string>
     <string name="runtime_favorite_sync_failed">收藏狀態同步失敗，將在稍後重試</string>
     <string name="runtime_feedback_todo">反饋入口即將上線</string>
+    <string name="runtime_share_copied">已複製分享內容</string>
     <string name="billing_title">賬單明細</string>
+    <string name="billing_empty">暫無賬單記錄</string>
     <string name="billing_income_title">本月累計收入</string>
     <string name="billing_income_value">+4,200</string>
     <string name="billing_expense_title">本月累計支出</string>
@@ -199,6 +205,11 @@
     <string name="billing_item_item_amount">-380</string>
     <string name="billing_item_item_time">10-22 10:45</string>
     <string name="transaction_title">賬單詳情</string>
+    <string name="transaction_empty">暫無詳情</string>
+    <string name="transaction_amount_format">金額：%1$s</string>
+    <string name="transaction_type_format">類型：%1$s</string>
+    <string name="transaction_time_format">時間：%1$s</string>
+    <string name="transaction_receipt_format">憑證：%1$s</string>
     <string name="transaction_complaint">投訴</string>
     <string name="transaction_amount_label">交易金額</string>
     <string name="transaction_amount_value">-1,200</string>
@@ -332,6 +343,7 @@
     <string name="referral_summary_invites">邀請人數：%1$d</string>
     <string name="referral_summary_reward">獎勵總額：%1$s</string>
     <string name="referral_no_records">暫無邀請記錄</string>
+    <string name="legal_empty_url">空白鏈接</string>
 
     <string name="discover_section_category_all">分類全部遊戲</string>
     <string name="discover_page_info">第 %1$d/%2$d 頁（每頁 30 款）</string>
@@ -340,9 +352,10 @@
 
     <string name="profile_sync_disabled">未登入</string>
     <string name="profile_login_account">登入帳號</string>
-    <string name="profile_login_required">請先登入後使用此功能</string>
+    <string name="profile_login_required">請先登錄</string>
     <string name="profile_guest_mode">訪客模式</string>
     <string name="profile_not_logged_in">未登入</string>
+    <string name="profile_system_hint">帳號系統</string>
 
     <string name="common_confirm">確認</string>
     <string name="common_loading">提交中...</string>

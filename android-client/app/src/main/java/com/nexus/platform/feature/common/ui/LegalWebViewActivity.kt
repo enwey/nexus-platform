@@ -13,8 +13,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.nexus.platform.R
+import com.nexus.platform.core.i18n.AppLanguageManager
 
 class LegalWebViewActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -44,7 +49,7 @@ class LegalWebViewActivity : AppCompatActivity() {
             text = "<"
             setTextColor(Color.parseColor("#A7B0CD"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-            setPadding(dp(4), 0, dp(12), 0)
+            setPadding(dp(4), 0, dp(0), 0)
             setOnClickListener { finish() }
         }
 
@@ -68,7 +73,7 @@ class LegalWebViewActivity : AppCompatActivity() {
             } else {
                 loadDataWithBaseURL(
                     null,
-                    "<html><body><p>Empty url</p></body></html>",
+                    "<html><body><p>${getString(R.string.legal_empty_url)}</p></body></html>",
                     "text/html",
                     "utf-8",
                     null

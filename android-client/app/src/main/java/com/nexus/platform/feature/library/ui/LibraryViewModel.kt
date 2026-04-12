@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 data class LibraryUiState(
     val loading: Boolean = true,
@@ -43,6 +44,22 @@ class LibraryViewModel(
 
     fun load() {
         _uiState.update { it.copy(loading = true, errorMessage = null) }
+        val cachedGames = catalogCacheStore.loadGames()
+        if (cachedGames.isNotEmpty()) {
+            val cachedDisplay = buildDisplayData(cachedGames, serverHome = null)
+            _uiState.update {
+                it.copy(
+                    loading = false,
+                    games = cachedGames,
+                    discoverGames = cachedGames,
+                    currentPlayingGame = cachedDisplay.currentPlaying,
+                    recentGames = cachedDisplay.recent,
+                    myGames = cachedDisplay.myGames,
+                    newbieMustPlay = cachedDisplay.newbieMustPlay,
+                    everyonePlaying = cachedDisplay.everyonePlaying
+                )
+            }
+        }
         viewModelScope.launch {
             runCatching { getApprovedGamesUseCase() }
                 .onSuccess { games ->
@@ -67,6 +84,9 @@ class LibraryViewModel(
                     } else {
                         discoverHome?.everyonePlaying.orEmpty()
                     }
+                    val randomizedEveryone = coldstartEveryone
+                        .take(50)
+                        .shuffled(Random(System.currentTimeMillis()))
                     _uiState.update {
                         it.copy(
                             loading = false,
@@ -79,7 +99,7 @@ class LibraryViewModel(
                             recentGames = display.recent,
                             myGames = display.myGames,
                             newbieMustPlay = coldstartNewbie,
-                            everyonePlaying = coldstartEveryone,
+                            everyonePlaying = randomizedEveryone,
                             favoriteCount = display.favoriteCount,
                             shareCount = display.shareCount
                         )
@@ -93,8 +113,8 @@ class LibraryViewModel(
                     } else {
                         runCatching { getApprovedGamesUseCase.getDiscoverGames(category = "all") }.getOrDefault(emptyList())
                     }
-                    val cachedGames = catalogCacheStore.loadGames()
-                    val fallbackGames = (discoverGamesRaw + cachedGames).distinctBy { it.id }
+                    val cachedCatalogGames = catalogCacheStore.loadGames()
+                    val fallbackGames = (discoverGamesRaw + cachedCatalogGames).distinctBy { it.id }
                     val display = buildDisplayData(fallbackGames, serverHome = null)
                     val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
                         display.newbieMustPlay
@@ -106,6 +126,9 @@ class LibraryViewModel(
                     } else {
                         discoverHome?.everyonePlaying.orEmpty()
                     }
+                    val randomizedEveryone = coldstartEveryone
+                        .take(50)
+                        .shuffled(Random(System.currentTimeMillis()))
                     _uiState.update {
                         it.copy(
                             loading = false,
@@ -119,7 +142,7 @@ class LibraryViewModel(
                             recentGames = display.recent,
                             myGames = display.myGames,
                             newbieMustPlay = coldstartNewbie,
-                            everyonePlaying = coldstartEveryone,
+                            everyonePlaying = randomizedEveryone,
                             favoriteCount = display.favoriteCount,
                             shareCount = display.shareCount
                         )
@@ -158,6 +181,23 @@ class LibraryViewModel(
                 recentGames = display.recent,
                 myGames = display.myGames
             )
+        }
+    }
+
+    fun toggleMyGame(gameId: String) {
+        val nowFavorite = engagementStore.toggleFavorite(gameId)
+        refreshLocalOrder()
+        viewModelScope.launch {
+            runCatching { getApprovedGamesUseCase.setFavorite(gameId, nowFavorite) }
+                .onSuccess { synced ->
+                    if (!synced) {
+                        engagementStore.toggleFavorite(gameId)
+                    }
+                }
+                .onFailure {
+                    engagementStore.toggleFavorite(gameId)
+                }
+            refreshLocalOrder()
         }
     }
 

@@ -4,7 +4,22 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:fillColor="#888B9A"
-        android:pathData="M14.71,6.71a1,1 0,0 1,0 1.41L10.83,12l3.88,3.88a1,1 0,1 1,-1.41 1.41l-4.59,-4.59a1,1 0,0 1,0,-1.41l4.59,-4.59a1,1 0,0 1,1.41 0z" />
+
+    <!-- pivotX 設為 0，確保縮放時左側不動 -->
+    <!-- pivotY 設為 12，確保垂直方向依然居中 -->
+    <group
+        android:pivotX="0"
+        android:pivotY="12"
+        android:scaleX="1.5"
+        android:scaleY="1.5">
+
+        <!-- 路徑重繪：頂點在 1 (預留微量空間防止描邊切邊)，兩端向右延伸 -->
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M7,6 L1,12 L7,18" />
+
+    </group>
 </vector>

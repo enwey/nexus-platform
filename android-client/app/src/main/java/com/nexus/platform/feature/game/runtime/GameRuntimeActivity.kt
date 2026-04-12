@@ -1,15 +1,17 @@
 package com.nexus.platform.feature.game.runtime
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -18,6 +20,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -33,11 +36,14 @@ import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
 import com.nexus.platform.R
 import com.nexus.platform.core.bridge.NexusBridge
 import com.nexus.platform.core.bridge.RuntimeMetricsProvider
+import com.nexus.platform.core.i18n.AppLanguageManager
+import com.nexus.platform.core.network.BackendConfig
 import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.GameRuntimeProfile
 import com.nexus.platform.feature.game.data.GameManager
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,8 +55,13 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 
 class GameRuntimeActivity : AppCompatActivity() {
+    private enum class CapsuleTheme { WHITE, BLACK }
+
     private lateinit var webView: WebView
     private lateinit var capsuleMenu: LinearLayout
+    private lateinit var capsuleMoreIcon: ImageView
+    private lateinit var capsuleCloseIcon: ImageView
+    private lateinit var capsuleDivider: TextView
     private lateinit var runtimeLoading: LinearLayout
     private lateinit var runtimeStatus: TextView
     private lateinit var runtimeRetry: TextView
@@ -86,6 +97,10 @@ class GameRuntimeActivity : AppCompatActivity() {
             }
             context.startActivity(intent)
         }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageManager.wrap(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,6 +140,9 @@ class GameRuntimeActivity : AppCompatActivity() {
     private fun initViews() {
         webView = findViewById(R.id.gameWebView)
         capsuleMenu = findViewById(R.id.capsuleMenu)
+        capsuleMoreIcon = findViewById(R.id.capsuleMoreIcon)
+        capsuleCloseIcon = findViewById(R.id.capsuleCloseIcon)
+        capsuleDivider = findViewById(R.id.capsuleDivider)
         runtimeLoading = findViewById(R.id.runtimeLoading)
         runtimeStatus = findViewById(R.id.runtimeStatus)
         runtimeRetry = findViewById(R.id.runtimeRetry)
@@ -137,6 +155,7 @@ class GameRuntimeActivity : AppCompatActivity() {
         gameManager = GameManager(this)
         engagementStore = GameEngagementStore(this)
         backendApi = PlatformBackendApi(this)
+        applyCapsuleTheme(CapsuleTheme.BLACK)
     }
 
     private fun initWindowInsets() {
@@ -364,7 +383,38 @@ class GameRuntimeActivity : AppCompatActivity() {
     private fun loadRuntimeProfile(appId: String) {
         scope.launch(Dispatchers.IO) {
             val profile = runCatching { backendApi.getGameRuntimeProfile(appId) }.getOrNull()
-            runtimeProfile = profile
+            withContext(Dispatchers.Main) {
+                runtimeProfile = profile
+                applyCapsuleTheme(resolveCapsuleTheme(profile?.capsuleTheme))
+            }
+        }
+    }
+
+    private fun resolveCapsuleTheme(rawTheme: String?): CapsuleTheme {
+        return when (rawTheme?.trim()?.lowercase()) {
+            "white", "light" -> CapsuleTheme.WHITE
+            "black", "dark" -> CapsuleTheme.BLACK
+            else -> CapsuleTheme.BLACK
+        }
+    }
+
+    private fun applyCapsuleTheme(theme: CapsuleTheme) {
+        when (theme) {
+            CapsuleTheme.WHITE -> {
+                capsuleMenu.setBackgroundResource(R.drawable.bg_runtime_capsule_white)
+                capsuleDivider.setBackgroundColor(Color.parseColor("#33000000"))
+                val iconColor = Color.parseColor("#D9000000")
+                capsuleMoreIcon.setColorFilter(iconColor)
+                capsuleCloseIcon.setColorFilter(iconColor)
+            }
+
+            CapsuleTheme.BLACK -> {
+                capsuleMenu.setBackgroundResource(R.drawable.bg_runtime_capsule)
+                capsuleDivider.setBackgroundColor(Color.parseColor("#52FFFFFF"))
+                val iconColor = Color.parseColor("#F2FFFFFF")
+                capsuleMoreIcon.setColorFilter(iconColor)
+                capsuleCloseIcon.setColorFilter(iconColor)
+            }
         }
     }
 
@@ -372,48 +422,42 @@ class GameRuntimeActivity : AppCompatActivity() {
         val game = currentGame ?: return
         runtimeMenuDialog?.dismiss()
         val dialog = BottomSheetDialog(this).also { sheet ->
-            val root = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setBackgroundColor(0xFF1A1B23.toInt())
-                setPadding(dp(20), dp(16), dp(20), dp(24))
-            }
+            val root = LayoutInflater.from(this)
+                .inflate(R.layout.layout_runtime_menu_sheet, null, false)
             val profile = runtimeProfile
-            root.addView(TextView(this).apply {
-                text = profile?.gameName?.ifBlank { game.name } ?: game.name
-                setTextColor(0xFFFFFFFF.toInt())
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-            })
-            val summary = buildRuntimeSummary(profile)
-            if (summary.isNotBlank()) {
-                root.addView(TextView(this).apply {
-                    text = summary
-                    setTextColor(0xFFB8BBC7.toInt())
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                    setPadding(0, dp(6), 0, dp(2))
-                })
-            }
-            root.addView(menuItem(getString(R.string.runtime_menu_share_title)) {
-                val text = buildShareText(game, profile)
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, text)
-                }
-                startActivity(Intent.createChooser(intent, getString(R.string.runtime_menu_share_title)))
-                scope.launch(Dispatchers.IO) {
-                    backendApi.markShared(game.id)
-                }
-            })
+            val shareLink = buildShareLandingUrl(game.id)
+            val shareText = buildShareText(game, profile, shareLink)
 
-            val favoriteItem = menuItem("", {})
+            root.findViewById<TextView>(R.id.runtimeMenuTitle).text =
+                profile?.gameName?.ifBlank { game.name } ?: game.name
+            root.findViewById<TextView>(R.id.runtimeMenuPlayers).text =
+                profile?.playerCountText?.ifBlank { getString(R.string.runtime_menu_game_players) }
+                    ?: getString(R.string.runtime_menu_game_players)
+            root.findViewById<TextView>(R.id.runtimeMenuStudio).text =
+                profile?.studioName?.ifBlank { getString(R.string.runtime_menu_game_studio) }
+                    ?: getString(R.string.runtime_menu_game_studio)
+
+            val favoriteActionText = root.findViewById<TextView>(R.id.runtimeMenuActionFavoriteText)
+            val headerFavorite = root.findViewById<ImageView>(R.id.runtimeMenuHeaderFavorite)
+            val actionFavoriteIcon = root.findViewById<ImageView>(R.id.runtimeMenuActionFavoriteIcon)
             val refreshFavoriteLabel = {
-                favoriteItem.text = if (engagementStore.isFavorite(game.id)) {
+                val favorite = engagementStore.isFavorite(game.id)
+                favoriteActionText.text = if (favorite) {
                     getString(R.string.runtime_menu_remove_favorite)
                 } else {
                     getString(R.string.runtime_menu_add_favorite)
                 }
+                val starRes = if (favorite) {
+                    R.drawable.ic_menu_star_filled
+                } else {
+                    R.drawable.ic_menu_star_outline
+                }
+                headerFavorite.setImageResource(starRes)
+                actionFavoriteIcon.setImageResource(starRes)
+                headerFavorite.contentDescription = favoriteActionText.text
+                actionFavoriteIcon.contentDescription = favoriteActionText.text
             }
-            refreshFavoriteLabel()
-            favoriteItem.setOnClickListener {
+            val toggleFavorite = {
                 val nowFavorite = engagementStore.toggleFavorite(game.id)
                 refreshFavoriteLabel()
                 Toast.makeText(
@@ -434,13 +478,48 @@ class GameRuntimeActivity : AppCompatActivity() {
                     }
                 }
             }
-            root.addView(favoriteItem)
+            refreshFavoriteLabel()
+            headerFavorite.setOnClickListener { toggleFavorite() }
+            root.findViewById<View>(R.id.runtimeMenuActionFavorite).setOnClickListener { toggleFavorite() }
 
-            root.addView(menuItem(getString(R.string.runtime_menu_restart)) {
+            val shareAction = {
+                scope.launch(Dispatchers.IO) {
+                    backendApi.markShared(game.id)
+                }
+            }
+            root.findViewById<View>(R.id.runtimeMenuShareWhatsapp).setOnClickListener {
+                shareAction()
+                shareToChannel(
+                    packageName = "com.whatsapp",
+                    chooserTitle = getString(R.string.runtime_menu_share_whatsapp),
+                    text = shareText
+                )
+            }
+            root.findViewById<View>(R.id.runtimeMenuShareFacebook).setOnClickListener {
+                shareAction()
+                shareToChannel(
+                    packageName = "com.facebook.katana",
+                    chooserTitle = getString(R.string.runtime_menu_share_facebook),
+                    text = shareText
+                )
+            }
+            root.findViewById<View>(R.id.runtimeMenuShareXiaohongshu).setOnClickListener {
+                shareAction()
+                shareToChannel(
+                    packageName = "com.xingin.xhs",
+                    chooserTitle = getString(R.string.runtime_menu_share_xiaohongshu),
+                    text = shareText
+                )
+            }
+            root.findViewById<View>(R.id.runtimeMenuShareLink).setOnClickListener {
+                copyShareTextToClipboard(shareLink)
+            }
+
+            root.findViewById<View>(R.id.runtimeMenuActionRestart).setOnClickListener {
                 sheet.dismiss()
                 loadGame(game = game, forceRefresh = true)
-            })
-            root.addView(menuItem(getString(R.string.runtime_menu_feedback)) {
+            }
+            root.findViewById<View>(R.id.runtimeMenuActionFeedback).setOnClickListener {
                 val mailIntent = Intent(
                     Intent.ACTION_SENDTO,
                     Uri.parse("mailto:support@nexus.local")
@@ -453,54 +532,70 @@ class GameRuntimeActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this, getString(R.string.runtime_feedback_todo), Toast.LENGTH_SHORT).show()
                 }
-            })
-            root.addView(menuItem(getString(R.string.common_cancel)) {
-                sheet.dismiss()
-            })
+            }
+            root.findViewById<View>(R.id.runtimeMenuCancel).setOnClickListener { sheet.dismiss() }
 
             sheet.setContentView(root)
             sheet.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            sheet.setOnShowListener { dialogInterface ->
+                val bottomSheetDialog = dialogInterface as BottomSheetDialog
+                val bottomSheet =
+                    bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+                bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+                bottomSheet?.let {
+                    BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_EXPANDED
+                }
+            }
             runtimeMenuDialog = sheet
         }.also { runtimeMenuDialog = it }
         dialog.show()
     }
 
-    private fun buildRuntimeSummary(profile: GameRuntimeProfile?): String {
-        if (profile == null) return ""
-        val studio = profile.studioName.trim()
-        val players = profile.playerCountText.trim()
-        return when {
-            studio.isNotBlank() && players.isNotBlank() -> "$studio  •  $players"
-            studio.isNotBlank() -> studio
-            players.isNotBlank() -> players
-            else -> ""
-        }
-    }
-
-    private fun buildShareText(game: GameItem, profile: GameRuntimeProfile?): String {
+    private fun buildShareText(game: GameItem, profile: GameRuntimeProfile?, shareLink: String): String {
         val title = profile?.shareTitle?.ifBlank { game.name } ?: game.name
         val subtitle = profile?.shareSubtitle?.ifBlank { game.description } ?: game.description
-        return listOf(title, subtitle, game.downloadUrl)
+        return listOf(title, subtitle, shareLink)
             .filter { it.isNotBlank() }
             .joinToString("\n")
     }
 
-    private fun menuItem(label: String, onClick: () -> Unit): TextView {
-        return TextView(this).apply {
-            text = label
-            setTextColor(0xFFF3F4F6.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            setPadding(0, dp(14), 0, dp(14))
-            setOnClickListener { onClick() }
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
+    private fun buildShareLandingUrl(appId: String): String {
+        val base = BackendConfig.apiBaseUrl.trimEnd('/')
+        return "$base/public/share/game/$appId"
     }
 
-    private fun dp(value: Int): Int {
-        return (value * resources.displayMetrics.density).toInt()
+    private fun shareToChannel(packageName: String, chooserTitle: String, text: String) {
+        val targetIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            setPackage(packageName)
+        }
+        val targetResolved = runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.resolveActivity(targetIntent, PackageManager.ResolveInfoFlags.of(0)) != null
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.resolveActivity(targetIntent, 0) != null
+            }
+        }.getOrDefault(false)
+
+        if (targetResolved) {
+            startActivity(targetIntent)
+            return
+        }
+
+        val fallbackIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        startActivity(Intent.createChooser(fallbackIntent, chooserTitle))
+    }
+
+    private fun copyShareTextToClipboard(text: String) {
+        val clipboardManager = getSystemService(ClipboardManager::class.java)
+        val clip = ClipData.newPlainText("runtime_share_text", text)
+        clipboardManager?.setPrimaryClip(clip)
+        Toast.makeText(this, getString(R.string.runtime_share_copied), Toast.LENGTH_SHORT).show()
     }
 
     private fun buildWebViewClient(assetLoader: WebViewAssetLoader): WebViewClient {

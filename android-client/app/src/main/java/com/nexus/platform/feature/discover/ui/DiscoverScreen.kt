@@ -70,7 +70,8 @@ fun DiscoverScreen(
     hero: DiscoverHeroCard?,
     onCategoryChange: (String) -> Unit,
     onGameClick: (GameItem) -> Unit,
-    onQuickPlayClick: (GameItem) -> Unit
+    onQuickPlayClick: (GameItem) -> Unit,
+    onRankingClick: () -> Unit
 ) {
     val categories = remember {
         listOf(
@@ -81,6 +82,8 @@ fun DiscoverScreen(
         )
     }
     var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(0) }
+    val selectedCategory = categories[selectedCategoryIndex]
+    val isAllCategory = selectedCategory.key == "all"
 
     val rankedGames = remember(games) { games.take(10) }
     val heroTarget = remember(hero, rankedGames) {
@@ -157,43 +160,48 @@ fun DiscoverScreen(
             }
         }
 
-        item {
-            Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                SectionHeader(
-                    title = stringResource(R.string.discover_section_rank),
-                    action = stringResource(R.string.discover_view_more)
-                )
-            }
-        }
-
-        if (rankedGames.isEmpty()) {
+        if (isAllCategory) {
             item {
                 Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                    Text(
-                        text = stringResource(R.string.discover_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextMuted
-                    )
-                }
+                SectionHeader(
+                    title = stringResource(R.string.discover_section_rank),
+                    action = stringResource(R.string.discover_view_more),
+                    onActionClick = onRankingClick
+                )
             }
-        } else {
-            items(rankedGames.size) { index ->
-                Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                    RankedItem(
-                        game = rankedGames[index],
-                        onGameClick = onGameClick,
-                        onQuickPlayClick = onQuickPlayClick
-                    )
+            }
+
+            if (rankedGames.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
+                        Text(
+                            text = stringResource(R.string.discover_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextMuted
+                        )
+                    }
+                }
+            } else {
+                items(rankedGames.size) { index ->
+                    Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
+                        RankedItem(
+                            game = rankedGames[index],
+                            onGameClick = onGameClick,
+                            onQuickPlayClick = onQuickPlayClick
+                        )
+                    }
                 }
             }
         }
 
-        item {
-            Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                SectionHeader(
-                    title = stringResource(R.string.discover_section_category_all),
-                    action = null
-                )
+        if (myGameSource.isNotEmpty()) {
+            item {
+                Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
+                    SectionHeader(
+                        title = stringResource(selectedCategory.labelRes),
+                        action = null
+                    )
+                }
             }
         }
 
@@ -316,7 +324,11 @@ private fun CategoryRow(
 }
 
 @Composable
-private fun SectionHeader(title: String, action: String?) {
+private fun SectionHeader(
+    title: String,
+    action: String?,
+    onActionClick: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -324,7 +336,19 @@ private fun SectionHeader(title: String, action: String?) {
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
         if (!action.isNullOrBlank()) {
-            Text(action, color = Primary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Row(
+                modifier = Modifier.then(if (onActionClick != null) Modifier.clickable { onActionClick() } else Modifier),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                Text(action, color = Primary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                androidx.compose.material3.Icon(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_more),
+                    contentDescription = null,
+                    tint = Primary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
     }
 }

@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.feature.main.ui.MainActivity
+import com.nexus.platform.feature.onboarding.data.OnboardingStore
+import com.nexus.platform.feature.onboarding.ui.OnboardingActivity
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
@@ -41,7 +43,12 @@ class SplashActivity : ComponentActivity() {
             }
         }
         window.decorView.postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
+            val target = if (OnboardingStore.isCompleted(this)) {
+                MainActivity::class.java
+            } else {
+                OnboardingActivity::class.java
+            }
+            startActivity(Intent(this, target))
             overridePendingTransition(0, 0)
             finish()
         }, 1200)

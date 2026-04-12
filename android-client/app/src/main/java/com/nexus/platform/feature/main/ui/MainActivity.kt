@@ -68,6 +68,9 @@ class MainActivity : ComponentActivity() {
                         libraryViewModel.markPlayed(game)
                         GameRuntimeActivity.start(this, game)
                     },
+                    onToggleMyGame = { game ->
+                        libraryViewModel.toggleMyGame(game.id)
+                    },
                     onRequestLogin = {
                         startActivity(Intent(this, LoginActivity::class.java))
                     },
@@ -114,6 +117,7 @@ private fun MainScreen(
     onLoadLibrary: () -> Unit,
     onDiscoverCategoryChange: (String) -> Unit,
     onPlayGame: (GameItem) -> Unit,
+    onToggleMyGame: (GameItem) -> Unit,
     onRequestLogin: () -> Unit,
     currentLanguage: AppLanguage,
     onChangeLanguage: (AppLanguage) -> Unit,
@@ -135,6 +139,8 @@ private fun MainScreen(
                 navController.navigate(MainRoutes.librarySectionRoute(section.routeValue))
             },
             onPlayGame = onPlayGame,
+            onToggleMyGame = onToggleMyGame,
+            onDiscoverRankingClick = { navController.navigate(MainRoutes.DISCOVER_RANKING) },
             onDiscoverCategoryChange = onDiscoverCategoryChange,
             isLoggedIn = isLoggedIn,
             onRequestLogin = onRequestLogin,

@@ -94,4 +94,14 @@ class GameRepository(context: Context) {
         }
         backendApi.markShared(appId)
     }
+
+    suspend fun setFavorite(appId: String, favorite: Boolean): Boolean {
+        if (BuildConfig.USE_MOCK_DATA) {
+            return true
+        }
+        if (authSessionStore.get() == null) {
+            return true
+        }
+        return backendApi.setFavorite(appId, favorite)
+    }
 }

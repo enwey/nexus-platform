@@ -1,0 +1,64 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="300dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- 1. 左側洋紅底色 (延伸至底部) -->
+    <path
+        android:fillColor="#D14F83"
+        android:pathData="M0,0 L100,0 L100,200 L0,200 Z" />
+
+    <!-- 2. 右側深藍底色 (延伸至底部) -->
+    <path
+        android:fillColor="#3452B1"
+        android:pathData="M100,0 L200,0 L200,200 L100,200 Z" />
+
+    <!-- 3. 中間的垂直白色分割線 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M98,0 L102,0 L102,95 L98,95 Z" />
+
+    <!-- 4. 優化後的白色吻部 (縮小為懸浮膠囊狀) -->
+    <!-- 頂部圓弧 Y=95，底部圓弧 Y=185，寬度從 40 到 160 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,135
+                          C40,90 160,90 160,135
+                          L160,170
+                          C160,185 40,185 40,170 Z" />
+
+    <!-- 5. 五官區域 (在縮小後的白色區域內居中) -->
+    <!-- 左眼 -->
+    <path
+        android:fillColor="#221F1F"
+        android:pathData="M65,75 A7,7 0 1,1 65,89 A7,7 0 1,1 65,75 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M55,63 L82,68" />
+
+    <!-- 右眼 -->
+    <path
+        android:fillColor="#221F1F"
+        android:pathData="M135,75 A7,7 0 1,1 135,89 A7,7 0 1,1 135,75 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M118,68 L145,63" />
+
+    <!-- 6. 鼻子 (黑色倒三角形) -->
+    <path
+        android:fillColor="#221F1F"
+        android:pathData="M88,125 L112,125 L100,143 Z" />
+
+    <!-- 7. 嘴巴 (平直黑線) -->
+    <path
+        android:strokeColor="#221F1F"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M90,165 L110,165" />
+
+</vector>

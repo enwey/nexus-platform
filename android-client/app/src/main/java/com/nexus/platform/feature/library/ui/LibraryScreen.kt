@@ -3,6 +3,8 @@ package com.nexus.platform.feature.library.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,8 +25,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -36,14 +42,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.domain.model.GameItem
@@ -60,13 +76,16 @@ import com.nexus.platform.ui.theme.TextMuted
 import kotlin.math.min
 
 private val TopLevelBottomPadding = 96.dp
+private val LibraryContentInset = 24.dp
 
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
     onLoad: () -> Unit,
     onGameClick: (GameItem) -> Unit,
-    onMoreClick: (LibrarySection) -> Unit
+    onMoreClick: (LibrarySection) -> Unit,
+    onToggleMyGame: (GameItem) -> Unit,
+    onGoDiscoverClick: () -> Unit
 ) {
     var hasRequested by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(uiState.games.isEmpty(), hasRequested) {
@@ -81,7 +100,7 @@ fun LibraryScreen(
         !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
         uiState.currentPlayingGame == null && uiState.recentGames.isEmpty() && uiState.myGames.isEmpty() ->
             ColdStartState(uiState = uiState, onGameClick = onGameClick)
-        else -> ContentState(uiState, onGameClick, onMoreClick)
+        else -> ContentState(uiState, onGameClick, onMoreClick, onToggleMyGame, onGoDiscoverClick)
     }
 }
 
@@ -89,10 +108,18 @@ fun LibraryScreen(
 private fun ContentState(
     uiState: LibraryUiState,
     onGameClick: (GameItem) -> Unit,
-    onMoreClick: (LibrarySection) -> Unit
+    onMoreClick: (LibrarySection) -> Unit,
+    onToggleMyGame: (GameItem) -> Unit,
+    onGoDiscoverClick: () -> Unit
 ) {
     val recentGames = remember(uiState.recentGames) { uiState.recentGames.take(8) }
     val myGameSource = remember(uiState.myGames) { uiState.myGames }
+    val myGameIds = remember(myGameSource) { myGameSource.map { it.id }.toSet() }
+    var pendingToggleGame by remember { mutableStateOf<GameItem?>(null) }
+    var draggingGame by remember { mutableStateOf<GameItem?>(null) }
+    var draggingPoint by remember { mutableStateOf(Offset.Zero) }
+    var myGamesDropZone by remember { mutableStateOf<Rect?>(null) }
+    val density = LocalDensity.current
     var myLoadedCount by remember(myGameSource) {
         mutableIntStateOf(min(40, myGameSource.size))
     }
@@ -110,75 +137,189 @@ private fun ContentState(
             myLoadedCount = min(myLoadedCount + 40, myGameSource.size)
         }
     }
-    LazyColumn(
-        state = listState,
-        modifier = Modifier
-            .fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 24.dp,
-            end = 24.dp,
-            top = 24.dp,
-            bottom = TopLevelBottomPadding
-        ),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        item { Spacer(modifier = Modifier.height(10.dp)) }
-        item {
-            ResumeCard(
-                featuredGame = uiState.currentPlayingGame,
-                onGameClick = onGameClick
-            )
-        }
-        item {
-            SectionHeader(
-                title = stringResource(R.string.library_section_recent),
-                action = stringResource(R.string.library_more_with_arrow),
-                onActionClick = { onMoreClick(LibrarySection.RECENT) }
-            )
-        }
-        item { RecentGameGrid(recentGames, onGameClick) }
-        item {
-            SectionHeader(
-                title = stringResource(R.string.library_section_my_games)
-            )
-        }
-        itemsIndexed(
-            items = myRows,
-            key = { index, _ -> "my_row_$index" },
-            contentType = { _, _ -> "home_game_row" }
-        ) { _, row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                row.forEach { sourceIndex ->
-                    val game = myGameSource[sourceIndex]
-                    GameItemCard(game, onGameClick)
-                }
-                repeat((4 - row.size).coerceAtLeast(0)) { EmptyGridCell() }
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = LibraryContentInset,
+                end = LibraryContentInset,
+                top = LibraryContentInset,
+                bottom = TopLevelBottomPadding
+            ),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            item {
+                ResumeCard(
+                    featuredGame = uiState.currentPlayingGame,
+                    onGameClick = onGameClick
+                )
             }
-        }
-        item {
-            if (myLoadedCount < myGameSource.size) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                }
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.library_load_end),
-                        color = TextMuted,
-                        style = MaterialTheme.typography.bodySmall
+            item {
+                SectionHeader(
+                    title = stringResource(R.string.library_section_recent),
+                    action = stringResource(R.string.library_more_with_arrow),
+                    onActionClick = { onMoreClick(LibrarySection.RECENT) }
+                )
+            }
+            item {
+                RecentGameGrid(
+                    games = recentGames,
+                    onGameClick = onGameClick,
+                    onLongPress = null,
+                    onDragStart = { game, point ->
+                        if (game.id !in myGameIds) {
+                            draggingGame = game
+                            draggingPoint = point
+                        }
+                    },
+                    onDragMove = { _, point -> draggingPoint = point },
+                    onDragEnd = { game ->
+                        val targetZone = myGamesDropZone
+                        if (targetZone != null && targetZone.contains(draggingPoint) && game.id !in myGameIds) {
+                            onToggleMyGame(game)
+                        }
+                        draggingGame = null
+                    }
+                )
+            }
+            if (myGameSource.isEmpty()) {
+                item {
+                    SectionHeader(
+                        title = stringResource(R.string.library_coldstart_trending),
+                        action = stringResource(R.string.library_coldstart_discover_action),
+                        onActionClick = onGoDiscoverClick
                     )
                 }
+                item {
+                    RecentGameGrid(
+                        games = (uiState.everyonePlaying.ifEmpty { uiState.discoverGames }).take(8),
+                        onGameClick = onGameClick,
+                        onLongPress = { game -> pendingToggleGame = game }
+                    )
+                }
+            } else {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned { coordinates ->
+                                myGamesDropZone = coordinates.boundsInRoot()
+                            }
+                    ) {
+                        SectionHeader(
+                            title = stringResource(R.string.library_section_my_games)
+                        )
+                    }
+                }
+                itemsIndexed(
+                    items = myRows,
+                    key = { index, _ -> "my_row_$index" },
+                    contentType = { _, _ -> "home_game_row" }
+                ) { _, row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        row.forEach { sourceIndex ->
+                            val game = myGameSource[sourceIndex]
+                            GameItemCard(
+                                game = game,
+                                onGameClick = onGameClick,
+                                onLongPress = { pendingToggleGame = game }
+                            )
+                        }
+                        repeat((4 - row.size).coerceAtLeast(0)) { EmptyGridCell() }
+                    }
+                }
+                item {
+                    if (myLoadedCount < myGameSource.size) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.library_load_end),
+                                color = TextMuted,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
             }
         }
+        val dragGame = draggingGame
+        if (dragGame != null) {
+            val halfSizePx = with(density) { 38.dp.toPx() }
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (draggingPoint.x - halfSizePx).toInt(),
+                            (draggingPoint.y - halfSizePx).toInt()
+                        )
+                    }
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
+                    .background(BackgroundSurfaceElevated.copy(alpha = 0.96f))
+            ) {
+                GameLogo(
+                    iconUrl = dragGame.iconUrl,
+                    seed = "${dragGame.id}_${dragGame.name}",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+
+    val targetGame = pendingToggleGame
+    if (targetGame != null) {
+        val inMyGames = targetGame.id in myGameIds
+        AlertDialog(
+            onDismissRequest = { pendingToggleGame = null },
+            title = {
+                Text(
+                    text = if (inMyGames) {
+                        stringResource(R.string.runtime_menu_remove_favorite)
+                    } else {
+                        stringResource(R.string.runtime_menu_add_favorite)
+                    }
+                )
+            },
+            text = {
+                Text(
+                    text = if (inMyGames) {
+                        stringResource(R.string.library_remove_my_game_confirm)
+                    } else {
+                        stringResource(R.string.library_add_my_game_confirm)
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onToggleMyGame(targetGame)
+                        pendingToggleGame = null
+                    }
+                ) {
+                    Text(stringResource(R.string.common_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingToggleGame = null }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            }
+        )
     }
 }
 
@@ -277,19 +418,37 @@ private fun SectionHeader(title: String, action: String? = null, onActionClick: 
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
         if (!action.isNullOrBlank() && onActionClick != null) {
-            Text(
-                action,
-                color = Primary,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable { onActionClick() }
-            )
+            Row(
+                modifier = Modifier.clickable { onActionClick() },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                Text(
+                    action,
+                    color = Primary,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Icon(
+                    painter = painterResource(R.drawable.ic_more),
+                    contentDescription = null,
+                    tint = Primary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun RecentGameGrid(games: List<GameItem>, onGameClick: (GameItem) -> Unit) {
+private fun RecentGameGrid(
+    games: List<GameItem>,
+    onGameClick: (GameItem) -> Unit,
+    onLongPress: ((GameItem) -> Unit)? = null,
+    onDragStart: ((GameItem, Offset) -> Unit)? = null,
+    onDragMove: ((GameItem, Offset) -> Unit)? = null,
+    onDragEnd: ((GameItem) -> Unit)? = null
+) {
     if (games.isEmpty()) {
         Text(
             text = stringResource(R.string.library_empty_section),
@@ -304,7 +463,16 @@ private fun RecentGameGrid(games: List<GameItem>, onGameClick: (GameItem) -> Uni
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             val firstRow = games.take(4)
-            firstRow.forEach { GameItemCard(it, onGameClick) }
+            firstRow.forEach { game ->
+                GameItemCard(
+                    game = game,
+                    onGameClick = onGameClick,
+                    onLongPress = onLongPress,
+                    onDragStart = onDragStart,
+                    onDragMove = onDragMove,
+                    onDragEnd = onDragEnd
+                )
+            }
             repeat((4 - firstRow.size).coerceAtLeast(0)) { EmptyGridCell() }
         }
         Row(
@@ -312,7 +480,16 @@ private fun RecentGameGrid(games: List<GameItem>, onGameClick: (GameItem) -> Uni
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             val secondRow = games.drop(4).take(4)
-            secondRow.forEach { GameItemCard(it, onGameClick) }
+            secondRow.forEach { game ->
+                GameItemCard(
+                    game = game,
+                    onGameClick = onGameClick,
+                    onLongPress = onLongPress,
+                    onDragStart = onDragStart,
+                    onDragMove = onDragMove,
+                    onDragEnd = onDragEnd
+                )
+            }
             repeat((4 - secondRow.size).coerceAtLeast(0)) { EmptyGridCell() }
         }
     }
@@ -328,11 +505,51 @@ private fun RowScope.EmptyGridCell() {
 }
 
 @Composable
-private fun RowScope.GameItemCard(game: GameItem, onGameClick: (GameItem) -> Unit) {
+@OptIn(ExperimentalFoundationApi::class)
+private fun RowScope.GameItemCard(
+    game: GameItem,
+    onGameClick: (GameItem) -> Unit,
+    onLongPress: ((GameItem) -> Unit)? = null,
+    onDragStart: ((GameItem, Offset) -> Unit)? = null,
+    onDragMove: ((GameItem, Offset) -> Unit)? = null,
+    onDragEnd: ((GameItem) -> Unit)? = null
+) {
+    var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     Column(
         modifier = Modifier
             .weight(1f)
-            .clickable { onGameClick(game) },
+            .onGloballyPositioned { coordinates = it }
+            .then(
+                if (onLongPress == null) {
+                    Modifier.clickable { onGameClick(game) }
+                } else {
+                    Modifier.combinedClickable(
+                        onClick = { onGameClick(game) },
+                        onLongClick = { onLongPress(game) }
+                    )
+                }
+            )
+            .then(
+                if (onDragStart == null || onDragMove == null || onDragEnd == null) {
+                    Modifier
+                } else {
+                    Modifier.pointerInput(game.id) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { startOffset ->
+                                val rootPoint = coordinates?.localToRoot(startOffset) ?: return@detectDragGesturesAfterLongPress
+                                onDragStart(game, rootPoint)
+                            },
+                            onDrag = { change, _ ->
+                                val rootPoint = coordinates?.localToRoot(change.position) ?: return@detectDragGesturesAfterLongPress
+                                change.consume()
+                                onDragMove(game, rootPoint)
+                            },
+                            onDragEnd = { onDragEnd(game) },
+                            onDragCancel = { onDragEnd(game) }
+                        )
+                    }
+                }
+            ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -546,7 +763,7 @@ private fun ColdStartHeroCard(
 }
 
 @Composable
-private fun ColdStartEmptyCollectionCard() {
+private fun ColdStartEmptyCollectionCard(onDiscoverClick: (() -> Unit)? = null) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -586,6 +803,7 @@ private fun ColdStartEmptyCollectionCard() {
             modifier = Modifier
                 .clip(RoundedCornerShape(22.dp))
                 .border(1.dp, Primary, RoundedCornerShape(22.dp))
+                .then(if (onDiscoverClick != null) Modifier.clickable { onDiscoverClick() } else Modifier)
                 .padding(horizontal = 18.dp, vertical = 10.dp)
         ) {
             Text(

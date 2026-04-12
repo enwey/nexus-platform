@@ -9,5 +9,6 @@ data class GameRuntimeProfile(
     val runtimeLogoUrl: String = "",
     val shareTitle: String = "",
     val shareSubtitle: String = "",
-    val shareImageUrl: String = ""
+    val shareImageUrl: String = "",
+    val capsuleTheme: String = ""
 )

@@ -1,0 +1,81 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- 1. 金幣外框底層 (深金色邊緣，營造厚度感) -->
+    <path
+        android:pathData="M100,100m-95,0a95,95 0,1 1,190 0a95,95 0,1 1,-190 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="20" android:startY="20"
+                android:endX="180" android:endY="180"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#B8860B" /> <!-- 暗金色 -->
+                <item android:offset="1.0" android:color="#8B4513" /> <!-- 鞍褐色 -->
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 2. 金幣主體面 (亮金色漸變) -->
+    <path
+        android:pathData="M100,100m-88,0a88,88 0,1 1,176 0a88,88 0,1 1,-176 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="35" android:startY="35"
+                android:endX="165" android:endY="165"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFE259" /> <!-- 亮金 -->
+                <item android:offset="0.5" android:color="#FFA400" /> <!-- 黃金 -->
+                <item android:offset="1.0" android:color="#FFD700" /> <!-- 正金 -->
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 3. 內環裝飾線 (增加幣面精緻度) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.4"
+        android:strokeWidth="1.5"
+        android:pathData="M100,100m-78,0a78,78 0,1 1,156 0a78,78 0,1 1,-156 0" />
+
+    <!-- 4. Bringbox 3D 標誌 (白色高光浮雕感) -->
+    <group
+        android:pivotX="100"
+        android:pivotY="100"
+        android:rotation="14">
+
+        <!-- 盒子頂面 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.9"
+            android:pathData="M100,65 L135,80 L100,95 L65,80 Z" />
+
+        <!-- 盒子側面 (深一點的顏色形成對比) -->
+        <path
+            android:fillColor="#8B4513"
+            android:fillAlpha="0.2"
+            android:pathData="M65,85 L100,100 L100,135 L65,120 Z" />
+        <path
+            android:fillColor="#8B4513"
+            android:fillAlpha="0.4"
+            android:pathData="M135,85 L100,100 L100,135 L135,120 Z" />
+
+        <!-- 盒子輪廓線 (讓圖標清晰) -->
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2.5"
+            android:strokeLineJoin="round"
+            android:pathData="M100,65 L135,80 L100,95 L65,80 Z M65,80 L65,120 L100,135 L135,120 L135,80 M100,95 L100,135" />
+    </group>
+
+    <!-- 5. 表面閃光 (右上角的高光，讓金幣看起來閃閃發亮) -->
+    <path
+        android:pathData="M150,40 L170,60 M165,45 L155,55"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+
+</vector>

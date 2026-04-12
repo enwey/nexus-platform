@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 1.5 倍放大，中心點 12,12 -->
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:scaleX="1.5"
+        android:scaleY="1.5">
+
+        <!-- 這次將五角星原始頂點座標從 4.5 降到了 6 -->
+        <!-- 縮放後頂點 Y 座標為: 12 - (12-6)*1.5 = 3 -->
+        <!-- 加上描邊的一半 0.9dp，邊緣在 2.1dp，離邊界 24dp 非常安全 -->
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.2"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000"
+            android:pathData="M12,6 L13.8,9.8 H18 L14.8,12.8 L16,17 L12,14.8 L8,17 L9.2,12.8 L6,9.8 H10.2 Z" />
+    </group>
+</vector>
