@@ -4,7 +4,7 @@
 
     <string name="tab_library">Games</string>
     <string name="tab_discover">Discover</string>
-    <string name="tab_community">Community</string>
+    <string name="tab_recommend">Recommend</string>
     <string name="tab_profile">Profile</string>
 
     <string name="splash_runtime">NEXT-GEN RUNTIME</string>
@@ -123,12 +123,13 @@
     <string name="game_rank_label">Action Rank</string>
     <string name="game_version_label">Version</string>
 
-    <string name="community_coming_soon">Community features are coming soon</string>
+    <string name="community_coming_soon">Recommendation features are coming soon</string>
     <string name="language_traditional_chinese">繁體中文</string>
     <string name="language_simplified_chinese">简体中文</string>
     <string name="language_english">English</string>
     <string name="common_confirm">Confirm</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_back">Back</string>
     <string name="common_close">Close</string>
     <string name="common_loading">Submitting...</string>
     <string name="common_error_network">Network error, please try again later</string>
@@ -138,8 +139,12 @@
     <string name="common_error_email_mismatch">Email does not match the current account</string>
     <string name="profile_cache_cleared">Cache cleared</string>
 
-    <string name="community_title">Game Community</string>
-    <string name="community_empty">No community posts yet. Discover and try games first.</string>
+    <string name="community_title">Recommend</string>
+    <string name="community_title_today">For You</string>
+    <string name="community_date_label">NEXUS TODAY</string>
+    <string name="community_empty">No recommendations yet. Discover and try games first.</string>
+    <string name="community_card_default_category">Editors Pick</string>
+    <string name="community_article_default_tag">In-Depth Review</string>
     <string name="community_topic_title_format">%1$s Player Discussion</string>
     <string name="community_topic_subtitle_fallback">Share tips and thoughts with other players.</string>
     <string name="community_hot">Hot</string>

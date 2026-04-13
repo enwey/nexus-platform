@@ -38,7 +38,8 @@ public class UserController {
 
     @PostMapping("/login")
     public Result<AuthResponse> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        return userService.login(request.email(), request.password(), extractClientIp(httpRequest));
+        String loginId = firstNotBlank(request.email(), request.username());
+        return userService.login(loginId, request.password(), extractClientIp(httpRequest));
     }
 
     @PostMapping("/refresh")
@@ -191,7 +192,7 @@ public class UserController {
 }
 
 record RegisterRequest(String email, String password, String code) {}
-record LoginRequest(String email, String password) {}
+record LoginRequest(String email, String username, String password) {}
 record RefreshRequest(String refreshToken) {}
 record SendCodeRequest(String email, String purpose, String source, String scene) {}
 record ResetPasswordRequest(String email, String code, String newPassword) {}

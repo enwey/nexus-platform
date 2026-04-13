@@ -46,28 +46,31 @@ public class UserService {
         return Result.success(new AuthResponse(accessToken, refreshToken, UserProfileDto.from(savedUser)));
     }
 
-    public Result<AuthResponse> login(String email, String password, String clientIp) {
-        String normalizedEmail = normalizeEmail(email);
-        if (normalizedEmail == null) {
+    public Result<AuthResponse> login(String loginId, String password, String clientIp) {
+        String normalizedLoginId = normalizeEmail(loginId);
+        if (normalizedLoginId == null) {
             return Result.error("Email is required");
         }
-        String blockedReason = loginSecurityService.getBlockReason(normalizedEmail, clientIp);
+        String blockedReason = loginSecurityService.getBlockReason(normalizedLoginId, clientIp);
         if (blockedReason != null) {
             return Result.error(429, blockedReason);
         }
 
-        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+        User user = userRepository.findByEmail(normalizedLoginId).orElse(null);
         if (user == null) {
-            loginSecurityService.onLoginFailed(normalizedEmail, clientIp);
+            user = userRepository.findByUsername(normalizedLoginId).orElse(null);
+        }
+        if (user == null) {
+            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp);
             return Result.error("User not found");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            loginSecurityService.onLoginFailed(normalizedEmail, clientIp);
+            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp);
             return Result.error("Incorrect password");
         }
 
-        loginSecurityService.onLoginSuccess(normalizedEmail, clientIp);
+        loginSecurityService.onLoginSuccess(normalizedLoginId, clientIp);
         String accessToken = authTokenService.issueAccessToken(user);
         String refreshToken = authTokenService.issueRefreshToken(user);
         accountOpsService.recordDeviceLogin(user, clientIp, authTokenService.extractDeviceId(accessToken));

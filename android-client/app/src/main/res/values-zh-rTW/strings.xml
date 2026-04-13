@@ -3,7 +3,7 @@
     <string name="app_name">Nexus Platform</string>
     <string name="tab_library">遊戲</string>
     <string name="tab_discover">發現</string>
-    <string name="tab_community">社區</string>
+    <string name="tab_recommend">推薦</string>
     <string name="tab_profile">帳號</string>
     <string name="splash_runtime">次世代運行時</string>
     <string name="onboarding_title">告別下載，秒開即玩</string>
@@ -118,11 +118,12 @@
     <string name="game_score_label">評分</string>
     <string name="game_rank_label">動作榜</string>
     <string name="game_version_label">版本</string>
-    <string name="community_coming_soon">社區功能即將上線</string>
+    <string name="community_coming_soon">推薦功能即將上線</string>
     <string name="language_traditional_chinese">繁體中文</string>
     <string name="language_simplified_chinese">简体中文</string>
     <string name="language_english">English</string>
     <string name="common_cancel">取消</string>
+    <string name="common_back">返回</string>
     <string name="common_close">關閉</string>
     <string name="library_section_my_games">我的遊戲</string>
     <string name="library_more_with_arrow">更多</string>
@@ -316,8 +317,12 @@
     <string name="account_termination_success">帳號已註銷</string>
     <string name="account_termination_failed">帳號註銷失敗</string>
 
-    <string name="community_title">遊戲社群</string>
-    <string name="community_empty">暫無社群內容，先去發現頁找遊戲試玩吧</string>
+    <string name="community_title">推薦</string>
+    <string name="community_title_today">為你推薦</string>
+    <string name="community_date_label">NEXUS TODAY</string>
+    <string name="community_empty">暫無推薦內容，先去發現頁找遊戲試玩吧</string>
+    <string name="community_card_default_category">編輯精選</string>
+    <string name="community_article_default_tag">深度測評</string>
     <string name="community_topic_title_format">%1$s 玩家討論區</string>
     <string name="community_topic_subtitle_fallback">歡迎分享攻略與心得</string>
     <string name="community_hot">熱門</string>

@@ -5,14 +5,30 @@ import { useUserStore } from '../stores/user'
 import { ltGlobal } from '../i18n'
 
 const routes = [
-  { path: '/', redirect: '/login' },
+  { path: '/', redirect: '/pro/dashboard' },
   { path: '/login', name: 'OpsLogin', component: () => import('../views/Login.vue') },
-  { path: '/audit', name: 'OpsAudit', component: () => import('../views/Audit.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/audit/logs', name: 'OpsAuditLogs', component: () => import('../views/AuditLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/verification-codes', name: 'VerificationCodeLogs', component: () => import('../views/VerificationCodeLogs.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/android-console', name: 'AndroidConsole', component: () => import('../views/AndroidConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/runtime-ops', name: 'OpsRuntime', component: () => import('../views/RuntimeOpsConsole.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/android', redirect: '/android-console' }
+  {
+    path: '/pro',
+    component: () => import('../layouts/ProLayout.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      { path: '', redirect: '/pro/dashboard' },
+      { path: 'dashboard', name: 'ProDashboard', component: () => import('../views/pro/DashboardModule.vue') },
+      { path: 'developers', name: 'ProDevelopers', component: () => import('../views/pro/DeveloperModule.vue') },
+      { path: 'sms', name: 'ProSms', component: () => import('../views/pro/SmsModule.vue') },
+      { path: 'recommend', name: 'ProRecommend', component: () => import('../views/pro/RecommendModule.vue') },
+      { path: 'recommend-categories', name: 'ProRecommendCategories', component: () => import('../views/pro/RecommendCategoryModule.vue') },
+      { path: 'game-categories', name: 'ProGameCategories', component: () => import('../views/pro/GameCategoryModule.vue') },
+      { path: 'games', name: 'ProGames', component: () => import('../views/pro/GameModule.vue') }
+    ]
+  },
+  { path: '/audit', redirect: '/pro/games' },
+  { path: '/audit/logs', redirect: '/pro/dashboard' },
+  { path: '/verification-codes', redirect: '/pro/sms' },
+  { path: '/android-console', redirect: '/pro/dashboard' },
+  { path: '/runtime-ops', redirect: '/pro/recommend' },
+  { path: '/discover-ops', redirect: '/pro/recommend' },
+  { path: '/android', redirect: '/pro/dashboard' }
 ]
 
 const router = createRouter({
@@ -54,7 +70,7 @@ router.beforeEach(async (to) => {
   }
 
   if (to.path === '/login' && hasSession) {
-    return '/audit'
+    return '/pro/dashboard'
   }
 
   if (to.meta.requiresAdmin && !userStore.isAdmin) {

@@ -20,7 +20,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -107,9 +110,10 @@ private fun AccountSecurityScreen(
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_back),
+            Icon(
+                imageVector = Icons.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.game_back),
+                tint = Color.White,
                 modifier = Modifier
                     .size(48.dp)
                     .padding(10.dp)

@@ -75,7 +75,7 @@
     </el-card>
 
     <el-card class="mt-16">
-      <template #header><div class="card-title">{{ lt('发现页运营配置', '發現頁營運配置', 'Discover Ops Config') }}</div></template>
+      <template #header><div class="card-title">{{ lt('推荐数据配置（发现/社区）', '推薦數據配置（發現/社區）', 'Recommendation Data (Discover/Community)') }}</div></template>
       <el-form :model="discoverForm" label-width="120px">
         <el-form-item :label="lt('推荐游戏', '推薦遊戲', 'Hero Game')">
           <el-select v-model="discoverForm.heroAppId" filterable style="width:100%">
@@ -95,6 +95,30 @@
         <el-form-item :label="lt('大家都在玩', '大家都在玩', 'Everyone Playing')">
           <el-select v-model="discoverForm.everyoneAppIds" multiple filterable style="width:100%"><el-option v-for="item in discoverGameOptions" :key="`all_${item.appId}`" :label="`${item.name} (${item.appId})`" :value="item.appId" /></el-select>
         </el-form-item>
+        <el-divider>{{ lt('社區推薦卡片', '社區推薦卡片', 'Community Today Cards') }}</el-divider>
+        <div class="community-list">
+          <el-card v-for="(item, index) in discoverForm.communityItems" :key="`community_${index}`" class="community-item">
+            <template #header>
+              <div class="community-header">
+                <span>{{ lt('卡片', '卡片', 'Card') }} #{{ index + 1 }}</span>
+                <el-button link type="danger" @click="removeCommunityItem(index)">{{ lt('刪除', '刪除', 'Remove') }}</el-button>
+              </div>
+            </template>
+            <el-form-item :label="lt('關聯遊戲', '關聯遊戲', 'Game')">
+              <el-select v-model="item.appId" filterable style="width:100%">
+                <el-option v-for="game in discoverGameOptions" :key="`community_game_${game.appId}`" :label="`${game.name} (${game.appId})`" :value="game.appId" />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="lt('卡片分類', '卡片分類', 'Card Category')"><el-input v-model="item.cardCategory" /></el-form-item>
+            <el-form-item :label="lt('卡片標題', '卡片標題', 'Card Title')"><el-input v-model="item.cardTitle" /></el-form-item>
+            <el-form-item :label="lt('封面圖', '封面圖', 'Cover URL')"><el-input v-model="item.coverUrl" /></el-form-item>
+            <el-form-item :label="lt('文章標籤', '文章標籤', 'Article Tag')"><el-input v-model="item.articleTag" /></el-form-item>
+            <el-form-item :label="lt('文章標題', '文章標題', 'Article Title')"><el-input v-model="item.articleTitle" /></el-form-item>
+            <el-form-item :label="lt('文章內容', '文章內容', 'Article Body')"><el-input v-model="item.articleBody" type="textarea" :rows="4" /></el-form-item>
+            <el-form-item :label="lt('按鈕文案', '按鈕文案', 'Action Text')"><el-input v-model="item.actionText" /></el-form-item>
+          </el-card>
+          <el-button plain @click="addCommunityItem">{{ lt('新增卡片', '新增卡片', 'Add Card') }}</el-button>
+        </div>
         <el-form-item><el-button type="primary" :loading="savingDiscover" @click="saveDiscoverConfig">{{ lt('保存运营配置', '儲存營運配置', 'Save Discover Config') }}</el-button></el-form-item>
       </el-form>
     </el-card>
@@ -168,7 +192,17 @@ const configMeta = reactive({ updatedBy: '', updatedAt: '' })
 const bridgeApis = ref([])
 const gameAssets = ref([])
 
-const discoverForm = reactive({ heroAppId: '', heroTitle: '', heroSubtitle: '', heroBadgeText: '', heroCoverUrl: '', rankedAppIds: [], newbieAppIds: [], everyoneAppIds: [] })
+const discoverForm = reactive({
+  heroAppId: '',
+  heroTitle: '',
+  heroSubtitle: '',
+  heroBadgeText: '',
+  heroCoverUrl: '',
+  rankedAppIds: [],
+  newbieAppIds: [],
+  everyoneAppIds: [],
+  communityItems: []
+})
 
 const gameEditVisible = ref(false)
 const editingGameId = ref(null)
@@ -210,6 +244,33 @@ const assignDiscoverConfig = (data = {}) => {
   discoverForm.rankedAppIds = [...(data.rankedAppIds || [])]
   discoverForm.newbieAppIds = [...(data.newbieAppIds || [])]
   discoverForm.everyoneAppIds = [...(data.everyoneAppIds || [])]
+  discoverForm.communityItems = [...(data.communityItems || [])].map((item) => ({
+    appId: item.appId || '',
+    cardCategory: item.cardCategory || '',
+    cardTitle: item.cardTitle || '',
+    coverUrl: item.coverUrl || '',
+    articleTag: item.articleTag || '',
+    articleTitle: item.articleTitle || '',
+    articleBody: item.articleBody || '',
+    actionText: item.actionText || ''
+  }))
+}
+
+const addCommunityItem = () => {
+  discoverForm.communityItems.push({
+    appId: '',
+    cardCategory: '',
+    cardTitle: '',
+    coverUrl: '',
+    articleTag: '',
+    articleTitle: '',
+    articleBody: '',
+    actionText: ''
+  })
+}
+
+const removeCommunityItem = (index) => {
+  discoverForm.communityItems.splice(index, 1)
 }
 
 const loadAll = async () => {
@@ -254,7 +315,17 @@ const saveDiscoverConfig = async () => {
       hero: discoverForm.heroAppId ? { appId: discoverForm.heroAppId, title: discoverForm.heroTitle, subtitle: discoverForm.heroSubtitle, badgeText: discoverForm.heroBadgeText, coverUrl: discoverForm.heroCoverUrl } : null,
       rankedAppIds: discoverForm.rankedAppIds,
       newbieAppIds: discoverForm.newbieAppIds,
-      everyoneAppIds: discoverForm.everyoneAppIds
+      everyoneAppIds: discoverForm.everyoneAppIds,
+      communityItems: discoverForm.communityItems.map((item) => ({
+        appId: item.appId,
+        cardCategory: item.cardCategory,
+        cardTitle: item.cardTitle,
+        coverUrl: item.coverUrl,
+        articleTag: item.articleTag,
+        articleTitle: item.articleTitle,
+        articleBody: item.articleBody,
+        actionText: item.actionText
+      }))
     }
     const res = await updateDiscoverOpsConfig(payload)
     assignDiscoverConfig(res.data || {})
@@ -356,5 +427,8 @@ onMounted(loadAll)
 .config-form :deep(.el-checkbox) { margin-right: 16px; }
 .hint { margin-left: 12px; color: #6b7280; font-size: 12px; }
 .mt-16 { margin-top: 16px; }
+.community-list { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 8px; }
+.community-item { width: 100%; }
+.community-header { display: flex; align-items: center; justify-content: space-between; width: 100%; font-weight: 600; }
 @media (max-width: 1100px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

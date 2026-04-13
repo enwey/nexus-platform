@@ -3,6 +3,7 @@ package com.nexus.platform.service;
 import com.nexus.platform.dto.DiscoverFeedItem;
 import com.nexus.platform.dto.DiscoverHeroCard;
 import com.nexus.platform.dto.DiscoverHomeResponse;
+import com.nexus.platform.dto.DiscoverCommunityItem;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.GameOpsProfile;
@@ -10,12 +11,14 @@ import com.nexus.platform.entity.OpsCollection;
 import com.nexus.platform.entity.OpsCollectionGameRel;
 import com.nexus.platform.entity.OpsContentItem;
 import com.nexus.platform.entity.OpsContentSlot;
+import com.nexus.platform.entity.OpsGameCategory;
 import com.nexus.platform.repository.GameOpsProfileRepository;
 import com.nexus.platform.repository.GameRepository;
 import com.nexus.platform.repository.OpsCollectionGameRelRepository;
 import com.nexus.platform.repository.OpsCollectionRepository;
 import com.nexus.platform.repository.OpsContentItemRepository;
 import com.nexus.platform.repository.OpsContentSlotRepository;
+import com.nexus.platform.repository.OpsGameCategoryRepository;
 import com.nexus.platform.repository.UserGameActionLogRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -28,14 +31,18 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class DiscoverService {
+    private static final String CATEGORY_STATUS_ENABLED = "ENABLED";
     private static final String SLOT_DISCOVER_HERO = "DISCOVER_HERO";
+    private static final String SLOT_LIBRARY_COLDSTART_HERO = "LIBRARY_COLDSTART_HERO";
     private static final String SLOT_DISCOVER_RANK = "DISCOVER_RANK";
+    private static final String SLOT_COMMUNITY_TODAY = "COMMUNITY_TODAY";
     private static final String COLLECTION_NEWBIE_MUST_PLAY = "NEWBIE_MUST_PLAY";
 
     private final GameRepository gameRepository;
     private final GameOpsProfileRepository gameOpsProfileRepository;
     private final OpsContentSlotRepository opsContentSlotRepository;
     private final OpsContentItemRepository opsContentItemRepository;
+    private final OpsGameCategoryRepository gameCategoryRepository;
     private final OpsCollectionRepository opsCollectionRepository;
     private final OpsCollectionGameRelRepository opsCollectionGameRelRepository;
     private final UserGameActionLogRepository actionLogRepository;
@@ -63,7 +70,8 @@ public class DiscoverService {
 
     public Result<DiscoverHomeResponse> getHome(int limit) {
         int normalizedLimit = Math.max(1, Math.min(limit, 100));
-        DiscoverHeroCard hero = resolveHeroCard();
+        DiscoverHeroCard hero = resolveHeroCard(SLOT_DISCOVER_HERO);
+        DiscoverHeroCard libraryTopBanner = resolveHeroCard(SLOT_LIBRARY_COLDSTART_HERO);
 
         List<DiscoverFeedItem> ranked = resolveSlotGames(SLOT_DISCOVER_RANK, normalizedLimit).stream()
                 .map(this::toDiscoverFeedItemWithOpsProfile)
@@ -95,7 +103,47 @@ public class DiscoverService {
                     "OPEN_GAME"
             );
         }
-        return Result.success(new DiscoverHomeResponse(hero, ranked, newbie, everyone));
+        return Result.success(new DiscoverHomeResponse(
+                hero,
+                libraryTopBanner,
+                listDiscoverCategories(),
+                ranked,
+                newbie,
+                everyone
+        ));
+    }
+
+    public Result<List<DiscoverCommunityItem>> getCommunity(int limit) {
+        int normalizedLimit = Math.max(1, Math.min(limit, 20));
+        List<OpsContentItem> items = resolveSlotItems(SLOT_COMMUNITY_TODAY, normalizedLimit);
+
+        List<DiscoverCommunityItem> result = new ArrayList<>();
+        for (OpsContentItem item : items) {
+            Game game = gameRepository.findById(item.getGameId()).orElse(null);
+            if (game == null || game.getStatus() != Game.GameStatus.APPROVED) {
+                continue;
+            }
+            result.add(toCommunityItem(game, item));
+            if (result.size() >= normalizedLimit) {
+                break;
+            }
+        }
+
+        if (result.isEmpty()) {
+            List<Game> fallbackGames = resolveEveryonePlayingGames(normalizedLimit);
+            for (Game game : fallbackGames) {
+                OpsContentItem pseudo = new OpsContentItem();
+                pseudo.setTitle(game.getName());
+                pseudo.setBadgeText("編輯精選");
+                pseudo.setCoverUrl(resolveDiscoverCoverUrl(game));
+                pseudo.setArticleTag("深度測評");
+                pseudo.setArticleTitle(game.getName());
+                pseudo.setArticleBody(textOrFallback(game.getDescription(), "立即秒開，體驗這款熱門遊戲。"));
+                pseudo.setActionText("立即秒開");
+                result.add(toCommunityItem(game, pseudo));
+            }
+        }
+        return Result.success(result.stream().limit(normalizedLimit).toList());
     }
 
     private DiscoverFeedItem toDiscoverFeedItemWithOpsProfile(Game game) {
@@ -115,7 +163,7 @@ public class DiscoverService {
 
     private String detectCategory(Game game) {
         if (game.getCategory() != null && !game.getCategory().isBlank()) {
-            return game.getCategory().toLowerCase(Locale.ROOT);
+            return game.getCategory().trim();
         }
         String text = ((game.getName() == null ? "" : game.getName()) + " "
                 + (game.getDescription() == null ? "" : game.getDescription()))
@@ -149,8 +197,8 @@ public class DiscoverService {
         return Math.max(1L, 1000L / hours);
     }
 
-    private DiscoverHeroCard resolveHeroCard() {
-        OpsContentSlot heroSlot = opsContentSlotRepository.findBySlotCodeAndEnabledTrue(SLOT_DISCOVER_HERO).orElse(null);
+    private DiscoverHeroCard resolveHeroCard(String slotCode) {
+        OpsContentSlot heroSlot = opsContentSlotRepository.findBySlotCodeAndEnabledTrue(slotCode).orElse(null);
         if (heroSlot == null) {
             return null;
         }
@@ -168,6 +216,16 @@ public class DiscoverService {
         String coverUrl = textOrFallback(first.getCoverUrl(), resolveDiscoverCoverUrl(game));
         String badge = textOrFallback(first.getBadgeText(), "Recommended");
         return new DiscoverHeroCard(game.getAppId(), title, subtitle, coverUrl, badge, "OPEN_GAME");
+    }
+
+    private List<String> listDiscoverCategories() {
+        List<String> categories = new ArrayList<>();
+        categories.add("all");
+        categories.addAll(gameCategoryRepository.findByStatusOrderBySortOrderAscUpdatedAtDesc(CATEGORY_STATUS_ENABLED)
+                .stream()
+                .map(OpsGameCategory::getName)
+                .toList());
+        return categories;
     }
 
     private List<Game> resolveSlotGames(String slotCode, int limit) {
@@ -215,6 +273,35 @@ public class DiscoverService {
             }
         }
         return result;
+    }
+
+    private List<OpsContentItem> resolveSlotItems(String slotCode, int limit) {
+        OpsContentSlot slot = opsContentSlotRepository.findBySlotCodeAndEnabledTrue(slotCode).orElse(null);
+        if (slot == null) {
+            return List.of();
+        }
+        List<OpsContentItem> items = opsContentItemRepository.findActiveBySlotId(slot.getId(), LocalDateTime.now());
+        if (items.isEmpty()) {
+            return List.of();
+        }
+        return items.stream().limit(limit).toList();
+    }
+
+    private DiscoverCommunityItem toCommunityItem(Game game, OpsContentItem item) {
+        String fallbackTitle = textOrFallback(item.getTitle(), game.getName());
+        return new DiscoverCommunityItem(
+                game.getAppId(),
+                textOrFallback(game.getName(), ""),
+                detectCategory(game),
+                textOrFallback(game.getIconUrl(), ""),
+                textOrFallback(item.getBadgeText(), "編輯精選"),
+                fallbackTitle,
+                textOrFallback(item.getCoverUrl(), resolveDiscoverCoverUrl(game)),
+                textOrFallback(item.getArticleTag(), "深度測評"),
+                textOrFallback(item.getArticleTitle(), fallbackTitle),
+                textOrFallback(item.getArticleBody(), textOrFallback(game.getDescription(), "")),
+                textOrFallback(item.getActionText(), "立即秒開")
+        );
     }
 
     private List<Game> resolveEveryonePlayingGames(int limit) {

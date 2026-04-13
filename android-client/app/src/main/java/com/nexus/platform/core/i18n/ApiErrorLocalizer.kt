@@ -32,12 +32,14 @@ object ApiErrorLocalizer {
         val text = message.lowercase()
         return when {
             text.contains("email is required") -> R.string.login_error_email_required
+            text.contains("account is required") -> R.string.login_error_email_required
             text.contains("invalid email format") || text == "invalid email" -> R.string.auth_error_invalid_email
             text.contains("email already registered") -> R.string.register_error_email_registered
             text.contains("email is not registered") -> R.string.register_error_email_not_registered
             text.contains("verification code is invalid or expired") -> R.string.auth_error_code_invalid_or_expired
             text.contains("invalid parameters") -> R.string.common_error_invalid_parameters
             text.contains("user not found") -> R.string.common_error_user_not_found
+            text.contains("incorrect password") -> R.string.login_error_failed
             text.contains("email does not match current account") -> R.string.common_error_email_mismatch
             text.contains("password must be at least 8 chars") -> R.string.change_password_error_too_short
             text.contains("unable to resolve host")

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nexus.platform.data.local.GameCatalogCacheStore
 import com.nexus.platform.data.local.GameEngagementStore
+import com.nexus.platform.domain.model.DiscoverCategory
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.LibraryHomeSnapshot
@@ -21,6 +22,8 @@ data class LibraryUiState(
     val games: List<GameItem> = emptyList(),
     val discoverGames: List<GameItem> = emptyList(),
     val discoverHero: DiscoverHeroCard? = null,
+    val libraryTopBanner: DiscoverHeroCard? = null,
+    val discoverCategories: List<DiscoverCategory> = emptyList(),
     val discoverNewbie: List<GameItem> = emptyList(),
     val discoverEveryone: List<GameItem> = emptyList(),
     val currentPlayingGame: GameItem? = null,
@@ -74,6 +77,14 @@ class LibraryViewModel(
                     val discoverGames = if (discoverGamesRaw.isNotEmpty()) discoverGamesRaw else games
                     catalogCacheStore.saveGames(games + discoverGames)
                     val display = buildDisplayData(games, serverHome)
+                    val discoverCategories = discoverHome?.categories.orEmpty().ifEmpty {
+                        listOf(
+                            DiscoverCategory(key = "all", label = "all"),
+                            DiscoverCategory(key = "動作射擊", label = "動作射擊"),
+                            DiscoverCategory(key = "休閒益智", label = "休閒益智"),
+                            DiscoverCategory(key = "角色扮演", label = "角色扮演")
+                        )
+                    }
                     val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
                         display.newbieMustPlay
                     } else {
@@ -93,6 +104,8 @@ class LibraryViewModel(
                             games = games,
                             discoverGames = discoverGames,
                             discoverHero = discoverHome?.hero,
+                            libraryTopBanner = discoverHome?.libraryTopBanner,
+                            discoverCategories = discoverCategories,
                             discoverNewbie = discoverHome?.newbieMustPlay ?: emptyList(),
                             discoverEveryone = discoverHome?.everyonePlaying ?: emptyList(),
                             currentPlayingGame = display.currentPlaying,
@@ -116,6 +129,14 @@ class LibraryViewModel(
                     val cachedCatalogGames = catalogCacheStore.loadGames()
                     val fallbackGames = (discoverGamesRaw + cachedCatalogGames).distinctBy { it.id }
                     val display = buildDisplayData(fallbackGames, serverHome = null)
+                    val discoverCategories = discoverHome?.categories.orEmpty().ifEmpty {
+                        listOf(
+                            DiscoverCategory(key = "all", label = "all"),
+                            DiscoverCategory(key = "動作射擊", label = "動作射擊"),
+                            DiscoverCategory(key = "休閒益智", label = "休閒益智"),
+                            DiscoverCategory(key = "角色扮演", label = "角色扮演")
+                        )
+                    }
                     val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
                         display.newbieMustPlay
                     } else {
@@ -136,6 +157,8 @@ class LibraryViewModel(
                             games = fallbackGames,
                             discoverGames = fallbackGames,
                             discoverHero = discoverHome?.hero,
+                            libraryTopBanner = discoverHome?.libraryTopBanner,
+                            discoverCategories = discoverCategories,
                             discoverNewbie = discoverHome?.newbieMustPlay ?: emptyList(),
                             discoverEveryone = discoverHome?.everyonePlaying ?: emptyList(),
                             currentPlayingGame = display.currentPlaying,

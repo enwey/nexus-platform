@@ -2,13 +2,17 @@ package com.nexus.platform.service;
 
 import com.nexus.platform.dto.GameUpdateCheckResponse;
 import com.nexus.platform.dto.GameMetadataUpdateRequest;
+import com.nexus.platform.dto.OpsGameCategoryRequest;
+import com.nexus.platform.dto.OpsGameCategoryResponse;
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.GameVersion;
+import com.nexus.platform.entity.OpsGameCategory;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.repository.GameRepository;
 import com.nexus.platform.repository.GameVersionRepository;
+import com.nexus.platform.repository.OpsGameCategoryRepository;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
@@ -19,9 +23,10 @@ import io.minio.PutObjectArgs;
 import io.minio.http.Method;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -37,11 +42,15 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class GameService {
+    private static final String CATEGORY_STATUS_ENABLED = "ENABLED";
+    private static final List<String> DEFAULT_GAME_CATEGORIES = List.of("動作射擊", "休閒益智", "角色扮演");
+
     public record GameDownloadStream(GetObjectResponse stream, String filename) {
     }
 
     private final GameRepository gameRepository;
     private final GameVersionRepository gameVersionRepository;
+    private final OpsGameCategoryRepository gameCategoryRepository;
     private final MinioClient minioClient;
     private final AuditLogService auditLogService;
     private final UploadProcessingService uploadProcessingService;
@@ -160,7 +169,73 @@ public class GameService {
     }
 
     public Result<List<String>> getGameCategories() {
-        return Result.success(List.of("all", "action", "casual", "rpg"));
+        List<String> categories = new ArrayList<>();
+        categories.add("all");
+        categories.addAll(listEnabledGameCategoryNames());
+        return Result.success(categories);
+    }
+
+    public Result<List<OpsGameCategoryResponse>> listGameCategoryOptions() {
+        ensureDefaultGameCategorySeed();
+        List<OpsGameCategoryResponse> rows = gameCategoryRepository
+                .findByStatusOrderBySortOrderAscUpdatedAtDesc(CATEGORY_STATUS_ENABLED)
+                .stream()
+                .map(this::toGameCategoryResponse)
+                .toList();
+        return Result.success(rows);
+    }
+
+    public Result<List<OpsGameCategoryResponse>> createGameCategory(OpsGameCategoryRequest request) {
+        String normalizedName = normalizeCategoryName(request == null ? null : request.name());
+        if (normalizedName == null) {
+            return Result.error("Category name is required");
+        }
+        if (gameCategoryRepository.existsByNameIgnoreCase(normalizedName)) {
+            return Result.error("Category name already exists");
+        }
+        OpsGameCategory row = new OpsGameCategory();
+        row.setName(normalizedName);
+        row.setSortOrder(categorySortOrder(request == null ? null : request.sortOrder()));
+        row.setStatus(CATEGORY_STATUS_ENABLED);
+        gameCategoryRepository.save(row);
+        return listGameCategoryOptions();
+    }
+
+    public Result<List<OpsGameCategoryResponse>> updateGameCategory(Long id, OpsGameCategoryRequest request) {
+        if (id == null) {
+            return Result.error("Category id is required");
+        }
+        OpsGameCategory row = gameCategoryRepository.findById(id).orElse(null);
+        if (row == null || !CATEGORY_STATUS_ENABLED.equals(row.getStatus())) {
+            return Result.error("Category not found");
+        }
+        String normalizedName = normalizeCategoryName(request == null ? null : request.name());
+        if (normalizedName == null) {
+            return Result.error("Category name is required");
+        }
+        if (gameCategoryRepository.existsByNameIgnoreCaseAndIdNot(normalizedName, row.getId())) {
+            return Result.error("Category name already exists");
+        }
+        row.setName(normalizedName);
+        row.setSortOrder(categorySortOrder(request == null ? null : request.sortOrder()));
+        gameCategoryRepository.save(row);
+        return listGameCategoryOptions();
+    }
+
+    public Result<List<OpsGameCategoryResponse>> deleteGameCategory(Long id) {
+        if (id == null) {
+            return Result.error("Category id is required");
+        }
+        OpsGameCategory row = gameCategoryRepository.findById(id).orElse(null);
+        if (row == null || !CATEGORY_STATUS_ENABLED.equals(row.getStatus())) {
+            return Result.error("Category not found");
+        }
+        long usedCount = gameRepository.countByCategoryIgnoreCase(row.getName());
+        if (usedCount > 0) {
+            return Result.error("Category is used by games and cannot be deleted");
+        }
+        gameCategoryRepository.delete(row);
+        return listGameCategoryOptions();
     }
 
     public Result<Game> updateGameMetadata(Long gameId, GameMetadataUpdateRequest request, User currentUser) {
@@ -659,13 +734,65 @@ public class GameService {
     }
 
     private String normalizeCategory(String raw) {
-        String normalized = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+        if (raw == null) {
+            return "";
+        }
+        String normalized = raw.trim();
         if (normalized.isBlank()) {
             return "";
         }
-        return Arrays.asList("all", "action", "casual", "rpg").contains(normalized)
-                ? normalized
-                : null;
+        if ("all".equalsIgnoreCase(normalized)) {
+            return "all";
+        }
+        ensureDefaultGameCategorySeed();
+        Set<String> allowed = gameCategoryRepository.findByStatusOrderBySortOrderAscUpdatedAtDesc(CATEGORY_STATUS_ENABLED)
+                .stream()
+                .map(OpsGameCategory::getName)
+                .collect(Collectors.toSet());
+        return allowed.stream()
+                .filter(name -> name.equalsIgnoreCase(normalized))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> listEnabledGameCategoryNames() {
+        ensureDefaultGameCategorySeed();
+        return gameCategoryRepository.findByStatusOrderBySortOrderAscUpdatedAtDesc(CATEGORY_STATUS_ENABLED)
+                .stream()
+                .map(OpsGameCategory::getName)
+                .toList();
+    }
+
+    private void ensureDefaultGameCategorySeed() {
+        for (int i = 0; i < DEFAULT_GAME_CATEGORIES.size(); i++) {
+            String name = DEFAULT_GAME_CATEGORIES.get(i);
+            if (!gameCategoryRepository.existsByNameIgnoreCase(name)) {
+                OpsGameCategory row = new OpsGameCategory();
+                row.setName(name);
+                row.setSortOrder((i + 1) * 10);
+                row.setStatus(CATEGORY_STATUS_ENABLED);
+                gameCategoryRepository.save(row);
+            }
+        }
+    }
+
+    private OpsGameCategoryResponse toGameCategoryResponse(OpsGameCategory row) {
+        return new OpsGameCategoryResponse(row.getId(), row.getName(), row.getSortOrder());
+    }
+
+    private Integer categorySortOrder(Integer inputSortOrder) {
+        return inputSortOrder == null ? 0 : Math.max(0, inputSortOrder);
+    }
+
+    private String normalizeCategoryName(String rawName) {
+        if (rawName == null) {
+            return null;
+        }
+        String trimmed = rawName.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed.length() > 64 ? trimmed.substring(0, 64) : trimmed;
     }
 
     private void normalizeClientUrls(Game game) {

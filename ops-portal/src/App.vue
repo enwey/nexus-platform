@@ -1,15 +1,6 @@
 ﻿<template>
   <el-config-provider :locale="elementLocale">
-    <div class="app-shell">
-      <div class="lang-switch">
-        <el-select :model-value="currentLocale" size="small" style="width: 130px" @change="setLocale">
-          <el-option label="简体中文" value="zh-CN" />
-          <el-option label="繁體中文" value="zh-TW" />
-          <el-option label="English" value="en" />
-        </el-select>
-      </div>
-      <router-view />
-    </div>
+    <div class="app-shell"><router-view /></div>
   </el-config-provider>
 </template>
 
@@ -20,7 +11,7 @@ import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import en from 'element-plus/es/locale/lang/en'
 import { useI18nLite } from './i18n'
 
-const { currentLocale, setLocale } = useI18nLite()
+const { currentLocale } = useI18nLite()
 
 const elementLocale = computed(() => {
   if (currentLocale.value === 'zh-TW') return zhTw
@@ -39,12 +30,5 @@ body {
 
 #app, .app-shell {
   min-height: 100vh;
-}
-
-.lang-switch {
-  position: fixed;
-  right: 16px;
-  top: 12px;
-  z-index: 1100;
 }
 </style>

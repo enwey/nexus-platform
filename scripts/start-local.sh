@@ -36,7 +36,8 @@ is_running() {
   if [[ -f "$pid_file" ]]; then
     local pid
     pid="$(cat "$pid_file")"
-    if [[ -n "$pid" ]] && kill -0 "$pid" >/dev/null 2>&1; then
+    # Ignore invalid/stale pid files such as 0/1 or non-numeric values.
+    if [[ "$pid" =~ ^[0-9]+$ ]] && (( pid > 1 )) && kill -0 "$pid" >/dev/null 2>&1; then
       return 0
     fi
   fi

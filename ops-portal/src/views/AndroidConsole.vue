@@ -6,7 +6,7 @@
         <p>{{ lt('围绕 Android 宿主运行时、Bridge 能力与游戏资源就绪状态进行统一管理。', '圍繞 Android 宿主運行時、Bridge 能力與遊戲資源就緒狀態進行統一管理。', 'Manage Android host runtime, bridge capabilities, and game asset readiness in one place.') }}</p>
       </div>
       <div class="actions">
-        <el-button @click="$router.push('/runtime-ops')">{{ lt('运营控制台', '營運控制台', 'Runtime Ops') }}</el-button>
+        <el-button @click="$router.push('/discover-ops')">{{ lt('推荐数据配置', '推薦數據配置', 'Recommendation Data') }}</el-button>
         <el-button @click="$router.push('/audit/logs')">{{ lt('审计日志', '審計日誌', 'Audit Logs') }}</el-button>
         <el-button @click="$router.push('/verification-codes')">{{ lt('验证码记录', '驗證碼記錄', 'Verification Codes') }}</el-button>
         <el-button @click="$router.push('/audit')">{{ lt('返回审核台', '返回審核台', 'Back To Audit') }}</el-button>

@@ -1,123 +1,167 @@
 import Foundation
-import Alamofire
-import CryptoKit
-import ZipFoundation
+import WebKit
 
-class GameManager {
+struct GameLaunchSummary: Sendable {
+    let activeVersion: String
+    let forceUpdated: Bool
+}
+
+final class GameManager {
     static let shared = GameManager()
-    private let fileManager = FileManager.default
-    
-    private init() {}
-    
-    func getGameDirectory(gameId: String) -> URL {
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let gamesDirectory = documentsPath.appendingPathComponent("games")
-        
-        if !fileManager.fileExists(atPath: gamesDirectory.path) {
-            try? fileManager.createDirectory(at: gamesDirectory, withIntermediateDirectories: true)
+
+    private let launchCoordinator: GameLaunchCoordinator
+    private let storageManager: VersionedGameStorageManager
+    private let updateState: RuntimeUpdateStateStore
+
+    private init(
+        launchCoordinator: GameLaunchCoordinator = GameLaunchCoordinator(),
+        storageManager: VersionedGameStorageManager = VersionedGameStorageManager(),
+        updateState: RuntimeUpdateStateStore = .shared
+    ) {
+        self.launchCoordinator = launchCoordinator
+        self.storageManager = storageManager
+        self.updateState = updateState
+    }
+
+    func prepareLaunch(
+        game: Game,
+        onForceProgress: (@Sendable (GameInstallProgress) -> Void)? = nil
+    ) async throws -> GameLaunchSummary {
+        await updateState.setCurrentGameID(game.id)
+        let result = try await launchCoordinator.prepareLaunch(game: game, forceProgress: onForceProgress)
+        return GameLaunchSummary(activeVersion: result.activeVersion, forceUpdated: result.forceUpdated)
+    }
+
+    func updateSnapshot(gameID: String?) async -> RuntimeUpdateSnapshot? {
+        if let gameID, gameID.isEmpty == false {
+            return await updateState.snapshot(gameID: gameID)
         }
-        
-        return gamesDirectory.appendingPathComponent(gameId)
+        guard let current = await updateState.currentGame() else {
+            return nil
+        }
+        return await updateState.snapshot(gameID: current)
     }
-    
-    func isGameDownloaded(gameId: String) -> Bool {
-        let gameDir = getGameDirectory(gameId: gameId)
-        let indexPath = gameDir.appendingPathComponent("index.html")
-        return fileManager.fileExists(atPath: indexPath.path)
+
+    func applyPendingUpdate(gameID: String?) async throws {
+        let resolvedID: String
+        if let gameID, gameID.isEmpty == false {
+            resolvedID = gameID
+        } else if let current = await updateState.currentGame() {
+            resolvedID = current
+        } else {
+            throw GameLaunchError.packageInstallFailed("未找到当前游戏上下文")
+        }
+        try await updateState.applyPending(gameID: resolvedID, storage: storageManager)
     }
-    
+
     func loadGame(_ game: Game, in webView: WKWebView, completion: @escaping (Bool) -> Void) {
         Task {
             do {
-                let gameDir = getGameDirectory(gameId: game.id)
-                
-                if !isGameDownloaded(gameId: game.id) {
-                    try await downloadGame(game, to: gameDir)
+                _ = try await prepareLaunch(game: game)
+                guard let gameURL = URL(string: "nexus://\(game.id)/index.html") else {
+                    completion(false)
+                    return
                 }
-                
-                let gameUrl = URL(string: "nexus://game/index.html")!
-                let request = URLRequest(url: gameUrl)
-                webView.load(request)
-                
+                webView.load(URLRequest(url: gameURL))
                 completion(true)
             } catch {
-                print("Failed to load game: \(error.localizedDescription)")
                 completion(false)
             }
         }
     }
-    
-    private func downloadGame(_ game: Game, to directory: URL) async throws {
-        guard let url = URL(string: game.downloadUrl) else {
-            throw GameError.invalidURL
-        }
-        
-        let destination: DownloadRequest.Destination = { _, _ in
-            let tempDir = fileManager.temporaryDirectory
-            return (tempDir.appendingPathComponent("\(game.id).zip"), [.removePreviousFile, .createIntermediateDirectories])
-        }
-        
-        let (downloadUrl, response) = try await AF.download(url, to: destination)
-            .serializingDownloadedFileURL()
-            .value
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw GameError.downloadFailed
-        }
-        
-        let downloadedFile = downloadUrl
-        
-        if !game.md5.isEmpty {
-            let actualMD5 = calculateMD5(file: downloadedFile)
-            if actualMD5 != game.md5 {
-                try? fileManager.removeItem(at: downloadedFile)
-                throw GameError.md5Mismatch
-            }
-        }
-        
-        try unzipFile(downloadedFile, to: directory)
-        try? fileManager.removeItem(at: downloadedFile)
-    }
-    
-    private func unzipFile(_ zipFile: URL, to destination: URL) throws {
-        try fileManager.unzipItem(at: zipFile, to: destination)
-    }
-    
-    private func calculateMD5(file: URL) -> String {
-        guard let data = try? Data(contentsOf: file) else {
-            return ""
-        }
-        
-        let hash = Insecure.MD5.hash(data: data)
-        return hash.compactMap { String(format: "%02x", $0) }.joined()
-    }
-    
-    func getSDKContent() -> String {
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let sdkPath = documentsPath.appendingPathComponent("wx-mock-sdk.js")
-        
-        guard let content = try? String(contentsOf: sdkPath) else {
-            return ""
-        }
-        
-        return content
-    }
-}
 
-enum GameError: Error, LocalizedError {
-    case invalidURL
-    case downloadFailed
-    case md5Mismatch
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return "无效的 URL"
-        case .downloadFailed:
-            return "下载失败"
-        case .md5Mismatch:
-            return "MD5 校验失败"
+    func getSDKContent() -> String {
+        let fileManager = FileManager.default
+        let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+
+        let direct = documents.appendingPathComponent("wx-mock-sdk.js")
+        if let text = try? String(contentsOf: direct), text.isEmpty == false {
+            return text
         }
+
+        let bundledPath = "wx-mock-sdk.iife"
+        let bundledExt = "js"
+        if let url = Bundle.main.url(forResource: bundledPath, withExtension: bundledExt),
+           let text = try? String(contentsOf: url),
+           text.isEmpty == false {
+            return text
+        }
+
+        return defaultSDKStub()
+    }
+
+    private func defaultSDKStub() -> String {
+        """
+        ;(function () {
+          if (window.wx) { return; }
+          var callbacks = {};
+          window.NexusBridgeCallback = function (response) {
+            if (!response || !response.callbackId) { return; }
+            var callback = callbacks[response.callbackId];
+            if (!callback) { return; }
+            delete callbacks[response.callbackId];
+            if (response.error) { callback.reject(response.error); return; }
+            callback.resolve(response.data || {});
+          };
+          function call(api, params) {
+            return new Promise(function (resolve, reject) {
+              if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.NexusBridge) {
+                reject({ code: -1, errMsg: api + ':fail bridge unavailable' });
+                return;
+              }
+              var callbackId = 'cb_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+              callbacks[callbackId] = { resolve: resolve, reject: reject };
+              window.webkit.messageHandlers.NexusBridge.postMessage({
+                api: api,
+                params: params || {},
+                callbackId: callbackId
+              });
+            });
+          }
+          function pass(api) { return Promise.resolve({ errMsg: api + ':ok' }); }
+          function createUpdateManager() {
+            var checked = [];
+            var ready = [];
+            var failed = [];
+            function emit(list, payload) {
+              list.forEach(function (cb) { try { cb(payload || {}); } catch (e) {} });
+            }
+            function poll() {
+              call('wx.update.check', {}).then(function (res) {
+                emit(checked, { hasUpdate: !!res.hasUpdate });
+                if (res.ready) {
+                  emit(ready, {});
+                } else if (res.hasUpdate) {
+                  setTimeout(poll, 1200);
+                }
+              }).catch(function () {
+                emit(failed, {});
+              });
+            }
+            setTimeout(poll, 0);
+            return {
+              onCheckForUpdate: function (cb) { if (typeof cb === 'function') checked.push(cb); },
+              onUpdateReady: function (cb) { if (typeof cb === 'function') ready.push(cb); },
+              onUpdateFailed: function (cb) { if (typeof cb === 'function') failed.push(cb); },
+              applyUpdate: function () { return call('wx.update.apply', {}); }
+            };
+          }
+          window.wx = {
+            login: function (params) { return call('wx.login', params); },
+            request: function (params) { return call('wx.request', params); },
+            setStorage: function (params) { return call('wx.setStorage', params); },
+            getStorage: function (params) { return call('wx.getStorage', params); },
+            removeStorage: function (params) { return call('wx.removeStorage', params); },
+            clearStorage: function () { return call('wx.clearStorage', {}); },
+            setStorageSync: function (params) { return call('wx.setStorageSync', params); },
+            getStorageSync: function (params) { return call('wx.getStorageSync', params); },
+            removeStorageSync: function (params) { return call('wx.removeStorageSync', params); },
+            clearStorageSync: function () { return call('wx.clearStorageSync', {}); },
+            getMenuButtonBoundingClientRect: function () { return call('wx.getMenuButtonBoundingClientRect', {}); },
+            showToast: function () { return pass('wx.showToast'); },
+            getUpdateManager: function () { return createUpdateManager(); }
+          };
+        })();
+        """
     }
 }

@@ -2,6 +2,7 @@ package com.nexus.platform.controller;
 
 import com.nexus.platform.dto.DiscoverFeedItem;
 import com.nexus.platform.dto.DiscoverHomeResponse;
+import com.nexus.platform.dto.DiscoverCommunityItem;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.service.DiscoverService;
 import java.util.List;
@@ -27,5 +28,10 @@ public class DiscoverController {
     @GetMapping("/home")
     public Result<DiscoverHomeResponse> home(@RequestParam(defaultValue = "20") int limit) {
         return discoverService.getHome(limit);
+    }
+
+    @GetMapping("/community")
+    public Result<List<DiscoverCommunityItem>> community(@RequestParam(defaultValue = "10") int limit) {
+        return discoverService.getCommunity(limit);
     }
 }

@@ -37,6 +37,18 @@ public class OpsContentItem {
     @Column(name = "badge_text", length = 64)
     private String badgeText;
 
+    @Column(name = "article_tag", length = 64)
+    private String articleTag;
+
+    @Column(name = "article_title", length = 256)
+    private String articleTitle;
+
+    @Column(name = "article_body", columnDefinition = "TEXT")
+    private String articleBody;
+
+    @Column(name = "action_text", length = 64)
+    private String actionText;
+
     @Column(nullable = false, length = 32)
     private String status = "DRAFT";
 

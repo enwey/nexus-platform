@@ -6,6 +6,6 @@ import com.nexus.platform.R
 enum class MainDestination(val route: String, @StringRes val labelRes: Int) {
     Library("library", R.string.tab_library),
     Discover("discover", R.string.tab_discover),
-    Community("community", R.string.tab_community),
+    Recommend("recommend", R.string.tab_recommend),
     Profile("profile", R.string.tab_profile)
 }

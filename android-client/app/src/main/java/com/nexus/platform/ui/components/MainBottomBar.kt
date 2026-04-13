@@ -99,7 +99,7 @@ private fun tabIcon(tab: MainDestination, selected: Boolean): ImageVector {
     return when (tab) {
         MainDestination.Library -> if (selected) Icons.Filled.SportsEsports else Icons.Outlined.SportsEsports
         MainDestination.Discover -> if (selected) Icons.Filled.Explore else Icons.Outlined.Explore
-        MainDestination.Community -> if (selected) Icons.Filled.Forum else Icons.Outlined.Forum
+        MainDestination.Recommend -> if (selected) Icons.Filled.Forum else Icons.Outlined.Forum
         MainDestination.Profile -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
     }
 }

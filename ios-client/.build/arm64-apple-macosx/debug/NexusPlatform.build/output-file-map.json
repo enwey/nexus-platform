@@ -1,0 +1,180 @@
+{
+  "": {
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/primary.swiftdeps"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/API/ApiHandler.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/ApiHandler.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/ApiHandler.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/ApiHandler~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/ApiHandler.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/ApiHandler.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/API/NetworkApis.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NetworkApis.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NetworkApis.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NetworkApis~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NetworkApis.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NetworkApis.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/API/OtherApis.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/OtherApis.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/OtherApis.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/OtherApis~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/OtherApis.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/OtherApis.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/API/StorageApi.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/StorageApi.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/StorageApi.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/StorageApi~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/StorageApi.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/StorageApi.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/API/SystemApis.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SystemApis.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SystemApis.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SystemApis~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SystemApis.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SystemApis.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/API/UnsupportedApi.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UnsupportedApi.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UnsupportedApi.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UnsupportedApi~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UnsupportedApi.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UnsupportedApi.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/App.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/App.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/App.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/App~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/App.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/App.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Bridge/NexusBridge.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusBridge.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusBridge.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusBridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusBridge.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusBridge.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/GameStorageManagerProtocol.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/VersionedGameStorageManager.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/VersionedGameStorageManager.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/VersionedGameStorageManager.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/VersionedGameStorageManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/VersionedGameStorageManager.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/VersionedGameStorageManager.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Theme/AppTheme.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AppTheme.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AppTheme.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AppTheme~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AppTheme.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AppTheme.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/Bridge/APIs/DefaultBridgeAPIs.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/DefaultBridgeAPIs.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/DefaultBridgeAPIs.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/DefaultBridgeAPIs~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/DefaultBridgeAPIs.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/DefaultBridgeAPIs.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/Bridge/JSBridge.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridge.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridge.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridge.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridge.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/Bridge/JSBridgeProtocol.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridgeProtocol.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridgeProtocol.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridgeProtocol~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridgeProtocol.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/JSBridgeProtocol.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/CapsuleMenu/CapsuleMenuOverlay.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/CapsuleMenuOverlay.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/CapsuleMenuOverlay.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/CapsuleMenuOverlay~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/CapsuleMenuOverlay.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/CapsuleMenuOverlay.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/Lifecycle/GameLaunchCoordinator.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameLaunchCoordinator.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameLaunchCoordinator.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameLaunchCoordinator~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameLaunchCoordinator.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameLaunchCoordinator.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/Lifecycle/UpdateCheckService.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UpdateCheckService.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UpdateCheckService.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UpdateCheckService~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UpdateCheckService.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/UpdateCheckService.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/SchemeHandler/MIMETypeResolver.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/MIMETypeResolver.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/MIMETypeResolver.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/MIMETypeResolver~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/MIMETypeResolver.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/MIMETypeResolver.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/SchemeHandler/NexusSchemeHandler.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusSchemeHandler.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusSchemeHandler.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusSchemeHandler~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusSchemeHandler.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/NexusSchemeHandler.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/SchemeHandler/SandboxFileResolver.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SandboxFileResolver.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SandboxFileResolver.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SandboxFileResolver~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SandboxFileResolver.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/SandboxFileResolver.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/WebView/GameWebView.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameWebView.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameWebView.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameWebView~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameWebView.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameWebView.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/WebView/WebViewConfigBuilder.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/WebViewConfigBuilder.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/WebViewConfigBuilder.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/WebViewConfigBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/WebViewConfigBuilder.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/WebViewConfigBuilder.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Utils/GameManager.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameManager.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameManager.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameManager.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameManager.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Views/GameListView.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameListView.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameListView.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameListView~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameListView.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameListView.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Views/GameView.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameView.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameView.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameView~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameView.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameView.dia"
+  }
+}

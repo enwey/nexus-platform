@@ -61,7 +61,7 @@ const handleLogin = async () => {
     }
 
     ElMessage.success(lt('登录成功', '登入成功', 'Signed in successfully'))
-    router.push(route.query.redirect || '/audit')
+    router.push(route.query.redirect || '/pro/dashboard')
   } catch (error) {
     ElMessage.error(error.message || lt('登录失败', '登入失敗', 'Sign in failed'))
   } finally {

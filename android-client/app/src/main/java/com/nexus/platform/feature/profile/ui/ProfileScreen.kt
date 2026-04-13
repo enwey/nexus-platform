@@ -195,14 +195,6 @@ fun ProfileScreen(
                 }
             }
         )
-        if (isLoggedIn) {
-            MenuGroup(
-                items = listOf(stringResource(R.string.profile_logout)),
-                rightTexts = listOf(null),
-                isLogout = true,
-                onLogoutClick = onLogoutClick
-            )
-        }
     }
 
     if (showLanguageDialog) {

@@ -40,6 +40,32 @@ export const getGameCategories = () =>
     method: 'get'
   })
 
+export const getOpsGameCategories = () =>
+  request({
+    url: '/admin/ops/game-categories',
+    method: 'get'
+  })
+
+export const createOpsGameCategory = (data) =>
+  request({
+    url: '/admin/ops/game-categories',
+    method: 'post',
+    data
+  })
+
+export const updateOpsGameCategory = (id, data) =>
+  request({
+    url: `/admin/ops/game-categories/${id}`,
+    method: 'put',
+    data
+  })
+
+export const deleteOpsGameCategory = (id) =>
+  request({
+    url: `/admin/ops/game-categories/${id}`,
+    method: 'delete'
+  })
+
 export const updateGameMetadata = (gameId, data) =>
   request({
     url: `/game/${gameId}/metadata`,
@@ -112,6 +138,32 @@ export const updateDiscoverOpsConfig = (data) =>
     url: '/admin/ops/discover/config',
     method: 'put',
     data
+  })
+
+export const getDiscoverCategories = () =>
+  request({
+    url: '/admin/ops/discover/categories',
+    method: 'get'
+  })
+
+export const createDiscoverCategory = (data) =>
+  request({
+    url: '/admin/ops/discover/categories',
+    method: 'post',
+    data
+  })
+
+export const updateDiscoverCategory = (id, data) =>
+  request({
+    url: `/admin/ops/discover/categories/${id}`,
+    method: 'put',
+    data
+  })
+
+export const deleteDiscoverCategory = (id) =>
+  request({
+    url: `/admin/ops/discover/categories/${id}`,
+    method: 'delete'
   })
 
 export const getOpsGameProfile = (gameId) =>

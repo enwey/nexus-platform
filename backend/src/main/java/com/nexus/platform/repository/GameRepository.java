@@ -22,4 +22,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     Page<Game> findByDeveloperIdOrderByCreatedAtDesc(Long developerId, Pageable pageable);
 
     Game findByAppId(String appId);
+
+    long countByCategoryIgnoreCase(String category);
 }

@@ -7,8 +7,10 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import com.nexus.platform.core.network.BackendConfig
 import com.nexus.platform.data.local.AuthSessionStore
+import com.nexus.platform.domain.model.DiscoverCategory
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.DiscoverHomeSnapshot
+import com.nexus.platform.domain.model.RecommendTodayItem
 import com.nexus.platform.domain.model.BillingDetail
 import com.nexus.platform.domain.model.BillingRecord
 import com.nexus.platform.domain.model.DeviceSession
@@ -145,12 +147,36 @@ class PlatformBackendApi(context: Context) {
                 DiscoverHeroCard(
                     appId = it.stringOrEmpty("appId"),
                     title = it.stringOrDefault("title", ""),
-                    subtitle = it.stringOrDefault("subtitle", "")
+                    subtitle = it.stringOrDefault("subtitle", ""),
+                    coverUrl = it.stringOrDefault("coverUrl", ""),
+                    badgeText = it.stringOrDefault("badgeText", "")
                 )
             }?.takeIf { it.title.isNotBlank() || it.subtitle.isNotBlank() }
+            val libraryBannerJson = data.getAsJsonObject("libraryTopBanner")
+            val libraryTopBanner = libraryBannerJson?.let {
+                DiscoverHeroCard(
+                    appId = it.stringOrEmpty("appId"),
+                    title = it.stringOrDefault("title", ""),
+                    subtitle = it.stringOrDefault("subtitle", ""),
+                    coverUrl = it.stringOrDefault("coverUrl", ""),
+                    badgeText = it.stringOrDefault("badgeText", "")
+                )
+            }?.takeIf { it.title.isNotBlank() || it.subtitle.isNotBlank() || it.coverUrl.isNotBlank() }
+            val categories = data.getAsJsonArray("categories")
+                ?.mapNotNull { it?.asString?.trim() }
+                ?.filter { it.isNotBlank() }
+                ?.map { name ->
+                    DiscoverCategory(
+                        key = name,
+                        label = name
+                    )
+                }
+                ?: emptyList()
 
             DiscoverHomeSnapshot(
                 hero = hero,
+                libraryTopBanner = libraryTopBanner,
+                categories = categories,
                 rankedGames = data.getAsJsonArray("rankedGames")
                     ?.mapNotNull { it?.asJsonObject?.toGame() }
                     ?: emptyList(),
@@ -161,6 +187,43 @@ class PlatformBackendApi(context: Context) {
                     ?.mapNotNull { it?.asJsonObject?.toGame() }
                     ?: emptyList()
             )
+        }
+    }
+
+    suspend fun getRecommendToday(limit: Int = 10): List<RecommendTodayItem> = withContext(Dispatchers.IO) {
+        val normalizedLimit = limit.coerceIn(1, 20)
+        executeRequestWithOptionalAuthRetry { token ->
+            val requestBuilder = Request.Builder()
+                .url("${BackendConfig.apiBaseUrl}/discover/community?limit=$normalizedLimit")
+            token?.let { requestBuilder.addHeader("Authorization", "Bearer $it") }
+            requestBuilder.build()
+        }.use { response ->
+            if (!response.isSuccessful) {
+                throw IOException("Failed to load community feed: ${response.code}")
+            }
+            val body = response.body?.string().orEmpty()
+            val payload = gson.fromJson(body, JsonObject::class.java)
+            val code = payload.get("code")?.asInt ?: -1
+            if (code != 0) {
+                throw IOException(payload.get("message")?.asString ?: "Community feed request failed")
+            }
+            val data = payload.getAsJsonArray("data") ?: JsonArray()
+            data.mapNotNull { item ->
+                val obj = item?.asJsonObject ?: return@mapNotNull null
+                RecommendTodayItem(
+                    appId = obj.stringOrEmpty("appId"),
+                    gameName = obj.stringOrDefault("gameName", ""),
+                    gameCategory = obj.stringOrDefault("gameCategory", ""),
+                    gameIconUrl = obj.stringOrDefault("gameIconUrl", ""),
+                    cardCategory = obj.stringOrDefault("cardCategory", ""),
+                    cardTitle = obj.stringOrDefault("cardTitle", ""),
+                    coverUrl = obj.stringOrDefault("coverUrl", ""),
+                    articleTag = obj.stringOrDefault("articleTag", ""),
+                    articleTitle = obj.stringOrDefault("articleTitle", ""),
+                    articleBody = obj.stringOrDefault("articleBody", ""),
+                    actionText = obj.stringOrDefault("actionText", "")
+                )
+            }
         }
     }
 

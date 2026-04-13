@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -36,11 +42,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.domain.model.DiscoverCategory
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.ui.components.GameLogo
@@ -53,37 +61,57 @@ import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import kotlinx.coroutines.delay
 import kotlin.math.min
+import coil.compose.rememberAsyncImagePainter
 
 private val TopLevelBottomPadding = 96.dp
 private val QuickPlayText = TextMain
 private const val DiscoverPageSize = 30
 
-data class DiscoverCategoryItem(
-    val labelRes: Int,
-    val key: String
-)
-
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DiscoverScreen(
     games: List<GameItem>,
     hero: DiscoverHeroCard?,
+    categories: List<DiscoverCategory>,
     onCategoryChange: (String) -> Unit,
+    onRefresh: (String) -> Unit,
     onGameClick: (GameItem) -> Unit,
     onQuickPlayClick: (GameItem) -> Unit,
     onRankingClick: () -> Unit
 ) {
-    val categories = remember {
-        listOf(
-            DiscoverCategoryItem(R.string.discover_category_all, "all"),
-            DiscoverCategoryItem(R.string.discover_category_action, "action"),
-            DiscoverCategoryItem(R.string.discover_category_casual, "casual"),
-            DiscoverCategoryItem(R.string.discover_category_rpg, "rpg")
-        )
+    val allCategoryLabel = stringResource(R.string.discover_category_all)
+    val resolvedCategories = remember(categories, allCategoryLabel) {
+        val allItem = DiscoverCategory(key = "all", label = allCategoryLabel)
+        val fromServer = categories
+            .mapNotNull { item ->
+                val key = item.key.trim()
+                if (key.isBlank()) null else DiscoverCategory(key = key, label = item.label.ifBlank { key })
+            }
+            .filter { !it.key.equals("all", ignoreCase = true) }
+        listOf(allItem) + fromServer
     }
     var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(0) }
-    val selectedCategory = categories[selectedCategoryIndex]
+    var refreshing by remember { mutableStateOf(false) }
+    if (selectedCategoryIndex >= resolvedCategories.size) {
+        selectedCategoryIndex = 0
+    }
+    val selectedCategory = resolvedCategories[selectedCategoryIndex]
     val isAllCategory = selectedCategory.key == "all"
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = refreshing,
+        onRefresh = {
+            refreshing = true
+            onRefresh(selectedCategory.key)
+        }
+    )
+    LaunchedEffect(refreshing, games) {
+        if (refreshing) {
+            delay(450)
+            refreshing = false
+        }
+    }
 
     val rankedGames = remember(games) { games.take(10) }
     val heroTarget = remember(hero, rankedGames) {
@@ -112,48 +140,42 @@ fun DiscoverScreen(
         }
     }
 
-    LazyColumn(
-        state = listState,
+    Box(
         modifier = Modifier
             .background(BackgroundBase)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .fillMaxSize()
+            .pullRefresh(pullRefreshState)
     ) {
-        item { Spacer(modifier = Modifier.height(10.dp)) }
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(10.dp)) }
 
-        item {
-            Column(
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp)
-            ) {
-                Text(
-                    stringResource(R.string.discover_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Black
-                )
-            }
-        }
+            item { Spacer(modifier = Modifier.height(2.dp)) }
 
-        item {
-            Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                Banner(
-                    hero = hero,
-                    onClick = {
-                        heroTarget?.let(onGameClick)
-                    }
-                )
+            item {
+                Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
+                    Banner(
+                        hero = hero,
+                        onClick = {
+                            heroTarget?.let(onGameClick)
+                        }
+                    )
+                }
             }
-        }
 
         item {
             Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
                 CategoryRow(
-                    categories = categories,
+                    categories = resolvedCategories,
                     selectedIndex = selectedCategoryIndex,
                     onSelect = { index ->
                         if (index != selectedCategoryIndex) {
                             selectedCategoryIndex = index
                             loadedCount = 0
-                            onCategoryChange(categories[index].key)
+                            onCategoryChange(resolvedCategories[index].key)
                         }
                     }
                 )
@@ -198,7 +220,7 @@ fun DiscoverScreen(
             item {
                 Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
                     SectionHeader(
-                        title = stringResource(selectedCategory.labelRes),
+                        title = selectedCategory.label,
                         action = null
                     )
                 }
@@ -247,11 +269,21 @@ fun DiscoverScreen(
                 }
             }
         }
+        }
+        PullRefreshIndicator(
+            refreshing = refreshing,
+            state = pullRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+        )
     }
 }
 
 @Composable
 private fun Banner(hero: DiscoverHeroCard?, onClick: () -> Unit) {
+    val bannerCoverUrl = hero?.coverUrl?.trim().orEmpty()
+    val showBannerCover = bannerCoverUrl.startsWith("http://") || bannerCoverUrl.startsWith("https://")
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -262,6 +294,19 @@ private fun Banner(hero: DiscoverHeroCard?, onClick: () -> Unit) {
             .padding(20.dp),
         contentAlignment = Alignment.BottomStart
     ) {
+        if (showBannerCover) {
+            Image(
+                painter = rememberAsyncImagePainter(model = bannerCoverUrl),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.28f))
+            )
+        }
         Column {
             Box(
                 modifier = Modifier
@@ -269,7 +314,11 @@ private fun Banner(hero: DiscoverHeroCard?, onClick: () -> Unit) {
                     .background(Color.Black.copy(alpha = 0.5f))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(stringResource(R.string.discover_banner_hot), style = MaterialTheme.typography.labelSmall)
+                Text(
+                    hero?.badgeText?.ifBlank { stringResource(R.string.discover_banner_hot) }
+                        ?: stringResource(R.string.discover_banner_hot),
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -292,7 +341,7 @@ private fun Banner(hero: DiscoverHeroCard?, onClick: () -> Unit) {
 
 @Composable
 private fun CategoryRow(
-    categories: List<DiscoverCategoryItem>,
+    categories: List<DiscoverCategory>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit
 ) {
@@ -313,7 +362,7 @@ private fun CategoryRow(
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Text(
-                    stringResource(category.labelRes),
+                    category.label,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = TextMain

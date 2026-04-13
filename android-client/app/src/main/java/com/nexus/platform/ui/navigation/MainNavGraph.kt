@@ -8,8 +8,12 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,9 +33,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.nexus.platform.domain.model.RecommendTodayItem
 import com.nexus.platform.core.i18n.AppLanguage
 import com.nexus.platform.domain.model.GameItem
-import com.nexus.platform.feature.community.ui.CommunityScreen
+import com.nexus.platform.feature.recommend.ui.RecommendDetailScreen
+import com.nexus.platform.feature.recommend.ui.RecommendScreen
 import com.nexus.platform.feature.discover.ui.DiscoverRankingScreen
 import com.nexus.platform.feature.discover.ui.DiscoverScreen
 import com.nexus.platform.feature.game.ui.GameDetailScreen
@@ -56,7 +62,7 @@ private fun AnimatedContentTransitionScope<*>.initialRoute(): String? {
 
 private fun isHierarchyRoute(route: String?): Boolean {
     return route == MainRoutes.GAME_DETAIL || route == MainRoutes.LIBRARY_SECTION
-        || route == MainRoutes.DISCOVER_RANKING
+        || route == MainRoutes.DISCOVER_RANKING || route == MainRoutes.RECOMMEND_DETAIL
 }
 
 private fun AnimatedContentTransitionScope<*>.hierarchyEnter() =
@@ -83,6 +89,20 @@ private fun AnimatedContentTransitionScope<*>.hierarchyPopExit() =
         animationSpec = tween(HIERARCHY_EXIT_DURATION, easing = FastOutLinearInEasing)
     ) + fadeOut(animationSpec = tween(HIERARCHY_EXIT_DURATION, easing = FastOutLinearInEasing))
 
+private fun AnimatedContentTransitionScope<*>.todayDetailEnter() =
+    slideInVertically(
+        initialOffsetY = { fullHeight -> fullHeight / 10 },
+        animationSpec = tween(320, easing = LinearOutSlowInEasing)
+    ) + fadeIn(animationSpec = tween(300, easing = LinearOutSlowInEasing)) +
+        scaleIn(initialScale = 0.98f, animationSpec = tween(320, easing = LinearOutSlowInEasing))
+
+private fun AnimatedContentTransitionScope<*>.todayDetailExit() =
+    slideOutVertically(
+        targetOffsetY = { fullHeight -> fullHeight / 8 },
+        animationSpec = tween(240, easing = FastOutLinearInEasing)
+    ) + fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing)) +
+        scaleOut(targetScale = 0.99f, animationSpec = tween(240, easing = FastOutLinearInEasing))
+
 @Composable
 private fun MainHomeScreen(
     libraryState: LibraryUiState,
@@ -94,6 +114,7 @@ private fun MainHomeScreen(
     onToggleMyGame: (GameItem) -> Unit,
     onDiscoverRankingClick: () -> Unit,
     onDiscoverGameClick: (GameItem) -> Unit,
+    onRecommendDetailClick: (RecommendTodayItem, GameItem?) -> Unit,
     onDiscoverQuickPlayClick: (GameItem) -> Unit,
     onRequestLogin: () -> Unit,
     currentLanguage: AppLanguage,
@@ -109,6 +130,7 @@ private fun MainHomeScreen(
                 MainDestination.Library -> LibraryScreen(
                     uiState = libraryState,
                     onLoad = onLoadLibrary,
+                    onRefresh = onLoadLibrary,
                     onGameClick = onLibraryGameClick,
                     onMoreClick = onLibraryMoreClick,
                     onToggleMyGame = onToggleMyGame,
@@ -118,14 +140,19 @@ private fun MainHomeScreen(
                 MainDestination.Discover -> DiscoverScreen(
                     games = libraryState.discoverGames,
                     hero = libraryState.discoverHero,
+                    categories = libraryState.discoverCategories,
                     onCategoryChange = onDiscoverCategoryChange,
+                    onRefresh = { category ->
+                        if (category == "all") onLoadLibrary() else onDiscoverCategoryChange(category)
+                    },
                     onGameClick = onDiscoverGameClick,
                     onQuickPlayClick = onDiscoverQuickPlayClick,
                     onRankingClick = { onDiscoverRankingClick() }
                 )
-                MainDestination.Community -> CommunityScreen(
-                    games = libraryState.discoverGames,
-                    onGameClick = onDiscoverGameClick
+                MainDestination.Recommend -> RecommendScreen(
+                    games = (libraryState.games + libraryState.discoverGames).distinctBy { it.id },
+                    onGameClick = onDiscoverGameClick,
+                    onCardClick = onRecommendDetailClick
                 )
                 MainDestination.Profile -> ProfileScreen(
                     isLoggedIn = isLoggedIn,
@@ -204,6 +231,15 @@ fun MainNavGraph(
                         ?.set(MainRoutes.GAME_DETAIL_KEY, game)
                     navController.navigate(MainRoutes.GAME_DETAIL)
                 },
+                onRecommendDetailClick = { item, game ->
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(MainRoutes.RECOMMEND_DETAIL_ITEM_KEY, item)
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(MainRoutes.RECOMMEND_DETAIL_GAME_KEY, game)
+                    navController.navigate(MainRoutes.RECOMMEND_DETAIL)
+                },
                 onDiscoverQuickPlayClick = onPlayGame,
                 onRequestLogin = onRequestLogin,
                 currentLanguage = currentLanguage,
@@ -227,6 +263,37 @@ fun MainNavGraph(
                         ?.set(MainRoutes.GAME_DETAIL_KEY, game)
                     navController.navigate(MainRoutes.GAME_DETAIL)
                 }
+            )
+        }
+        composable(
+            route = MainRoutes.RECOMMEND_DETAIL,
+            enterTransition = { todayDetailEnter() },
+            exitTransition = { todayDetailExit() },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { todayDetailExit() }
+        ) { backStackEntry ->
+            val item = remember(backStackEntry.id) {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<RecommendTodayItem>(MainRoutes.RECOMMEND_DETAIL_ITEM_KEY)
+            }
+            val game = remember(backStackEntry.id) {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<GameItem?>(MainRoutes.RECOMMEND_DETAIL_GAME_KEY)
+            }
+            if (item == null) {
+                LaunchedEffect(Unit) {
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+
+            RecommendDetailScreen(
+                item = item,
+                game = game,
+                onBackClick = { navController.popBackStack() },
+                onPlayClick = { game?.let(onPlayGame) }
             )
         }
         composable(

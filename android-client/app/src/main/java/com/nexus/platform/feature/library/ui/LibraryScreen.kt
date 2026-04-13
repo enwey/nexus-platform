@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +51,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -62,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import com.nexus.platform.R
 import com.nexus.platform.core.i18n.ApiErrorLocalizer
+import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.ui.components.GameLogo
 import com.nexus.platform.ui.theme.AccentGreen
@@ -74,14 +81,17 @@ import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
 import kotlin.math.min
+import coil.compose.rememberAsyncImagePainter
 
 private val TopLevelBottomPadding = 96.dp
 private val LibraryContentInset = 24.dp
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
     onLoad: () -> Unit,
+    onRefresh: () -> Unit,
     onGameClick: (GameItem) -> Unit,
     onMoreClick: (LibrarySection) -> Unit,
     onToggleMyGame: (GameItem) -> Unit,
@@ -95,12 +105,33 @@ fun LibraryScreen(
         }
     }
 
-    when {
-        uiState.loading -> LoadingState()
-        !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
-        uiState.currentPlayingGame == null && uiState.recentGames.isEmpty() && uiState.myGames.isEmpty() ->
-            ColdStartState(uiState = uiState, onGameClick = onGameClick)
-        else -> ContentState(uiState, onGameClick, onMoreClick, onToggleMyGame, onGoDiscoverClick)
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.loading,
+        onRefresh = onRefresh
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pullRefresh(pullRefreshState)
+    ) {
+        when {
+            uiState.loading -> LoadingState()
+            !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
+            uiState.currentPlayingGame == null && uiState.recentGames.isEmpty() && uiState.myGames.isEmpty() ->
+                ColdStartState(
+                    uiState = uiState,
+                    onGameClick = onGameClick,
+                    onGoDiscoverClick = onGoDiscoverClick
+                )
+            else -> ContentState(uiState, onGameClick, onMoreClick, onToggleMyGame)
+        }
+        PullRefreshIndicator(
+            refreshing = uiState.loading,
+            state = pullRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+        )
     }
 }
 
@@ -109,8 +140,7 @@ private fun ContentState(
     uiState: LibraryUiState,
     onGameClick: (GameItem) -> Unit,
     onMoreClick: (LibrarySection) -> Unit,
-    onToggleMyGame: (GameItem) -> Unit,
-    onGoDiscoverClick: () -> Unit
+    onToggleMyGame: (GameItem) -> Unit
 ) {
     val recentGames = remember(uiState.recentGames) { uiState.recentGames.take(8) }
     val myGameSource = remember(uiState.myGames) { uiState.myGames }
@@ -124,6 +154,9 @@ private fun ContentState(
         mutableIntStateOf(min(40, myGameSource.size))
     }
     val myRows = remember(myLoadedCount) { (0 until myLoadedCount).chunked(4) }
+    val everyonePlayingGames = remember(uiState.everyonePlaying, uiState.discoverGames) {
+        resolveEveryonePlayingGames(uiState)
+    }
     val listState = rememberLazyListState()
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -187,14 +220,12 @@ private fun ContentState(
             if (myGameSource.isEmpty()) {
                 item {
                     SectionHeader(
-                        title = stringResource(R.string.library_coldstart_trending),
-                        action = stringResource(R.string.library_coldstart_discover_action),
-                        onActionClick = onGoDiscoverClick
+                        title = stringResource(R.string.library_coldstart_trending)
                     )
                 }
                 item {
                     RecentGameGrid(
-                        games = (uiState.everyonePlaying.ifEmpty { uiState.discoverGames }).take(8),
+                        games = everyonePlayingGames,
                         onGameClick = onGameClick,
                         onLongPress = { game -> pendingToggleGame = game }
                     )
@@ -630,9 +661,12 @@ private fun EmptyState() {
 @Composable
 private fun ColdStartState(
     uiState: LibraryUiState,
-    onGameClick: (GameItem) -> Unit
+    onGameClick: (GameItem) -> Unit,
+    onGoDiscoverClick: () -> Unit
 ) {
-    val picks = (uiState.newbieMustPlay + uiState.everyonePlaying).distinctBy { it.id }.take(4)
+    val everyonePlayingGames = remember(uiState.everyonePlaying, uiState.discoverGames) {
+        resolveEveryonePlayingGames(uiState)
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -646,6 +680,7 @@ private fun ColdStartState(
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
             ColdStartHeroCard(
+                banner = uiState.libraryTopBanner,
                 featured = uiState.newbieMustPlay.firstOrNull() ?: uiState.everyonePlaying.firstOrNull(),
                 onGameClick = onGameClick
             )
@@ -655,44 +690,35 @@ private fun ColdStartState(
                 title = stringResource(R.string.library_section_my_games)
             )
         }
-        item { ColdStartEmptyCollectionCard() }
+        item { ColdStartEmptyCollectionCard(onDiscoverClick = onGoDiscoverClick) }
         item {
             SectionHeader(
-                title = stringResource(R.string.library_coldstart_trending),
-                action = stringResource(R.string.library_coldstart_refresh)
+                title = stringResource(R.string.library_coldstart_trending)
             )
         }
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (picks.isEmpty()) {
-                    repeat(4) {
-                        ColdStartPickCard(title = stringResource(R.string.discover_empty), badge = "-")
-                    }
-                } else {
-                    picks.forEachIndexed { index, game ->
-                        ColdStartPickCard(
-                            title = game.name,
-                            badge = "${index + 1}",
-                            onClick = { onGameClick(game) }
-                        )
-                    }
-                    repeat((4 - picks.size).coerceAtLeast(0)) {
-                        ColdStartPickCard(title = "", badge = "")
-                    }
-                }
-            }
+            RecentGameGrid(
+                games = everyonePlayingGames,
+                onGameClick = onGameClick
+            )
         }
     }
 }
 
+private fun resolveEveryonePlayingGames(uiState: LibraryUiState): List<GameItem> {
+    return uiState.everyonePlaying
+        .ifEmpty { uiState.discoverGames }
+        .take(8)
+}
+
 @Composable
 private fun ColdStartHeroCard(
+    banner: DiscoverHeroCard?,
     featured: GameItem?,
     onGameClick: (GameItem) -> Unit
 ) {
+    val bannerCoverUrl = banner?.coverUrl?.trim().orEmpty()
+    val showBannerCover = bannerCoverUrl.startsWith("http://") || bannerCoverUrl.startsWith("https://")
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -710,6 +736,19 @@ private fun ColdStartHeroCard(
             .padding(24.dp),
         contentAlignment = Alignment.BottomStart
     ) {
+        if (showBannerCover) {
+            Image(
+                painter = rememberAsyncImagePainter(model = bannerCoverUrl),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.28f))
+            )
+        }
         Column {
             Box(
                 modifier = Modifier
@@ -718,7 +757,7 @@ private fun ColdStartHeroCard(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.library_coldstart_new_player_tag),
+                    text = banner?.badgeText?.takeIf { it.isNotBlank() } ?: stringResource(R.string.library_coldstart_new_player_tag),
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.ExtraBold
@@ -726,13 +765,16 @@ private fun ColdStartHeroCard(
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = featured?.name ?: stringResource(R.string.library_coldstart_hero_title),
+                text = banner?.title?.takeIf { it.isNotBlank() }
+                    ?: featured?.name
+                    ?: stringResource(R.string.library_coldstart_hero_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = featured?.description?.takeIf { it.isNotBlank() }
+                text = banner?.subtitle?.takeIf { it.isNotBlank() }
+                    ?: featured?.description?.takeIf { it.isNotBlank() }
                     ?: stringResource(R.string.library_coldstart_hero_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White.copy(alpha = 0.82f)
@@ -813,53 +855,5 @@ private fun ColdStartEmptyCollectionCard(onDiscoverClick: (() -> Unit)? = null) 
                 fontWeight = FontWeight.Bold
             )
         }
-    }
-}
-
-@Composable
-private fun RowScope.ColdStartPickCard(
-    title: String,
-    badge: String,
-    onClick: (() -> Unit)? = null
-) {
-    Column(
-        modifier = Modifier
-            .weight(1f)
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(18.dp))
-                .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            PrimaryStart.copy(alpha = 0.5f),
-                            PrimaryEnd.copy(alpha = 0.5f)
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = badge,
-                color = Color.White.copy(alpha = 0.65f),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Black
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = title,
-            color = TextMuted,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }

@@ -65,7 +65,12 @@ class MainActivity : ComponentActivity() {
                     onLoadLibrary = { libraryViewModel.load() },
                     onDiscoverCategoryChange = { category -> libraryViewModel.loadDiscoverByCategory(category) },
                     onPlayGame = { game ->
-                        libraryViewModel.markPlayed(game)
+                        val isColdStart = libraryState.currentPlayingGame == null
+                            && libraryState.recentGames.isEmpty()
+                            && libraryState.myGames.isEmpty()
+                        if (!isColdStart) {
+                            libraryViewModel.markPlayed(game)
+                        }
                         GameRuntimeActivity.start(this, game)
                     },
                     onToggleMyGame = { game ->

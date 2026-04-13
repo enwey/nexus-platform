@@ -10,7 +10,7 @@
         <el-button type="primary" @click="loadLogs">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
         <el-button @click="$router.push('/verification-codes')">{{ lt('验证码记录', '驗證碼記錄', 'Verification Codes') }}</el-button>
         <el-button @click="$router.push('/android-console')">Android Console</el-button>
-        <el-button @click="$router.push('/runtime-ops')">Runtime Ops Console</el-button>
+        <el-button @click="$router.push('/discover-ops')">{{ lt('推荐数据配置', '推薦數據配置', 'Recommendation Data') }}</el-button>
         <el-button @click="$router.push('/audit')">{{ lt('返回审核台', '返回審核台', 'Back to Review') }}</el-button>
       </div>
     </header>

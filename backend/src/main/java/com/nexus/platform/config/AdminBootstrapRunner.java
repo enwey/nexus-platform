@@ -30,17 +30,17 @@ public class AdminBootstrapRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!enabled || userRepository.existsByUsername(username)) {
+        if (!enabled) {
             return;
         }
 
-        User admin = new User();
+        User admin = userRepository.findByUsername(username).orElseGet(User::new);
         admin.setUsername(username);
         admin.setPassword(passwordEncoder.encode(password));
         admin.setEmail(email);
         admin.setRole(User.UserRole.ADMIN);
         userRepository.save(admin);
 
-        log.info("Bootstrap admin created: username={}", username);
+        log.info("Bootstrap admin ensured: username={}", username);
     }
 }
