@@ -7,11 +7,27 @@
     <string name="tab_recommend">Recommend</string>
     <string name="tab_profile">Profile</string>
 
-    <string name="splash_runtime">NEXT-GEN RUNTIME</string>
+    <string name="splash_runtime">GAMING ENGINE</string>
+    <string name="splash_version">v%1$s Studio Edition</string>
 
     <string name="onboarding_title">Skip Downloads, Play Instantly</string>
     <string name="onboarding_subtitle">Get a stable and smooth mini-game experience through Nexus Runtime.</string>
-    <string name="onboarding_start">Start Now</string>
+    <string name="onboarding_title_1">Beat Every\nBoring Moment.</string>
+    <string name="onboarding_title_prefix_1">Beat Every</string>
+    <string name="onboarding_title_highlight_1">Boring Moment.</string>
+    <string name="onboarding_subtitle_1">A next-gen game universe tailored for you, packed with premium titles ready to lift every dull moment.</string>
+    <string name="onboarding_title_2">No Downloads,\nInstant Play.</string>
+    <string name="onboarding_title_prefix_2">No Downloads,</string>
+    <string name="onboarding_title_highlight_2">Instant Play.</string>
+    <string name="onboarding_subtitle_2">Skip the long install wait. Our in-house engine breaks device limits for a silky 60 FPS instant-play experience.</string>
+    <string name="onboarding_title_3">Big Games,\nIn Your Pocket.</string>
+    <string name="onboarding_title_prefix_3">Big Games,</string>
+    <string name="onboarding_title_highlight_3">In Your Pocket.</string>
+    <string name="onboarding_subtitle_3">Across phone, PC, and tablet, your games, achievements, and progress stay synced in the cloud.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Start Exploring</string>
+    <string name="onboarding_skip">Skip</string>
 
     <string name="login_welcome">Welcome Back</string>
     <string name="login_subtitle">Sign in to your Nexus account and sweep boredom away.</string>
@@ -188,14 +204,6 @@
     <string name="referral_no_records">No referral records</string>
     <string name="legal_empty_url">Empty URL</string>
 
-    <!-- Fallback strings copied from default locale to keep key parity -->
-    <string name="onboarding_title_1">告別下載，\n秒開即玩。</string>
-    <string name="onboarding_subtitle_1">突破設備限制的雲原生架構，為您帶來無需等待的沉浸式小遊戲體驗。</string>
-    <string name="onboarding_title_2">自研引擎，\n滿幀表現。</string>
-    <string name="onboarding_subtitle_2">自研 Nexus Runtime 渲染技術，動態光影追蹤，讓每一幀畫面都細膩如絲。</string>
-    <string name="onboarding_title_3">多端同步，\n進度跟隨。</string>
-    <string name="onboarding_subtitle_3">無論是手機、PC 還是小程序，您的遊戲存檔與成就資產實時雲端同步。</string>
-    <string name="onboarding_next">下一步</string>
     <string name="register_title">創建帳號</string>
     <string name="register_subtitle">Just 30 seconds to start your game journey.</string>
     <string name="register_account_label">電子郵件</string>

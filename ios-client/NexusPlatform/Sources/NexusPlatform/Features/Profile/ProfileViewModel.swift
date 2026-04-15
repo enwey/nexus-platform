@@ -2,27 +2,71 @@ import Foundation
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
-    @Published var email: String = ""
-    @Published var password: String = ""
     @Published private(set) var currentEmail: String?
+    @Published private(set) var displayName: String?
     @Published private(set) var isLoading = false
     @Published private(set) var message: String?
+    @Published private(set) var walletSummary: WalletSummary?
+    @Published private(set) var isWalletLoading = false
+    @Published private(set) var billingRecords: [BillingRecord] = []
+    @Published private(set) var isBillingLoading = false
+    @Published private(set) var isTerminating = false
+    @Published private(set) var devices: [DeviceSession] = []
+    @Published private(set) var isDevicesLoading = false
+    @Published private(set) var cloudSyncEnabled = false
+    @Published private(set) var selectedLanguage: AppLanguage = .simplifiedChinese
 
     private let authService: AuthServiceProtocol
     private let authStore: AuthSessionStore
+    private let walletService: WalletServiceProtocol
+    private let billingService: BillingServiceProtocol
+    private let deviceService: DeviceSessionServiceProtocol
+    private let profileService: UserProfileServiceProtocol
+    private let homeService: LibraryHomeServiceProtocol
+    private let cloudSyncStore: CloudSyncStore
+    private let languageStore: AppLanguageStore
 
     init(
         authService: AuthServiceProtocol = AuthService(),
-        authStore: AuthSessionStore = .shared
+        authStore: AuthSessionStore = .shared,
+        walletService: WalletServiceProtocol = WalletService(),
+        billingService: BillingServiceProtocol = BillingService(),
+        deviceService: DeviceSessionServiceProtocol = DeviceSessionService(),
+        profileService: UserProfileServiceProtocol = UserProfileService(),
+        homeService: LibraryHomeServiceProtocol = LibraryHomeService(),
+        cloudSyncStore: CloudSyncStore = .shared,
+        languageStore: AppLanguageStore = .shared
     ) {
         self.authService = authService
         self.authStore = authStore
+        self.walletService = walletService
+        self.billingService = billingService
+        self.deviceService = deviceService
+        self.profileService = profileService
+        self.homeService = homeService
+        self.cloudSyncStore = cloudSyncStore
+        self.languageStore = languageStore
     }
 
     func loadSession() {
         Task {
+            selectedLanguage = await languageStore.current()
+            cloudSyncEnabled = await cloudSyncStore.isEnabled()
             let session = await authStore.current()
             currentEmail = session?.email
+            if session != nil {
+                if let profile = try? await profileService.fetchProfile() {
+                    displayName = profile.displayName.isEmpty ? nil : profile.displayName
+                }
+                await loadWallet()
+                await loadBilling(limit: 10)
+                await loadDevices()
+            } else {
+                displayName = nil
+                walletSummary = nil
+                billingRecords = []
+                devices = []
+            }
         }
     }
 
@@ -30,31 +74,177 @@ final class ProfileViewModel: ObservableObject {
         currentEmail?.isEmpty == false
     }
 
-    func login() {
-        guard email.isEmpty == false, password.isEmpty == false else {
-            message = "请输入邮箱和密码"
-            return
-        }
+    func logout() {
         Task {
-            isLoading = true
-            defer { isLoading = false }
+            if let session = await authStore.current() {
+                try? await authService.logout(accessToken: session.accessToken)
+            }
+            await authStore.clear()
+            currentEmail = nil
+            displayName = nil
+            walletSummary = nil
+            billingRecords = []
+            devices = []
+            message = "已退出登录"
+        }
+    }
+
+    func applyAuthenticatedSession(_ session: AuthSession) {
+        Task {
+            await authStore.save(session)
+            currentEmail = session.email
+            message = "登录成功"
+            if let profile = try? await profileService.fetchProfile() {
+                displayName = profile.displayName.isEmpty ? nil : profile.displayName
+            }
+            await loadWallet()
+            await loadBilling(limit: 10)
+            await loadDevices()
+        }
+    }
+
+    func loadWalletManually() {
+        Task { await loadWallet() }
+    }
+
+    func loadBillingManually() {
+        Task { await loadBilling(limit: 20) }
+    }
+
+    func terminateAccount() {
+        Task {
+            guard let session = await authStore.current() else {
+                message = "请先登录"
+                return
+            }
+            isTerminating = true
+            defer { isTerminating = false }
+
             do {
-                let session = try await authService.login(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-                await authStore.save(session)
-                currentEmail = session.email
-                password = ""
-                message = "登录成功"
+                try await authService.terminateAccount(accessToken: session.accessToken, confirmText: "确认注销")
+                await authStore.clear()
+                currentEmail = nil
+                displayName = nil
+                walletSummary = nil
+                billingRecords = []
+                devices = []
+                message = "账号已注销"
             } catch {
                 message = error.localizedDescription
             }
         }
     }
 
-    func logout() {
+    func loadDevicesManually() {
+        Task { await loadDevices() }
+    }
+
+    func kickDevice(_ deviceID: String) {
         Task {
-            await authStore.clear()
-            currentEmail = nil
-            message = "已退出登录"
+            do {
+                try await deviceService.kick(deviceID: deviceID)
+                message = "设备已下线"
+                await loadDevices()
+            } catch {
+                message = error.localizedDescription
+            }
         }
+    }
+
+    func logoutAllDevices() {
+        Task {
+            do {
+                try await deviceService.logoutAll()
+                message = "其他设备已退出"
+                await loadDevices()
+            } catch {
+                message = error.localizedDescription
+            }
+        }
+    }
+
+    func setLanguage(_ language: AppLanguage) {
+        Task {
+            await languageStore.set(language)
+            await MainActor.run {
+                selectedLanguage = language
+                message = "语言已更新"
+            }
+        }
+    }
+
+    func setCloudSyncEnabled(_ enabled: Bool) {
+        Task {
+            await cloudSyncStore.setEnabled(enabled)
+            if enabled, let home = try? await homeService.fetchHome() {
+                await GameEngagementStore.shared.applyCloudState(
+                    currentPlayingGameID: home.currentPlayingGame?.id,
+                    recentGameIDs: home.recentGames.map(\.id),
+                    favoriteGameIDs: home.myGames.map(\.id)
+                )
+            }
+            await MainActor.run {
+                cloudSyncEnabled = enabled
+                message = enabled ? "云同步已开启" : "云同步已关闭"
+            }
+        }
+    }
+
+    var balanceText: String {
+        formatAmount(walletSummary?.balance ?? 0)
+    }
+
+    var availableBalanceText: String {
+        formatAmount(walletSummary?.availableBalance ?? 0)
+    }
+
+    private func loadWallet() async {
+        isWalletLoading = true
+        defer { isWalletLoading = false }
+        do {
+            walletSummary = try await walletService.fetchSummary()
+        } catch {
+            message = error.localizedDescription
+            if case WalletServiceError.unauthorized = error {
+                walletSummary = nil
+            }
+        }
+    }
+
+    private func loadBilling(limit: Int) async {
+        isBillingLoading = true
+        defer { isBillingLoading = false }
+        do {
+            billingRecords = try await billingService.fetchBillingList(limit: limit)
+        } catch {
+            message = error.localizedDescription
+            if case BillingServiceError.unauthorized = error {
+                billingRecords = []
+            }
+        }
+    }
+
+    private func loadDevices() async {
+        isDevicesLoading = true
+        defer { isDevicesLoading = false }
+        do {
+            devices = try await deviceService.fetchDevices()
+        } catch {
+            message = error.localizedDescription
+            if case DeviceSessionServiceError.unauthorized = error {
+                devices = []
+            }
+        }
+    }
+
+    private func formatAmount(_ value: Decimal) -> String {
+        let number = NSDecimalNumber(decimal: value)
+        return String(format: "%.2f", number.doubleValue)
+    }
+
+    func amountText(_ value: Decimal) -> String {
+        let base = formatAmount(value)
+        let numeric = NSDecimalNumber(decimal: value).doubleValue
+        return numeric >= 0 ? "+\(base)" : base
     }
 }

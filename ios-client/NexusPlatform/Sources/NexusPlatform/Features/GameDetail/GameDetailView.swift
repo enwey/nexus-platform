@@ -41,7 +41,7 @@ struct GameDetailView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            NavigationLink(destination: GameView(game: game)) {
+            AuthGateLaunchLink(game: game) {
                 Text("立即秒开")
                     .font(.headline)
                     .nexusPrimaryCTA()

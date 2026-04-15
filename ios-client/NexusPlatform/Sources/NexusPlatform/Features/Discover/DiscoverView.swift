@@ -64,8 +64,17 @@ struct DiscoverView: View {
 
     private var rankingSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("排行榜")
-                .font(.headline)
+            HStack {
+                Text("排行榜")
+                    .font(.headline)
+                Spacer()
+                NavigationLink(destination: DiscoverRankingView(games: viewModel.topRanked)) {
+                    Text("查看更多")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(AppTheme.ColorToken.auroraBlue)
+                }
+                .buttonStyle(.plain)
+            }
             ForEach(Array(viewModel.topRanked.enumerated()), id: \.element.id) { idx, game in
                 NavigationLink(destination: GameDetailView(game: game)) {
                     HStack {

@@ -7,18 +7,27 @@
     <string name="tab_recommend">推薦</string>
     <string name="tab_profile">帳號</string>
 
-    <string name="splash_runtime">次世代運行時</string>
+    <string name="splash_runtime">GAMING ENGINE</string>
+    <string name="splash_version">v%1$s Studio Edition</string>
 
     <string name="onboarding_title">告別下載，秒開即玩</string>
     <string name="onboarding_subtitle">透過 Nexus 運行時，獲得穩定流暢的小程序遊戲體驗。</string>
-    <string name="onboarding_title_1">告別下載，\n秒開即玩。</string>
-    <string name="onboarding_subtitle_1">突破設備限制的雲原生架構，為您帶來無需等待的沉浸式小遊戲體驗。</string>
-    <string name="onboarding_title_2">自研引擎，\n滿幀表現。</string>
-    <string name="onboarding_subtitle_2">自研 Nexus Runtime 渲染技術，動態光影追蹤，讓每一幀畫面都細膩如絲。</string>
-    <string name="onboarding_title_3">多端同步，\n進度跟隨。</string>
-    <string name="onboarding_subtitle_3">無論是手機、PC 還是小程序，您的遊戲存檔與成就資產實時雲端同步。</string>
+    <string name="onboarding_title_1">打敗所有，\n無聊。</string>
+    <string name="onboarding_title_prefix_1">打敗所有，</string>
+    <string name="onboarding_title_highlight_1">無聊。</string>
+    <string name="onboarding_subtitle_1">為你量身定制的次世代遊戲宇宙，海量精品大作，隨時隨地拯救不開心。</string>
+    <string name="onboarding_title_2">無需下載，\n秒開即玩。</string>
+    <string name="onboarding_title_prefix_2">無需下載，</string>
+    <string name="onboarding_title_highlight_2">秒開即玩。</string>
+    <string name="onboarding_subtitle_2">告別漫長的安裝包等待。自研底層引擎突破物理限制，享受滿幀 60FPS 的極致流暢。</string>
+    <string name="onboarding_title_3">海量大作，\n裝進口袋。</string>
+    <string name="onboarding_title_prefix_3">海量大作，</string>
+    <string name="onboarding_title_highlight_3">裝進口袋。</string>
+    <string name="onboarding_subtitle_3">無論是手機、PC 還是平板，您的遊戲資產、成就與進度實時雲端同步，永不丟失。</string>
+    <string name="onboarding_continue">繼續</string>
     <string name="onboarding_next">下一步</string>
-    <string name="onboarding_start">立即開啟之旅</string>
+    <string name="onboarding_start">開啟體驗</string>
+    <string name="onboarding_skip">跳過</string>
 
     <string name="login_welcome">歡迎回來</string>
     <string name="login_subtitle">登入你的Nexus帳號，掃除一切無聊</string>

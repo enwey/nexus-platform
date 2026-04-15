@@ -4,7 +4,7 @@ import SwiftUI
 struct NexusPlatformApp: App {
     var body: some Scene {
         WindowGroup {
-            RootTabView()
+            LaunchExperienceView()
         }
     }
 }
@@ -24,6 +24,13 @@ struct RootTabView: View {
             }
             .tabItem {
                 Label("发现", systemImage: "sparkles")
+            }
+
+            NavigationStack {
+                RecommendView()
+            }
+            .tabItem {
+                Label("推荐", systemImage: "play.square.stack.fill")
             }
 
             NavigationStack {
