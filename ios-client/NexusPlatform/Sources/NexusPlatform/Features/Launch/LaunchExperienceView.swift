@@ -102,8 +102,8 @@ private struct OnboardingView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let heroHeight = min(proxy.size.height * 0.61, 520)
-            let bottomPadding = proxy.safeAreaInsets.bottom + 18
+            let heroHeight = proxy.size.height > 760 ? min(proxy.size.height * 0.61, 520) : proxy.size.height * 0.58
+            let bottomPadding = proxy.size.height > 760 ? proxy.safeAreaInsets.bottom + 50 : proxy.safeAreaInsets.bottom + 28
 
             ZStack(alignment: .topTrailing) {
                 Color(hex: 0x121212)
@@ -136,15 +136,18 @@ private struct OnboardingView: View {
                     let current = copy.pages[pageIndex]
 
                     VStack(alignment: .leading, spacing: 0) {
+                        Spacer()
+                            .frame(height: 8)
+
                         title(for: current)
                             .font(.system(size: 40, weight: .black))
-                            .lineSpacing(4)
+                            .lineSpacing(8)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Text(current.description)
                             .font(.system(size: 16))
                             .foregroundColor(Color(hex: 0xA0A0A0))
-                            .lineSpacing(7)
+                            .lineSpacing(10)
                             .padding(.top, 16)
 
                         HStack(spacing: 8) {
@@ -434,14 +437,5 @@ private struct ScaleButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .opacity(configuration.isPressed ? 0.92 : 1)
-    }
-}
-
-private extension Color {
-    init(hex: UInt32, alpha: Double = 1.0) {
-        let red = Double((hex >> 16) & 0xFF) / 255.0
-        let green = Double((hex >> 8) & 0xFF) / 255.0
-        let blue = Double(hex & 0xFF) / 255.0
-        self = Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
     }
 }

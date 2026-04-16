@@ -40,6 +40,10 @@ struct BackendEnvironment {
            let url = URL(string: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
+        if let raw = Bundle.main.object(forInfoDictionaryKey: "BACKEND_BASE_URL") as? String,
+           let url = URL(string: raw) {
+            return BackendEnvironment(apiBaseURL: url)
+        }
         return BackendEnvironment(apiBaseURL: URL(string: "http://localhost:8080/api/v1")!)
     }
 }

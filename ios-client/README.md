@@ -32,6 +32,55 @@ open Package.swift
 swift build
 ```
 
+## 真机宿主工程
+
+已新增可运行的 iOS 宿主工程生成脚本：
+
+```bash
+cd ios-client
+ruby scripts/generate_host_project.rb
+open NexusPlatformApp.xcodeproj
+```
+
+生成后可直接在 Xcode 中选择 `NexusPlatformApp` scheme，并连接真实 iPhone 运行。
+
+默认后端地址会写入宿主 App 配置，当前默认值为：
+
+```text
+http://192.168.1.5:8080/api/v1
+```
+
+如果局域网 IP 变化，可在生成前临时覆盖：
+
+```bash
+cd ios-client
+BACKEND_BASE_URL=http://你的Mac局域网IP:8080/api/v1 ruby scripts/generate_host_project.rb
+```
+
+## 命令行真机安装
+
+先确保：
+
+1. iPhone 已通过 Xcode 完成配对
+2. Xcode 已登录 Apple ID
+3. Mac 与 iPhone 在同一局域网
+4. backend 监听 `0.0.0.0:8080`
+
+然后执行：
+
+```bash
+cd ios-client
+BACKEND_BASE_URL=http://你的Mac局域网IP:8080/api/v1 \
+DEVELOPMENT_TEAM=你的TeamID \
+./scripts/run-ios-device.sh 你的设备UDID
+```
+
+可用下面命令查看设备 UDID：
+
+```bash
+xcrun xcdevice list
+```
+
 ## 联调建议
 
 1. 先确保 backend 与基础设施正常

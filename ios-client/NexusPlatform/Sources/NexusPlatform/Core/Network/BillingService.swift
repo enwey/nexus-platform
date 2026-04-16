@@ -44,6 +44,7 @@ protocol BillingServiceProtocol: Sendable {
 struct BillingService: BillingServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
         self.session = session
@@ -80,32 +81,7 @@ struct BillingService: BillingServiceProtocol {
     }
 
     private func request(pathURL url: URL) async throws -> Any {
-        guard let auth = await authorizationHeader() else {
-            throw BillingServiceError.unauthorized
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue(auth, forHTTPHeaderField: "Authorization")
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw BillingServiceError.invalidResponse
-        }
-        if http.statusCode == 401 || http.statusCode == 403 {
-            throw BillingServiceError.unauthorized
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw BillingServiceError.invalidResponse
-        }
-
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int else {
-            throw BillingServiceError.invalidResponse
-        }
-        if code != 0 {
-            throw BillingServiceError.failed(root["message"] as? String ?? "")
-        }
-        return root["data"] as Any
+        return try await client.request(url: url, authMode: .required)
     }
 
     private func parseRecord(raw: [String: Any]) -> BillingRecord? {

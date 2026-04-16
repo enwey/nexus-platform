@@ -5,7 +5,7 @@ import UIKit
 struct GameView: View {
     let game: Game
 
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
     @State private var isLoading = true
     @State private var gameReady = false
     @State private var errorMessage: String?
@@ -23,6 +23,9 @@ struct GameView: View {
     private let bridge = JSBridge()
     private let schemeHandler = NexusSchemeHandler()
     private let libraryService: LibraryHomeServiceProtocol = LibraryHomeService()
+    private var copy: GameRuntimeCopy {
+        .forLanguage(AppLanguageStore.currentSync())
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -45,9 +48,9 @@ struct GameView: View {
                 if isLoading || (gameReady == false) {
                     if hasCheckedAuth && isAuthenticated == false {
                         VStack(spacing: 10) {
-                            Text("需要登录才能启动游戏")
+                            Text(copy.loginRequired)
                                 .font(.headline)
-                            Button("去登录") {
+                            Button(copy.goLogin) {
                                 showAuthFlow = true
                             }
                             .nexusPrimaryCTA()
@@ -55,7 +58,7 @@ struct GameView: View {
                         .padding(20)
                         .nexusGlassCard()
                     } else {
-                        ProgressView("加载中...")
+                        ProgressView(copy.loading)
                             .scaleEffect(1.2)
                             .padding(20)
                             .nexusGlassCard()
@@ -64,7 +67,7 @@ struct GameView: View {
 
                 if forceUpdating {
                     VStack(spacing: 14) {
-                        Text("正在更新游戏资源")
+                        Text(copy.updating)
                             .font(.headline)
                         ProgressView(value: forceUpdateProgress, total: 1.0)
                             .progressViewStyle(.linear)
@@ -80,7 +83,7 @@ struct GameView: View {
                 CapsuleMenuOverlay(
                     isFavorite: isFavorite,
                     onToggleFavorite: { toggleFavorite() },
-                    onExit: { dismiss() },
+                    onExit: { presentationMode.wrappedValue.dismiss() },
                     onRestart: { reloadToken = UUID() },
                     onCopyLink: { copyShareLink() },
                     onShareWhatsApp: { shareToChannel("whatsapp") },
@@ -91,10 +94,10 @@ struct GameView: View {
                 .padding(.trailing, 12)
             }
             .nexusPageBackground()
-            .alert("启动失败", isPresented: Binding(get: { errorMessage != nil }, set: { _ in errorMessage = nil })) {
-                Button("确定", role: .cancel) {}
+            .alert(copy.launchFailed, isPresented: Binding(get: { errorMessage != nil }, set: { _ in errorMessage = nil })) {
+                Button(copy.confirm, role: .cancel) {}
             } message: {
-                Text(errorMessage ?? "未知错误")
+                Text(errorMessage ?? copy.unknownError)
             }
             .overlay(alignment: .bottom) {
                 if let actionTip {
@@ -115,7 +118,7 @@ struct GameView: View {
                     }
                 }
             }
-            .onChange(of: proxy.size) { _ in
+            .onChange(of: proxy.size) {
                 Task { @MainActor in
                     bridge.updateMenuRectProvider {
                         menuButtonRect(in: proxy)
@@ -160,7 +163,10 @@ struct GameView: View {
                 }
                 forceUpdating = false
             }
-            Task { await GameEngagementStore.shared.markPlayed(gameID: game.id) }
+            Task {
+                await GameEngagementStore.shared.markPlayed(gameID: game.id)
+                await libraryService.markPlayed(appID: game.id)
+            }
         } catch {
             await MainActor.run {
                 if let launchError = error as? GameLaunchError {
@@ -193,13 +199,14 @@ struct GameView: View {
 
     private func copyShareLink() {
         UIPasteboard.general.string = "nexus://\(game.id)/index.html"
-        showTip("分享链接已复制")
+        showTip(copy.linkCopied)
         Task { try? await libraryService.markShared(appID: game.id) }
     }
 
     private func shareToChannel(_ channel: String) {
         UIPasteboard.general.string = "nexus://\(game.id)/index.html"
-        showTip("\(channel.capitalized) 分享文案已复制")
+        let channelName = copy.channelName(channel)
+        showTip(String(format: copy.shareCopiedFormat, channelName))
         Task { try? await libraryService.markShared(appID: game.id) }
     }
 
@@ -208,7 +215,7 @@ struct GameView: View {
             let updated = await GameEngagementStore.shared.toggleFavorite(gameID: game.id)
             await MainActor.run {
                 isFavorite = updated
-                showTip(updated ? "已加入收藏" : "已移出收藏")
+                showTip(updated ? copy.addedFavorite : copy.removedFavorite)
             }
             try? await libraryService.setFavorite(appID: game.id, favorite: updated)
         }
@@ -216,7 +223,7 @@ struct GameView: View {
 
     private func sendFeedback() {
         UIPasteboard.general.string = "Game feedback: \(game.name) - \(game.id)"
-        showTip("反馈信息已复制")
+        showTip(copy.feedbackCopied)
     }
 
     @MainActor
@@ -238,5 +245,93 @@ struct GameView: View {
         let x = proxy.size.width - 12 - width
         let y = proxy.safeAreaInsets.top + 8
         return CGRect(x: x, y: y, width: width, height: height)
+    }
+}
+
+private struct GameRuntimeCopy {
+    let loginRequired: String
+    let goLogin: String
+    let loading: String
+    let updating: String
+    let launchFailed: String
+    let confirm: String
+    let unknownError: String
+    let linkCopied: String
+    let shareCopiedFormat: String
+    let addedFavorite: String
+    let removedFavorite: String
+    let feedbackCopied: String
+    let whatsapp: String
+    let facebook: String
+    let more: String
+
+    func channelName(_ raw: String) -> String {
+        switch raw.lowercased() {
+        case "whatsapp":
+            return whatsapp
+        case "facebook":
+            return facebook
+        default:
+            return more
+        }
+    }
+
+    static func forLanguage(_ language: AppLanguage) -> GameRuntimeCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(
+                loginRequired: "需要登录才能启动游戏",
+                goLogin: "去登录",
+                loading: "加载中...",
+                updating: "正在更新游戏资源",
+                launchFailed: "启动失败",
+                confirm: "确定",
+                unknownError: "未知错误",
+                linkCopied: "分享链接已复制",
+                shareCopiedFormat: "%@ 分享文案已复制",
+                addedFavorite: "已加入收藏",
+                removedFavorite: "已移出收藏",
+                feedbackCopied: "反馈信息已复制",
+                whatsapp: "WhatsApp",
+                facebook: "Facebook",
+                more: "更多"
+            )
+        case .traditionalChinese:
+            return .init(
+                loginRequired: "需要登入才能啟動遊戲",
+                goLogin: "去登入",
+                loading: "載入中...",
+                updating: "正在更新遊戲資源",
+                launchFailed: "啟動失敗",
+                confirm: "確定",
+                unknownError: "未知錯誤",
+                linkCopied: "分享連結已複製",
+                shareCopiedFormat: "%@ 分享文案已複製",
+                addedFavorite: "已加入收藏",
+                removedFavorite: "已移出收藏",
+                feedbackCopied: "回饋資訊已複製",
+                whatsapp: "WhatsApp",
+                facebook: "Facebook",
+                more: "更多"
+            )
+        case .english:
+            return .init(
+                loginRequired: "Sign in to launch this game",
+                goLogin: "Sign In",
+                loading: "Loading...",
+                updating: "Updating game resources",
+                launchFailed: "Launch Failed",
+                confirm: "OK",
+                unknownError: "Unknown error",
+                linkCopied: "Share link copied",
+                shareCopiedFormat: "%@ share text copied",
+                addedFavorite: "Added to favorites",
+                removedFavorite: "Removed from favorites",
+                feedbackCopied: "Feedback info copied",
+                whatsapp: "WhatsApp",
+                facebook: "Facebook",
+                more: "More"
+            )
+        }
     }
 }

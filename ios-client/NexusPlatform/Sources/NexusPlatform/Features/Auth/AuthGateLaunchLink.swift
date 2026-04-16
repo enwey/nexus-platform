@@ -15,14 +15,9 @@ struct AuthGateLaunchLink<Label: View>: View {
             label()
         }
         .disabled(isChecking)
-        .background(
-            NavigationLink(
-                destination: GameView(game: game),
-                isActive: $shouldNavigate,
-                label: { EmptyView() }
-            )
-            .hidden()
-        )
+        .navigationDestination(isPresented: $shouldNavigate) {
+            GameView(game: game)
+        }
         .sheet(isPresented: $showAuthFlow) {
             NavigationStack {
                 AuthFlowView { session in

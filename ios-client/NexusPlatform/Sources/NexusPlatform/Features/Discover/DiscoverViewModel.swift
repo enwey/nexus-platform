@@ -9,6 +9,7 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var hero: DiscoverHero?
     @Published private(set) var heroGame: Game?
     @Published private(set) var heroFallbackMessage: String?
+    @Published private(set) var errorMessage: String?
 
     private let service: GameCatalogServiceProtocol
     private let homeService: DiscoverHomeServiceProtocol
@@ -24,6 +25,7 @@ final class DiscoverViewModel: ObservableObject {
     func load() {
         Task {
             do {
+                errorMessage = nil
                 let home = try await homeService.fetchHome(limit: 20)
                 hero = home.hero
                 heroFallbackMessage = nil
@@ -69,6 +71,7 @@ final class DiscoverViewModel: ObservableObject {
                 hero = nil
                 heroGame = nil
                 heroFallbackMessage = nil
+                errorMessage = error.localizedDescription
             }
         }
     }

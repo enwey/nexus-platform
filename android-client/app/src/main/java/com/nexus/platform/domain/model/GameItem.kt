@@ -11,5 +11,7 @@ data class GameItem(
     val version: String,
     val md5: String = "",
     val category: String = "",
-    val requiresOnline: Boolean = false
+    val requiresOnline: Boolean = false,
+    val localizedNames: Map<String, String> = emptyMap(),
+    val localizedDescriptions: Map<String, String> = emptyMap()
 ) : Serializable

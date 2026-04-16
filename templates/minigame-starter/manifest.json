@@ -1,12 +1,30 @@
 {
-  "name": "Nexus Mini Game Starter",
+  "name": "Neon Lane",
+  "description": "Arcade lane-dodging demo with localized metadata support.",
   "appId": "replace-with-generated-app-id",
   "version": "1.0.0",
   "orientation": "portrait",
   "entry": "index.html",
+  "metadata": {
+    "icon": "assets/logo/game-logo.png",
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": {
+        "name": "霓虹闪避",
+        "description": "高帧率街机闪避小游戏，演示 logo 与多语言元数据。"
+      },
+      "zh-TW": {
+        "name": "霓虹閃避",
+        "description": "高幀率街機閃避小遊戲，示範 logo 與多語言中繼資料。"
+      },
+      "en": {
+        "name": "Neon Lane",
+        "description": "Arcade lane-dodging demo with logo and localization metadata."
+      }
+    }
+  },
   "permissions": [
     "storage",
     "network"
   ]
 }
-

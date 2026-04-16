@@ -18,7 +18,7 @@ struct ReceiptPageView: View {
             .id(reloadToken)
 
             if isLoading {
-                ProgressView("加载回执中...")
+                ProgressView(copy.loading)
                     .padding(16)
                     .nexusGlassCard()
             }
@@ -29,7 +29,7 @@ struct ReceiptPageView: View {
                         .font(.footnote)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                    Button("重试") {
+                    Button(copy.retry) {
                         self.errorMessage = nil
                         reloadToken = UUID()
                     }
@@ -41,8 +41,12 @@ struct ReceiptPageView: View {
             }
         }
         .nexusPageBackground()
-        .navigationTitle("回执")
+        .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var copy: ReceiptCopy {
+        .forLanguage(AppLanguageStore.currentSync())
     }
 
     private func authorizedRequest(url: URL) -> URLRequest {
@@ -58,6 +62,23 @@ struct ReceiptPageView: View {
             break
         }
         return request
+    }
+}
+
+private struct ReceiptCopy {
+    let title: String
+    let loading: String
+    let retry: String
+
+    static func forLanguage(_ language: AppLanguage) -> ReceiptCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(title: "回执", loading: "加载回执中...", retry: "重试")
+        case .traditionalChinese:
+            return .init(title: "回執", loading: "正在載入回執...", retry: "重試")
+        case .english:
+            return .init(title: "Receipt", loading: "Loading receipt...", retry: "Retry")
+        }
     }
 }
 

@@ -82,6 +82,7 @@ final class LibraryViewModel: ObservableObject {
     func markPlayed(_ game: Game) {
         Task {
             await engagementStore.markPlayed(gameID: game.id)
+            await homeService.markPlayed(appID: game.id)
             currentPlaying = game
             recentGames.removeAll { $0.id == game.id }
             recentGames.insert(game, at: 0)

@@ -5,22 +5,25 @@ struct LibrarySectionListView: View {
     let games: [Game]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 10) {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(games) { game in
                     AuthGateLaunchLink(game: game) {
                         GameRow(game: game)
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        Task { await GameEngagementStore.shared.markPlayed(gameID: game.id) }
+                    })
                     .buttonStyle(.plain)
-                    if game.id != games.last?.id {
-                        Divider()
-                    }
                 }
             }
-            .padding(AppTheme.Layout.pagePadding)
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+            .padding(.bottom, 96)
         }
-        .nexusPageBackground()
+        .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }

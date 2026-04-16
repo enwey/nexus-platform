@@ -1,13 +1,13 @@
 import Foundation
 
 enum AuthError: LocalizedError {
-    case invalidResponse
+    case invalidResponse(path: String)
     case loginFailed(String)
 
     var errorDescription: String? {
         switch self {
-        case .invalidResponse:
-            return "登录响应无效"
+        case .invalidResponse(let path):
+            return "服务响应无效\n\(path)"
         case .loginFailed(let message):
             return message.isEmpty ? "登录失败" : message
         }
@@ -16,7 +16,7 @@ enum AuthError: LocalizedError {
 
 protocol AuthServiceProtocol: Sendable {
     func login(email: String, password: String) async throws -> AuthSession
-    func sendCode(email: String, purpose: String) async throws
+    func sendCode(email: String, purpose: String, scene: String?) async throws
     func register(email: String, password: String, code: String) async throws -> AuthSession
     func resetPassword(email: String, code: String, newPassword: String) async throws
     func logout(accessToken: String?) async throws
@@ -26,6 +26,7 @@ protocol AuthServiceProtocol: Sendable {
 struct AuthService: AuthServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
         self.session = session
@@ -33,31 +34,40 @@ struct AuthService: AuthServiceProtocol {
     }
 
     func login(email: String, password: String) async throws -> AuthSession {
-        let payload = try await post(path: "user/login", body: [
+        let path = "user/login"
+        let payload = try await postObject(path: path, body: [
             "email": email,
             "password": password
         ])
-        return try parseAuthSession(from: payload, email: email)
+        return try parseAuthSession(from: payload, email: email, path: path)
     }
 
-    func sendCode(email: String, purpose: String) async throws {
-        _ = try await post(path: "user/send-code", body: [
+    func sendCode(email: String, purpose: String, scene: String? = nil) async throws {
+        var payload: [String: Any] = [
             "email": email,
             "purpose": purpose
+        ]
+        if let scene, scene.isEmpty == false {
+            payload["scene"] = scene
+        }
+        try await postVoid(path: "user/send-code", body: payload, extraHeaders: [
+            "X-Client-Source": "ios-client",
+            "X-Client-Scene": scene ?? ""
         ])
     }
 
     func register(email: String, password: String, code: String) async throws -> AuthSession {
-        let payload = try await post(path: "user/register", body: [
+        let path = "user/register"
+        let payload = try await postObject(path: path, body: [
             "email": email,
             "password": password,
             "code": code
         ])
-        return try parseAuthSession(from: payload, email: email)
+        return try parseAuthSession(from: payload, email: email, path: path)
     }
 
     func resetPassword(email: String, code: String, newPassword: String) async throws {
-        _ = try await post(path: "user/password/reset", body: [
+        try await postVoid(path: "user/password/reset", body: [
             "email": email,
             "code": code,
             "newPassword": newPassword
@@ -65,71 +75,61 @@ struct AuthService: AuthServiceProtocol {
     }
 
     func logout(accessToken: String?) async throws {
-        let url = baseURL.appendingPathComponent("user/logout")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        if let accessToken, accessToken.isEmpty == false {
-            let hasBearer = accessToken.lowercased().hasPrefix("bearer ")
-            let auth = hasBearer ? accessToken : "Bearer \(accessToken)"
-            request.setValue(auth, forHTTPHeaderField: "Authorization")
-        }
-
-        let (_, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw AuthError.invalidResponse
-        }
+        let storedToken = await AuthSessionStore.shared.current()?.accessToken
+        let token = normalizedToken(accessToken) ?? storedToken
+        _ = try await client.request(
+            path: "user/logout",
+            method: "POST",
+            body: [:],
+            authMode: token == nil ? .none : .required
+        )
     }
 
     func terminateAccount(accessToken: String?, confirmText: String) async throws {
-        let url = baseURL.appendingPathComponent("user/terminate")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["confirmText": confirmText])
-        if let accessToken, accessToken.isEmpty == false {
-            let hasBearer = accessToken.lowercased().hasPrefix("bearer ")
-            let auth = hasBearer ? accessToken : "Bearer \(accessToken)"
-            request.setValue(auth, forHTTPHeaderField: "Authorization")
-        }
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw AuthError.invalidResponse
-        }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int else {
-            throw AuthError.invalidResponse
-        }
-        if code != 0 {
-            throw AuthError.loginFailed(root["message"] as? String ?? "注销失败")
-        }
+        _ = try await client.request(
+            path: "user/terminate",
+            method: "POST",
+            body: ["confirmText": confirmText],
+            authMode: .required
+        )
     }
 
-    private func post(path: String, body: [String: Any]) async throws -> [String: Any] {
-        let url = baseURL.appendingPathComponent(path)
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw AuthError.invalidResponse
+    private func postObject(path: String, body: [String: Any], extraHeaders: [String: String] = [:]) async throws -> [String: Any] {
+        guard let payload = try await client.request(
+            path: path,
+            method: "POST",
+            body: body,
+            authMode: .none,
+            extraHeaders: extraHeaders
+        ) as? [String: Any] else {
+            throw AuthError.invalidResponse(path: path)
         }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int else {
-            throw AuthError.invalidResponse
-        }
-        if code != 0 {
-            throw AuthError.loginFailed(root["message"] as? String ?? "请求失败")
-        }
-        return root["data"] as? [String: Any] ?? [:]
+        return payload
     }
 
-    private func parseAuthSession(from payload: [String: Any], email: String) throws -> AuthSession {
+    private func postVoid(path: String, body: [String: Any], extraHeaders: [String: String] = [:]) async throws {
+        _ = try await client.request(
+            path: path,
+            method: "POST",
+            body: body,
+            authMode: .none,
+            extraHeaders: extraHeaders
+        )
+    }
+
+    private func parseAuthSession(from payload: [String: Any], email: String, path: String) throws -> AuthSession {
         guard let token = payload["token"] as? String,
               let refresh = payload["refreshToken"] as? String else {
-            throw AuthError.invalidResponse
+            throw AuthError.invalidResponse(path: path)
         }
         return AuthSession(accessToken: token, refreshToken: refresh, email: email)
+    }
+
+    private func normalizedToken(_ value: String?) -> String? {
+        guard let value, value.isEmpty == false else { return nil }
+        if value.lowercased().hasPrefix("bearer ") {
+            return String(value.dropFirst(7))
+        }
+        return value
     }
 }

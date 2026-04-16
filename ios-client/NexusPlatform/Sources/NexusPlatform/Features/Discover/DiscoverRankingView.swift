@@ -4,37 +4,75 @@ struct DiscoverRankingView: View {
     let games: [Game]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 10) {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 12) {
                 ForEach(Array(games.enumerated()), id: \.element.id) { index, game in
                     NavigationLink(destination: GameDetailView(game: game)) {
-                        HStack(spacing: 14) {
-                            Text("#\(index + 1)")
-                                .font(.headline.monospacedDigit())
-                                .foregroundStyle(AppTheme.ColorToken.auroraPink)
-                                .frame(width: 44)
+                        HStack(spacing: 12) {
+                            Text("\(index + 1)")
+                                .font(.system(size: 22, weight: .heavy))
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+
+                            AsyncImage(url: URL(string: game.iconUrl)) { image in
+                                image.resizable().scaledToFill()
+                            } placeholder: {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color(hex: 0x232326))
+                            }
+                            .frame(width: 52, height: 52)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                            )
+
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(game.name)
-                                    .font(.subheadline.bold())
-                                    .foregroundStyle(AppTheme.ColorToken.textPrimary)
-                                Text(game.description)
-                                    .font(.caption)
-                                    .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                                    .lineLimit(2)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundStyle(.white)
+                                Text(game.description.isEmpty ? "v\(game.version)" : game.description)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color(hex: 0xA0A0A0))
+                                    .lineLimit(1)
                             }
                             Spacer()
                         }
+                        .padding(12)
+                        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                        )
                     }
                     .buttonStyle(.plain)
-                    if game.id != games.last?.id {
-                        Divider()
-                    }
                 }
             }
-            .padding(AppTheme.Layout.pagePadding)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 96)
         }
-        .nexusPageBackground()
-        .navigationTitle("排行榜")
+        .background(Color(hex: 0x121212).ignoresSafeArea())
+        .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+
+    private var copy: DiscoverRankingCopy {
+        .forLanguage(AppLanguageStore.currentSync())
+    }
+}
+
+private struct DiscoverRankingCopy {
+    let title: String
+
+    static func forLanguage(_ language: AppLanguage) -> DiscoverRankingCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(title: "查看更多")
+        case .traditionalChinese:
+            return .init(title: "查看更多")
+        case .english:
+            return .init(title: "View More")
+        }
     }
 }

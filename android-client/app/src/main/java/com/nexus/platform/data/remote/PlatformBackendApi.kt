@@ -78,6 +78,8 @@ class PlatformBackendApi(context: Context) {
 
     private fun JsonObject.toGame(): GameItem {
         val appId = stringOrEmpty("appId")
+        val locales = getAsJsonObject("metadata")?.getAsJsonObject("locales")
+            ?: getAsJsonObject("locales")
         return GameItem(
             id = appId,
             name = stringOrDefault("name", "Unnamed game"),
@@ -87,8 +89,18 @@ class PlatformBackendApi(context: Context) {
             version = stringOrDefault("version", "1.0.0"),
             md5 = stringOrEmpty("md5"),
             category = stringOrEmpty("category"),
-            requiresOnline = get("requiresOnline")?.asBoolean ?: false
+            requiresOnline = get("requiresOnline")?.asBoolean ?: false,
+            localizedNames = locales.extractLocalizedField("name"),
+            localizedDescriptions = locales.extractLocalizedField("description")
         )
+    }
+
+    private fun JsonObject?.extractLocalizedField(fieldName: String): Map<String, String> {
+        if (this == null) return emptyMap()
+        return entrySet().mapNotNull { (tag, value) ->
+            val text = value?.asJsonObject?.get(fieldName)?.takeIf { !it.isJsonNull }?.asString.orEmpty()
+            if (text.isBlank()) null else tag to text
+        }.toMap()
     }
 
     suspend fun getDiscoverGames(limit: Int = 20, category: String? = null): List<GameItem> = withContext(Dispatchers.IO) {

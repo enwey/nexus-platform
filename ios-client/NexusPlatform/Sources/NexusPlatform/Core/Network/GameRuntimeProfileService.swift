@@ -19,6 +19,7 @@ protocol GameRuntimeProfileServiceProtocol: Sendable {
 struct GameRuntimeProfileService: GameRuntimeProfileServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
         self.session = session
@@ -30,14 +31,7 @@ struct GameRuntimeProfileService: GameRuntimeProfileServiceProtocol {
             return nil
         }
         let url = baseURL.appendingPathComponent("game").appendingPathComponent(appID).appendingPathComponent("runtime-profile")
-        let (data, response) = try await session.data(from: url)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            return nil
-        }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int,
-              code == 0,
-              let payload = root["data"] as? [String: Any] else {
+        guard let payload = try await client.request(url: url, authMode: .optional) as? [String: Any] else {
             return nil
         }
 

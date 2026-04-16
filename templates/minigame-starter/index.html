@@ -3,26 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Nexus Mini Game Starter</title>
+  <title>Neon Lane</title>
   <style>
     :root {
-      --bg: #0b1020;
-      --panel: #111a32;
-      --line: #2a3b71;
-      --text: #dbe7ff;
-      --accent: #6ed6ff;
+      --bg: #07111e;
+      --panel: #0d1a2f;
+      --line: #1e3b64;
+      --text: #eef4ff;
+      --subtle: #9aacd0;
+      --accent: #57d0ff;
     }
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; background: radial-gradient(circle at 20% 0%, #17264f 0%, var(--bg) 60%); color: var(--text); font-family: "Segoe UI", Arial, sans-serif; }
+    html, body { width: 100%; height: 100%; margin: 0; background: radial-gradient(circle at 20% 0%, #17315d 0%, var(--bg) 58%); color: var(--text); font-family: "Segoe UI", Arial, sans-serif; }
     .app { width: 100%; height: 100%; display: grid; place-items: center; padding: 12px; }
     .stage {
       width: min(100%, 480px);
-      background: color-mix(in srgb, var(--panel) 92%, black);
+      background: color-mix(in srgb, var(--panel) 94%, black);
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 12px;
+      border-radius: 18px;
+      padding: 14px;
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
     }
+    .hero { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(145deg, rgba(87,208,255,0.18), rgba(88,112,255,0.28));
+      flex: 0 0 auto;
+    }
+    .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .logo-fallback { width: 100%; height: 100%; display: grid; place-items: center; font-size: 20px; font-weight: 800; color: white; }
+    .hero-copy h1 { margin: 0; font-size: 20px; line-height: 1.2; }
+    .hero-copy p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--subtle); }
     .hud { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
     #gameCanvas { width: 100%; background: #030813; border-radius: 10px; border: 1px solid #1a2a57; display: block; }
     .actions { display: flex; gap: 8px; margin-top: 10px; }
@@ -37,11 +52,22 @@
       font-weight: 700;
     }
     button:active { transform: translateY(1px); }
+    .hint { margin-top: 10px; font-size: 12px; color: var(--subtle); }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="stage">
+      <div class="hero">
+        <div class="logo">
+          <img id="gameLogo" alt="" hidden />
+          <div class="logo-fallback" id="logoFallback">N</div>
+        </div>
+        <div class="hero-copy">
+          <h1 id="gameTitle">Neon Lane</h1>
+          <p id="gameDescription">Arcade lane-dodging demo with localized metadata support.</p>
+        </div>
+      </div>
       <div class="hud">
         <span id="scoreText">Score: 0</span>
         <span id="statusText">Status: Ready</span>
@@ -51,9 +77,9 @@
         <button id="startBtn">Start</button>
         <button id="restartBtn">Restart</button>
       </div>
+      <div class="hint" id="hintText">Move left and right to dodge obstacles.</div>
     </div>
   </div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
-

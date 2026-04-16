@@ -8,23 +8,30 @@ protocol GameCatalogServiceProtocol: Sendable {
 struct GameCatalogService: GameCatalogServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private let metadataResolver: LocalGameMetadataResolver
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
-    init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
+    init(
+        session: URLSession = .shared,
+        env: BackendEnvironment = .current(),
+        metadataResolver: LocalGameMetadataResolver = .shared
+    ) {
         self.session = session
         self.baseURL = env.apiBaseURL
+        self.metadataResolver = metadataResolver
     }
 
     func fetchGames() async throws -> [Game] {
         let primary = baseURL.appendingPathComponent("game/public/list")
         let fallback = baseURL.appendingPathComponent("game/list")
 
-        if let games = try await fetch(from: primary) {
-            return games
+        if let games = try await fetch(from: primary, authMode: .optional) {
+            return await metadataResolver.merge(games)
         }
-        if let games = try await fetch(from: fallback) {
-            return games
+        if let games = try await fetch(from: fallback, authMode: .optional) {
+            return await metadataResolver.merge(games)
         }
-        return mockedGames()
+        throw BackendAPIClientError.invalidResponse
     }
 
     func fetchGame(appID: String) async throws -> Game? {
@@ -32,33 +39,18 @@ struct GameCatalogService: GameCatalogServiceProtocol {
             return nil
         }
         let target = baseURL.appendingPathComponent("game").appendingPathComponent(appID)
-        let (data, response) = try await session.data(from: target)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            return nil
-        }
-
-        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = object["code"] as? Int,
-              code == 0,
-              let payload = object["data"] as? [String: Any] else {
+        guard let payload = try await client.request(url: target, authMode: .optional) as? [String: Any] else {
             return nil
         }
 
         let normalized = normalizeGameDict(payload)
         let json = try JSONSerialization.data(withJSONObject: normalized)
-        return try JSONDecoder().decode(Game.self, from: json)
+        let game = try JSONDecoder().decode(Game.self, from: json)
+        return await metadataResolver.merge(game)
     }
 
-    private func fetch(from url: URL) async throws -> [Game]? {
-        let (data, response) = try await session.data(from: url)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            return nil
-        }
-
-        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = object["code"] as? Int,
-              code == 0,
-              let payload = object["data"] as? [[String: Any]] else {
+    private func fetch(from url: URL, authMode: BackendAuthMode) async throws -> [Game]? {
+        guard let payload = try await client.request(url: url, authMode: authMode) as? [[String: Any]] else {
             return nil
         }
 
@@ -81,6 +73,8 @@ struct GameCatalogService: GameCatalogServiceProtocol {
         }
         if mutable["downloadUrl"] == nil {
             mutable["downloadUrl"] = ""
+        } else if let rawURL = mutable["downloadUrl"] as? String {
+            mutable["downloadUrl"] = normalizeBackendURL(rawURL)
         }
         if mutable["version"] == nil {
             mutable["version"] = "0.0.0"
@@ -91,38 +85,16 @@ struct GameCatalogService: GameCatalogServiceProtocol {
         return mutable
     }
 
-    private func mockedGames() -> [Game] {
-        [
-            Game(
-                id: "demo-racing",
-                name: "霓虹竞速",
-                description: "高帧率街机竞速，60 秒一局",
-                iconUrl: "",
-                downloadUrl: "",
-                version: "1.0.0",
-                md5: "",
-                category: "动作射击"
-            ),
-            Game(
-                id: "demo-puzzle",
-                name: "迷宫方块",
-                description: "轻度益智，随开随停",
-                iconUrl: "",
-                downloadUrl: "",
-                version: "1.0.0",
-                md5: "",
-                category: "休闲益智"
-            ),
-            Game(
-                id: "demo-rpg",
-                name: "异界旅人",
-                description: "横版冒险，收集与成长",
-                iconUrl: "",
-                downloadUrl: "",
-                version: "1.0.0",
-                md5: "",
-                category: "角色扮演"
-            )
-        ]
+    private func normalizeBackendURL(_ raw: String) -> String {
+        guard raw.isEmpty == false else { return raw }
+        guard var components = URLComponents(string: raw) else { return raw }
+        let host = components.host?.lowercased() ?? ""
+        if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+            components.scheme = baseURL.scheme
+            components.host = baseURL.host
+            components.port = baseURL.port
+            return components.string ?? raw
+        }
+        return raw
     }
 }

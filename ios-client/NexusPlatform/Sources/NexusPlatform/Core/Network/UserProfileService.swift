@@ -29,6 +29,7 @@ protocol UserProfileServiceProtocol: Sendable {
 struct UserProfileService: UserProfileServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
         self.session = session
@@ -36,28 +37,7 @@ struct UserProfileService: UserProfileServiceProtocol {
     }
 
     func fetchProfile() async throws -> UserProfileDetail {
-        guard let auth = await authorizationHeader() else {
-            throw UserProfileServiceError.unauthorized
-        }
-
-        var request = URLRequest(url: baseURL.appendingPathComponent("user/profile"))
-        request.httpMethod = "GET"
-        request.setValue(auth, forHTTPHeaderField: "Authorization")
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw UserProfileServiceError.invalidResponse
-        }
-        if http.statusCode == 401 || http.statusCode == 403 {
-            throw UserProfileServiceError.unauthorized
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw UserProfileServiceError.invalidResponse
-        }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int,
-              code == 0,
-              let payload = root["data"] as? [String: Any] else {
+        guard let payload = try await client.request(path: "user/profile", authMode: .required) as? [String: Any] else {
             throw UserProfileServiceError.invalidResponse
         }
 
@@ -68,12 +48,5 @@ struct UserProfileService: UserProfileServiceProtocol {
             avatarURL: payload["avatarUrl"] as? String ?? "",
             languageTag: payload["languageTag"] as? String ?? ""
         )
-    }
-
-    private func authorizationHeader() async -> String? {
-        guard let session = await AuthSessionStore.shared.current() else {
-            return nil
-        }
-        return "Bearer \(session.accessToken)"
     }
 }

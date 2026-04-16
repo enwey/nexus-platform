@@ -37,6 +37,7 @@ protocol ReferralServiceProtocol: Sendable {
 struct ReferralService: ReferralServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
         self.session = session
@@ -57,12 +58,17 @@ struct ReferralService: ReferralServiceProtocol {
 
     func fetchRecords(limit: Int = 20) async throws -> [ReferralRecord] {
         let data = try await request(path: "referral/records?limit=\(max(1, limit))", method: "GET", body: nil)
-        guard let rows = data as? [[String: Any]] else {
+        let rows: [[String: Any]]
+        if let list = data as? [[String: Any]] {
+            rows = list
+        } else if let payload = data as? [String: Any], let nested = payload["records"] as? [[String: Any]] {
+            rows = nested
+        } else {
             return []
         }
         return rows.enumerated().map { index, row in
             ReferralRecord(
-                id: row["id"] as? String ?? "\(index)",
+                id: (row["id"] as? String) ?? String(row["id"] as? Int ?? index),
                 title: row["title"] as? String ?? "",
                 subtitle: row["subtitle"] as? String ?? "",
                 createdAt: row["createdAt"] as? String ?? "",
@@ -76,43 +82,9 @@ struct ReferralService: ReferralServiceProtocol {
     }
 
     private func request(path: String, method: String, body: [String: Any]?) async throws -> Any {
-        guard let auth = await authorizationHeader() else {
-            throw ReferralServiceError.unauthorized
-        }
         guard let url = URL(string: path, relativeTo: baseURL) else {
             throw ReferralServiceError.invalidResponse
         }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.setValue(auth, forHTTPHeaderField: "Authorization")
-        if let body {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        }
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw ReferralServiceError.invalidResponse
-        }
-        if http.statusCode == 401 || http.statusCode == 403 {
-            throw ReferralServiceError.unauthorized
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw ReferralServiceError.invalidResponse
-        }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int,
-              code == 0 else {
-            throw ReferralServiceError.invalidResponse
-        }
-        return root["data"] as Any
-    }
-
-    private func authorizationHeader() async -> String? {
-        guard let session = await AuthSessionStore.shared.current() else {
-            return nil
-        }
-        return "Bearer \(session.accessToken)"
+        return try await client.request(url: url, method: method, body: body, authMode: .required)
     }
 }

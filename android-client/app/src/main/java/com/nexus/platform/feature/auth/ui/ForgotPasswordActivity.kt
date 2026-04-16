@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +39,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexus.platform.R
@@ -63,13 +69,14 @@ fun ForgotPasswordScreen(
     var email by remember { mutableStateOf("") }
     var verificationCode by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
+    var newPasswordVisible by remember { mutableStateOf(false) }
     var codeCountdown by remember { mutableIntStateOf(0) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
     var feedbackIsError by remember { mutableStateOf(false) }
     val inputTextStyle = TextStyle(
         fontSize = 16.sp,
         lineHeight = 22.sp,
-        platformStyle = PlatformTextStyle(includeFontPadding = true)
+        platformStyle = PlatformTextStyle(includeFontPadding = false)
     )
     val textFieldColors = TextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent,
@@ -121,7 +128,7 @@ fun ForgotPasswordScreen(
             label = { Text(accountLabel, style = MaterialTheme.typography.bodyLarge) },
             textStyle = inputTextStyle,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = textFieldColors
         )
@@ -134,7 +141,7 @@ fun ForgotPasswordScreen(
                 label = { Text(stringResource(R.string.forgot_code_label), style = MaterialTheme.typography.bodyLarge) },
                 textStyle = inputTextStyle,
                 singleLine = true,
-                modifier = Modifier.weight(1f).height(56.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = textFieldColors
             )
@@ -185,7 +192,22 @@ fun ForgotPasswordScreen(
             label = { Text(stringResource(R.string.forgot_new_password_label), style = MaterialTheme.typography.bodyLarge) },
             textStyle = inputTextStyle,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            visualTransformation = if (newPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                IconButton(onClick = { newPasswordVisible = !newPasswordVisible }) {
+                    Icon(
+                        imageVector = if (newPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = if (newPasswordVisible) {
+                            stringResource(R.string.change_password_hide)
+                        } else {
+                            stringResource(R.string.change_password_show)
+                        },
+                        tint = TextMuted
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = textFieldColors
         )

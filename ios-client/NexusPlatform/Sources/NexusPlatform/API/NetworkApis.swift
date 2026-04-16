@@ -37,8 +37,9 @@ class RequestApi: ApiHandler {
         }
         
         do {
-            let (data, response) = try await AF.request(request).serializingData().value
-            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let response = await AF.request(request).serializingData().response
+            let data = try response.result.get()
+            let statusCode = response.response?.statusCode ?? 0
             let responseBody = String(data: data, encoding: .utf8) ?? ""
             
             return [

@@ -2,7 +2,7 @@ import Foundation
 import CryptoKit
 import ZIPFoundation
 
-actor VersionedGameStorageManager: GameStorageManagerProtocol {
+actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     private let fileManager: FileManager
     private let gamesRoot: URL
     private let session: URLSession

@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +44,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexus.platform.NexusApplication
@@ -79,6 +84,7 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var verificationCode by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var agreedToTerms by remember { mutableStateOf(true) }
     var isSubmitting by remember { mutableStateOf(false) }
     var codeCountdown by remember { mutableIntStateOf(0) }
@@ -244,9 +250,24 @@ fun RegisterScreen(
             textStyle = inputTextStyle,
             singleLine = true,
             isError = !passwordError.isNullOrBlank(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Password),
             supportingText = {
                 if (!passwordError.isNullOrBlank()) {
                     Text(text = passwordError.orEmpty())
+                }
+            },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = if (passwordVisible) {
+                            stringResource(R.string.change_password_hide)
+                        } else {
+                            stringResource(R.string.change_password_show)
+                        },
+                        tint = TextMuted
+                    )
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),

@@ -84,13 +84,14 @@ export PATH="$SYSTEM_PATH:$PATH"
 
 # Local fallback for empty DB when migrations are not present.
 export SPRING_JPA_HIBERNATE_DDL_AUTO="${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}"
+export SERVER_ADDRESS="${SERVER_ADDRESS:-0.0.0.0}"
 
 echo "[3/4] Starting backend..."
 start_bg \
   "backend" \
   "$RUN_DIR/backend.pid" \
   "$LOG_DIR/backend.log" \
-  "cd '$ROOT_DIR' && set -a && source ./.env && set +a && export SPRING_JPA_HIBERNATE_DDL_AUTO='${SPRING_JPA_HIBERNATE_DDL_AUTO}' && export JAVA_HOME='$JAVA_HOME_DIR' && export PATH='$SYSTEM_PATH:$JAVA_HOME_DIR/bin:$NODE_BIN_DIR:$ROOT_DIR/apache-maven-3.9.9/bin:\$PATH' && '$MAVEN_BIN' -Dmaven.repo.local='$M2_REPO' -f backend/pom.xml spring-boot:run"
+  "cd '$ROOT_DIR' && set -a && source ./.env && set +a && export SPRING_JPA_HIBERNATE_DDL_AUTO='${SPRING_JPA_HIBERNATE_DDL_AUTO}' && export SERVER_ADDRESS='${SERVER_ADDRESS}' && export JAVA_HOME='$JAVA_HOME_DIR' && export PATH='$SYSTEM_PATH:$JAVA_HOME_DIR/bin:$NODE_BIN_DIR:$ROOT_DIR/apache-maven-3.9.9/bin:\$PATH' && '$MAVEN_BIN' -Dmaven.repo.local='$M2_REPO' -f backend/pom.xml spring-boot:run"
 
 echo "[4/4] Starting frontends..."
 start_bg \
@@ -110,6 +111,7 @@ echo "Launched."
 echo "Dev Portal:  http://localhost:5173"
 echo "Ops Portal:  http://localhost:5174"
 echo "Backend:     http://localhost:8080/api/v1/actuator/health"
+echo "Backend LAN: http://$(ipconfig getifaddr en0 2>/dev/null || echo '<your-lan-ip>'):8080/api/v1/actuator/health"
 echo ""
 echo "Logs:"
 echo "  $LOG_DIR/backend.log"

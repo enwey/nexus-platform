@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 @MainActor
 final class BillingDetailViewModel: ObservableObject {
@@ -34,140 +33,153 @@ final class BillingDetailViewModel: ObservableObject {
         }
     }
 
-    func reload(id: Int64, fallback: BillingRecord) {
-        message = nil
-        load(id: id, fallback: fallback)
-    }
-
     func amountText(_ value: Decimal) -> String {
         let number = NSDecimalNumber(decimal: value).doubleValue
-        let text = String(format: "%.2f", number)
-        return number >= 0 ? "+\(text)" : text
+        return String(format: "%.2f", number)
     }
 }
 
 struct BillingDetailView: View {
     let record: BillingRecord
+
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = BillingDetailViewModel()
-    @State private var linkTip: String?
-    @State private var showReceiptPage = false
-    @State private var receiptPageURL: URL?
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                if viewModel.isLoading {
-                    ProgressView("加载中...")
-                }
+        VStack(spacing: 0) {
+            header
 
+            VStack(alignment: .leading, spacing: 0) {
                 if let detail = viewModel.detail {
                     Text(detail.title)
-                        .font(.title3.bold())
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.white)
 
-                    Text("¥\(viewModel.amountText(detail.amount))")
-                        .font(.system(size: 30, weight: .heavy, design: .rounded))
-                        .foregroundStyle(
-                            viewModel.amountText(detail.amount).hasPrefix("-")
-                            ? AppTheme.ColorToken.danger
-                            : AppTheme.ColorToken.success
-                        )
+                    Spacer()
+                        .frame(height: 8)
 
-                    Divider()
-                    line("账单ID", "\(detail.id)")
-                    line("类型", detail.type.isEmpty ? "-" : detail.type)
-                    line("时间", detail.createdAtText.isEmpty ? "-" : detail.createdAtText)
-                    line("说明", detail.subtitle.isEmpty ? "-" : detail.subtitle)
-                    line("回执", detail.receiptURL.isEmpty ? "暂无" : resolvedReceiptURL(detail.receiptURL))
-                    if detail.receiptURL.isEmpty == false {
-                        HStack(spacing: 10) {
-                            Button("打开回执") {
-                                openReceipt(detail.receiptURL)
-                            }
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(AppTheme.ColorToken.auroraBlue)
+                    Text(detail.subtitle)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
 
-                            Button("复制链接") {
-                                UIPasteboard.general.string = resolvedReceiptURL(detail.receiptURL)
-                                linkTip = "回执链接已复制"
-                            }
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                        }
-                    }
+                    Spacer()
+                        .frame(height: 8)
+
+                    Text(String(format: copy.amountFormat, viewModel.amountText(detail.amount)))
+                        .font(.system(size: 15))
+                        .foregroundStyle(.white)
+                    Text(String(format: copy.typeFormat, detail.type))
+                        .font(.system(size: 15))
+                        .foregroundStyle(.white)
+                        .padding(.top, 4)
+                    Text(String(format: copy.timeFormat, detail.createdAtText))
+                        .font(.system(size: 15))
+                        .foregroundStyle(.white)
+                        .padding(.top, 4)
+                    Text(String(format: copy.receiptFormat, detail.receiptURL.isEmpty ? "-" : detail.receiptURL))
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .padding(.top, 4)
+                } else if viewModel.isLoading {
+                    Text(copy.empty)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                } else {
+                    Text(copy.empty)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
                 }
 
                 if let message = viewModel.message {
                     Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                    Button("重试") {
-                        viewModel.reload(id: record.id, fallback: record)
-                    }
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(AppTheme.ColorToken.auroraBlue)
-                }
-
-                if let linkTip {
-                    Text(linkTip)
-                        .font(.footnote)
-                        .foregroundStyle(AppTheme.ColorToken.textSecondary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .padding(.top, 12)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(AppTheme.Layout.pagePadding)
+            .padding(.horizontal, 24)
+
+            Spacer()
         }
-        .nexusPageBackground()
-        .navigationTitle("账单详情")
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color(hex: 0x121212).ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             viewModel.load(id: record.id, fallback: record)
         }
-        .background(
-            NavigationLink(
-                isActive: $showReceiptPage,
-                destination: {
-                    if let receiptPageURL {
-                        ReceiptPageView(url: receiptPageURL)
-                    } else {
-                        EmptyView()
-                    }
-                },
-                label: { EmptyView() }
+    }
+
+    private var header: some View {
+        VStack(spacing: 0) {
+            Spacer()
+                .frame(height: 20)
+
+            HStack(spacing: 0) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 48, height: 48)
+                }
+                .buttonStyle(.plain)
+
+                Text(copy.title)
+                    .font(.system(size: 28, weight: .heavy))
+                    .foregroundStyle(.white)
+
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+                .frame(height: 20)
+        }
+    }
+
+    private var copy: BillingDetailCopy {
+        .forLanguage(AppLanguageStore.currentSync())
+    }
+}
+
+private struct BillingDetailCopy {
+    let title: String
+    let empty: String
+    let amountFormat: String
+    let typeFormat: String
+    let timeFormat: String
+    let receiptFormat: String
+
+    static func forLanguage(_ language: AppLanguage) -> BillingDetailCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(
+                title: "交易详情",
+                empty: "暂无交易详情",
+                amountFormat: "金额：%@",
+                typeFormat: "类型：%@",
+                timeFormat: "时间：%@",
+                receiptFormat: "回执：%@"
             )
-            .hidden()
-        )
-    }
-
-    private func line(_ key: String, _ value: String) -> some View {
-        HStack(alignment: .top) {
-            Text(key)
-                .font(.footnote)
-                .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                .frame(width: 56, alignment: .leading)
-            Text(value)
-                .font(.footnote)
-                .foregroundStyle(AppTheme.ColorToken.textPrimary)
-            Spacer(minLength: 0)
+        case .traditionalChinese:
+            return .init(
+                title: "交易詳情",
+                empty: "暫無交易詳情",
+                amountFormat: "金額：%@",
+                typeFormat: "類型：%@",
+                timeFormat: "時間：%@",
+                receiptFormat: "回執：%@"
+            )
+        case .english:
+            return .init(
+                title: "Transaction Detail",
+                empty: "No transaction detail",
+                amountFormat: "Amount: %@",
+                typeFormat: "Type: %@",
+                timeFormat: "Time: %@",
+                receiptFormat: "Receipt: %@"
+            )
         }
-    }
-
-    private func resolvedReceiptURL(_ raw: String) -> String {
-        if raw.hasPrefix("http://") || raw.hasPrefix("https://") {
-            return raw
-        }
-        if raw.hasPrefix("/") {
-            let base = BackendEnvironment.current().apiBaseURL
-            return URL(string: raw, relativeTo: base)?.absoluteURL.absoluteString ?? raw
-        }
-        return raw
-    }
-
-    private func openReceipt(_ raw: String) {
-        guard let url = URL(string: resolvedReceiptURL(raw)) else {
-            linkTip = "回执链接无效"
-            return
-        }
-        receiptPageURL = url
-        showReceiptPage = true
     }
 }

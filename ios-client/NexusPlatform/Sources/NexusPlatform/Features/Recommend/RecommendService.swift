@@ -7,6 +7,7 @@ protocol RecommendServiceProtocol: Sendable {
 struct RecommendService: RecommendServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
         self.session = session
@@ -14,21 +15,13 @@ struct RecommendService: RecommendServiceProtocol {
     }
 
     func fetchToday(limit: Int = 10) async throws -> [RecommendTodayItem] {
-        var components = URLComponents(url: baseURL.appendingPathComponent("discover/recommend/today"), resolvingAgainstBaseURL: false)
+        var components = URLComponents(url: baseURL.appendingPathComponent("discover/community"), resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "limit", value: String(max(1, min(limit, 20))))]
         guard let url = components?.url else {
             throw URLError(.badURL)
         }
 
-        let (data, response) = try await session.data(from: url)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw URLError(.badServerResponse)
-        }
-
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int,
-              code == 0,
-              let rows = root["data"] as? [[String: Any]] else {
+        guard let rows = try await client.request(url: url, authMode: .optional) as? [[String: Any]] else {
             throw URLError(.cannotParseResponse)
         }
 

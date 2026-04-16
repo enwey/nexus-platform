@@ -43,12 +43,11 @@ fun GameLogo(
 ) {
     val safeSeed = if (seed.isBlank()) "nexus_logo" else seed
     val url = iconUrl.trim()
-    val shouldLoadImage = url.startsWith("http://") || url.startsWith("https://")
 
     val context = LocalContext.current
-    val imageRequest = remember(url, context, shouldLoadImage) {
+    val imageRequest = remember(url, context) {
         ImageRequest.Builder(context)
-            .data(if (shouldLoadImage) url else null)
+            .data(url.ifBlank { null })
             .crossfade(false)
             .build()
     }

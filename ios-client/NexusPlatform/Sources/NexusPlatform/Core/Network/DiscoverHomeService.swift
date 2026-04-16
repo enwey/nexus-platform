@@ -22,10 +22,17 @@ protocol DiscoverHomeServiceProtocol: Sendable {
 struct DiscoverHomeService: DiscoverHomeServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private let metadataResolver: LocalGameMetadataResolver
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
-    init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
+    init(
+        session: URLSession = .shared,
+        env: BackendEnvironment = .current(),
+        metadataResolver: LocalGameMetadataResolver = .shared
+    ) {
         self.session = session
         self.baseURL = env.apiBaseURL
+        self.metadataResolver = metadataResolver
     }
 
     func fetchHome(limit: Int = 20) async throws -> DiscoverHomePayload {
@@ -35,15 +42,7 @@ struct DiscoverHomeService: DiscoverHomeServiceProtocol {
             throw URLError(.badURL)
         }
 
-        let (data, response) = try await session.data(from: url)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw URLError(.badServerResponse)
-        }
-
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int,
-              code == 0,
-              let payload = root["data"] as? [String: Any] else {
+        guard let payload = try await client.request(url: url, authMode: .optional) as? [String: Any] else {
             throw URLError(.cannotParseResponse)
         }
 
@@ -61,8 +60,8 @@ struct DiscoverHomeService: DiscoverHomeServiceProtocol {
         }
 
         let categories = (payload["categories"] as? [String] ?? ["all"]).map { $0 == "all" ? "全部" : $0 }
-        let ranked = decodeGames(payload["rankedGames"])
-        let newbie = decodeGames(payload["newbieMustPlay"])
+        let ranked = await metadataResolver.merge(decodeGames(payload["rankedGames"]))
+        let newbie = await metadataResolver.merge(decodeGames(payload["newbieMustPlay"]))
         return DiscoverHomePayload(hero: hero, categories: categories, rankedGames: ranked, newbieGames: newbie)
     }
 
@@ -78,6 +77,8 @@ struct DiscoverHomeService: DiscoverHomeServiceProtocol {
             }
             if out["downloadUrl"] == nil {
                 out["downloadUrl"] = ""
+            } else if let rawURL = out["downloadUrl"] as? String {
+                out["downloadUrl"] = normalizeBackendURL(rawURL)
             }
             if out["description"] == nil {
                 out["description"] = ""
@@ -89,5 +90,18 @@ struct DiscoverHomeService: DiscoverHomeServiceProtocol {
             return []
         }
         return games
+    }
+
+    private func normalizeBackendURL(_ raw: String) -> String {
+        guard raw.isEmpty == false else { return raw }
+        guard var components = URLComponents(string: raw) else { return raw }
+        let host = components.host?.lowercased() ?? ""
+        if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+            components.scheme = baseURL.scheme
+            components.host = baseURL.host
+            components.port = baseURL.port
+            return components.string ?? raw
+        }
+        return raw
     }
 }

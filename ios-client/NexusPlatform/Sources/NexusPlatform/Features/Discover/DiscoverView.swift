@@ -4,169 +4,233 @@ struct DiscoverView: View {
     @StateObject private var viewModel = DiscoverViewModel()
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                fallbackBanner
-                heroSection
-                rankingSection
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                Spacer()
+                    .frame(height: 12)
+
+                bannerSection
+                    .padding(.horizontal, 24)
+
                 categorySection
+                    .padding(.horizontal, 24)
+
+                if let error = viewModel.errorMessage, error.isEmpty == false {
+                    errorBanner(error)
+                        .padding(.horizontal, 24)
+                }
+
+                if viewModel.selectedCategory == "全部" {
+                    rankingSection
+                        .padding(.horizontal, 24)
+                }
+
                 feedSection
+                    .padding(.horizontal, 24)
+
+                footer
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 96)
             }
-            .padding(AppTheme.Layout.pagePadding)
         }
-        .nexusPageBackground()
-        .navigationTitle("发现")
+        .background(Color(hex: 0x121212).ignoresSafeArea())
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { viewModel.load() }
     }
 
-    @ViewBuilder
-    private var fallbackBanner: some View {
-        if let message = viewModel.heroFallbackMessage {
-            HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.yellow)
-                Text(message)
-                    .font(.footnote)
-                    .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                Spacer(minLength: 0)
-            }
-            .padding(10)
-            .background(AppTheme.ColorToken.surfaceSecondary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        }
-    }
-
-    @ViewBuilder
-    private var heroSection: some View {
-        if let hero = viewModel.hero {
-            NavigationLink(destination: GameDetailView(game: heroTargetGame)) {
-                ZStack(alignment: .bottomLeading) {
-                    RoundedRectangle(cornerRadius: AppTheme.Layout.cardRadius, style: .continuous)
-                        .fill(AppTheme.GradientToken.hero)
-                        .frame(height: 180)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(hero.badgeText.isEmpty ? "精选推荐" : hero.badgeText)
-                            .font(.caption.bold())
-                            .foregroundStyle(.white.opacity(0.9))
-                        Text(hero.title)
-                            .font(.title3.bold())
-                            .foregroundStyle(.white)
-                        Text(hero.subtitle)
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.88))
-                            .lineLimit(2)
+    private var bannerSection: some View {
+        NavigationLink(destination: GameDetailView(game: heroTargetGame)) {
+            ZStack(alignment: .bottomLeading) {
+                if
+                    let hero = viewModel.hero,
+                    let url = URL(string: hero.coverURL),
+                    hero.coverURL.isEmpty == false
+                {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Rectangle().fill(
+                            LinearGradient(
+                                colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
                     }
-                    .padding(14)
+                } else {
+                    Rectangle().fill(
+                        LinearGradient(
+                            colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                 }
-            }
-            .buttonStyle(.plain)
-        }
-    }
 
-    private var rankingSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("排行榜")
-                    .font(.headline)
-                Spacer()
-                NavigationLink(destination: DiscoverRankingView(games: viewModel.topRanked)) {
-                    Text("查看更多")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(AppTheme.ColorToken.auroraBlue)
+                Rectangle()
+                    .fill(Color.black.opacity(0.28))
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(viewModel.hero?.badgeText.isEmpty == false ? (viewModel.hero?.badgeText ?? copy.hot) : copy.hot)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                    Text(viewModel.hero?.title ?? heroTargetGame.name)
+                        .font(.system(size: 30, weight: .black))
+                        .foregroundStyle(.white)
+
+                    Text(viewModel.hero?.subtitle ?? heroTargetGame.description)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
                 }
-                .buttonStyle(.plain)
+                .padding(20)
             }
-            ForEach(Array(viewModel.topRanked.enumerated()), id: \.element.id) { idx, game in
-                NavigationLink(destination: GameDetailView(game: game)) {
-                    HStack {
-                        Text("#\(idx + 1)")
-                            .font(.headline.monospacedDigit())
-                            .foregroundStyle(AppTheme.ColorToken.auroraPink)
-                            .frame(width: 44)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(game.name).font(.subheadline.bold())
-                            Text(game.description)
-                                .font(.caption)
-                                .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                                .lineLimit(1)
-                        }
-                        Spacer()
-                    }
-                    .padding(.vertical, 4)
-                }
-                .buttonStyle(.plain)
-            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 180)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
-        .padding(14)
-        .nexusGlassCard()
+        .buttonStyle(.plain)
     }
 
     private var categorySection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(viewModel.categories, id: \.self) { category in
+                ForEach(Array(viewModel.categories.enumerated()), id: \.offset) { _, category in
                     let selected = category == viewModel.selectedCategory
                     Button(category) {
                         viewModel.selectCategory(category)
                     }
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(selected ? .white : Color(hex: 0xF2F2F7))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(selected ? AnyShapeStyle(AppTheme.GradientToken.hero) : AnyShapeStyle(AppTheme.ColorToken.surfaceSecondary))
-                    .foregroundStyle(selected ? Color.white : AppTheme.ColorToken.textPrimary)
+                    .background(
+                        selected
+                        ? LinearGradient(colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)], startPoint: .leading, endPoint: .trailing)
+                        : LinearGradient(colors: [Color(hex: 0x232326), Color(hex: 0x232326)], startPoint: .leading, endPoint: .trailing)
+                    )
                     .clipShape(Capsule())
                 }
             }
         }
     }
 
-    private var feedSection: some View {
-        LazyVStack(spacing: 12) {
-            ForEach(viewModel.filteredGames) { game in
-                NavigationLink(destination: GameDetailView(game: game)) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(AppTheme.GradientToken.hero)
-                            .frame(height: 132)
-                            .overlay(alignment: .bottomLeading) {
-                                Text(game.category ?? "推荐")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.white)
-                                    .padding(8)
-                                    .background(Color.black.opacity(0.2), in: Capsule())
-                                    .padding(10)
-                            }
-                        Text(game.name).font(.headline)
-                        Text(game.description)
-                            .font(.subheadline)
-                            .foregroundStyle(AppTheme.ColorToken.textSecondary)
-                            .lineLimit(2)
-                    }
-                    .padding(12)
-                    .nexusGlassCard()
+    private var rankingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(copy.rankTitle)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white)
+                Spacer()
+                NavigationLink(destination: DiscoverRankingView(games: viewModel.topRanked)) {
+                    Text(copy.viewMore)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(hex: 0x6B4EFF))
                 }
                 .buttonStyle(.plain)
+            }
+
+            if viewModel.topRanked.isEmpty {
+                Text(copy.empty)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+            } else {
+                ForEach(viewModel.topRanked.prefix(10)) { game in
+                    rankedItem(game: game, rank: (viewModel.topRanked.firstIndex(where: { $0.id == game.id }) ?? 0) + 1)
+                }
             }
         }
     }
 
-    private var heroTargetGame: Game {
-        if let heroGame = viewModel.heroGame {
-            return heroGame
-        }
+    private func rankedItem(game: Game, rank: Int) -> some View {
+        NavigationLink(destination: GameDetailView(game: game)) {
+            HStack(spacing: 12) {
+                Text("\(rank)")
+                    .font(.system(size: 22, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(width: 28, height: 28)
 
-        if let hero = viewModel.hero {
-            return Game(
-                id: hero.appID.isEmpty ? UUID().uuidString : hero.appID,
-                name: hero.title.isEmpty ? "推荐游戏" : hero.title,
-                description: hero.subtitle,
-                iconUrl: "",
-                downloadUrl: "",
-                version: "1.0.0",
-                md5: "",
-                category: "精选"
+                AsyncImage(url: URL(string: game.iconUrl)) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(hex: 0x232326))
+                }
+                .frame(width: 52, height: 52)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(game.name)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text(game.description.isEmpty ? "v\(game.version)" : game.description)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
+            .padding(12)
+            .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
             )
         }
+        .buttonStyle(.plain)
+    }
 
-        return Game(
+    private var feedSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if viewModel.filteredGames.isEmpty {
+                Text(copy.empty)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+            } else {
+                Text(viewModel.selectedCategory)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white)
+
+                ForEach(viewModel.filteredGames) { game in
+                    rankedItem(game: game, rank: (viewModel.filteredGames.firstIndex(where: { $0.id == game.id }) ?? 0) + 1)
+                }
+            }
+        }
+    }
+
+    private var footer: some View {
+        Text(copy.loadEnd)
+            .font(.system(size: 12))
+            .foregroundStyle(Color(hex: 0xA0A0A0))
+            .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func errorBanner(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Color(hex: 0xFFB3B3))
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(hex: 0x3A1616), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color(hex: 0x7A2C2C), lineWidth: 1)
+            )
+    }
+
+    private var heroTargetGame: Game {
+        viewModel.heroGame ?? viewModel.topRanked.first ?? viewModel.games.first ?? Game(
             id: UUID().uuidString,
             name: "推荐游戏",
             description: "",
@@ -176,5 +240,29 @@ struct DiscoverView: View {
             md5: "",
             category: "精选"
         )
+    }
+
+    private var copy: DiscoverCopy {
+        .forLanguage(AppLanguageStore.currentSync())
+    }
+}
+
+private struct DiscoverCopy {
+    let title: String
+    let rankTitle: String
+    let viewMore: String
+    let empty: String
+    let loadEnd: String
+    let hot: String
+
+    static func forLanguage(_ language: AppLanguage) -> DiscoverCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(title: "发现", rankTitle: "排行榜", viewMore: "查看更多", empty: "暂无内容", loadEnd: "已经到底啦", hot: "热门")
+        case .traditionalChinese:
+            return .init(title: "發現", rankTitle: "排行榜", viewMore: "查看更多", empty: "暫無內容", loadEnd: "已經到底了", hot: "熱門")
+        case .english:
+            return .init(title: "Discover", rankTitle: "Ranking", viewMore: "View More", empty: "No content yet", loadEnd: "You've reached the end", hot: "Hot")
+        }
     }
 }

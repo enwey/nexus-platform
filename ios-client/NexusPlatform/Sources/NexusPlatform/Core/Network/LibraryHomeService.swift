@@ -26,6 +26,7 @@ enum LibraryHomeServiceError: LocalizedError {
 
 protocol LibraryHomeServiceProtocol: Sendable {
     func fetchHome() async throws -> LibraryHomeSnapshot
+    func markPlayed(appID: String) async
     func setFavorite(appID: String, favorite: Bool) async throws
     func markShared(appID: String) async throws
 }
@@ -33,10 +34,17 @@ protocol LibraryHomeServiceProtocol: Sendable {
 struct LibraryHomeService: LibraryHomeServiceProtocol {
     private let session: URLSession
     private let baseURL: URL
+    private let metadataResolver: LocalGameMetadataResolver
+    private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
-    init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
+    init(
+        session: URLSession = .shared,
+        env: BackendEnvironment = .current(),
+        metadataResolver: LocalGameMetadataResolver = .shared
+    ) {
         self.session = session
         self.baseURL = env.apiBaseURL
+        self.metadataResolver = metadataResolver
     }
 
     func fetchHome() async throws -> LibraryHomeSnapshot {
@@ -44,15 +52,31 @@ struct LibraryHomeService: LibraryHomeServiceProtocol {
         guard let payload = data as? [String: Any] else {
             throw LibraryHomeServiceError.invalidResponse
         }
+        let currentPlaying = decodeGame(payload["currentPlayingGame"])
+        let recentGames = decodeGames(payload["recentGames"])
+        let myGames = decodeGames(payload["myGames"])
+        let newbieGames = decodeGames(payload["newbieMustPlay"])
+        let everyonePlaying = decodeGames(payload["everyonePlaying"])
+        let resolvedCurrentPlaying = await mergeOptionalGame(currentPlaying)
+        let resolvedRecentGames = await metadataResolver.merge(recentGames)
+        let resolvedMyGames = await metadataResolver.merge(myGames)
+        let resolvedNewbieGames = await metadataResolver.merge(newbieGames)
+        let resolvedEveryonePlaying = await metadataResolver.merge(everyonePlaying)
+
         return LibraryHomeSnapshot(
-            currentPlayingGame: decodeGame(payload["currentPlayingGame"]),
-            recentGames: decodeGames(payload["recentGames"]),
-            myGames: decodeGames(payload["myGames"]),
-            newbieMustPlay: decodeGames(payload["newbieMustPlay"]),
-            everyonePlaying: decodeGames(payload["everyonePlaying"]),
+            currentPlayingGame: resolvedCurrentPlaying,
+            recentGames: resolvedRecentGames,
+            myGames: resolvedMyGames,
+            newbieMustPlay: resolvedNewbieGames,
+            everyonePlaying: resolvedEveryonePlaying,
             favoriteCount: payload["favoriteCount"] as? Int ?? 0,
             shareCount: payload["shareCount"] as? Int ?? 0
         )
+    }
+
+    func markPlayed(appID: String) async {
+        guard appID.isEmpty == false else { return }
+        _ = try? await request(path: "library/\(appID)/play", method: "POST", body: [:])
     }
 
     func setFavorite(appID: String, favorite: Bool) async throws {
@@ -65,42 +89,7 @@ struct LibraryHomeService: LibraryHomeServiceProtocol {
     }
 
     private func request(path: String, method: String, body: [String: Any]?) async throws -> Any {
-        guard let auth = await authorizationHeader() else {
-            throw LibraryHomeServiceError.unauthorized
-        }
-
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
-        request.httpMethod = method
-        request.setValue(auth, forHTTPHeaderField: "Authorization")
-        if let body {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        }
-
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw LibraryHomeServiceError.invalidResponse
-        }
-        if http.statusCode == 401 || http.statusCode == 403 {
-            throw LibraryHomeServiceError.unauthorized
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw LibraryHomeServiceError.invalidResponse
-        }
-
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let code = root["code"] as? Int,
-              code == 0 else {
-            throw LibraryHomeServiceError.invalidResponse
-        }
-        return root["data"] as Any
-    }
-
-    private func authorizationHeader() async -> String? {
-        guard let session = await AuthSessionStore.shared.current() else {
-            return nil
-        }
-        return "Bearer \(session.accessToken)"
+        return try await client.request(path: path, method: method, body: body, authMode: .required)
     }
 
     private func decodeGames(_ object: Any?) -> [Game] {
@@ -126,5 +115,12 @@ struct LibraryHomeService: LibraryHomeServiceProtocol {
             return nil
         }
         return game
+    }
+
+    private func mergeOptionalGame(_ game: Game?) async -> Game? {
+        guard let game else {
+            return nil
+        }
+        return await metadataResolver.merge(game)
     }
 }

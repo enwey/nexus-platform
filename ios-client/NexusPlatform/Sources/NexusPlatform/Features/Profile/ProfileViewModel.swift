@@ -2,6 +2,7 @@ import Foundation
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
+    @Published private(set) var userID: Int64?
     @Published private(set) var currentEmail: String?
     @Published private(set) var displayName: String?
     @Published private(set) var isLoading = false
@@ -56,12 +57,14 @@ final class ProfileViewModel: ObservableObject {
             currentEmail = session?.email
             if session != nil {
                 if let profile = try? await profileService.fetchProfile() {
+                    userID = profile.id
                     displayName = profile.displayName.isEmpty ? nil : profile.displayName
                 }
                 await loadWallet()
                 await loadBilling(limit: 10)
                 await loadDevices()
             } else {
+                userID = nil
                 displayName = nil
                 walletSummary = nil
                 billingRecords = []
@@ -81,6 +84,7 @@ final class ProfileViewModel: ObservableObject {
             }
             await authStore.clear()
             currentEmail = nil
+            userID = nil
             displayName = nil
             walletSummary = nil
             billingRecords = []
@@ -95,6 +99,7 @@ final class ProfileViewModel: ObservableObject {
             currentEmail = session.email
             message = "登录成功"
             if let profile = try? await profileService.fetchProfile() {
+                userID = profile.id
                 displayName = profile.displayName.isEmpty ? nil : profile.displayName
             }
             await loadWallet()
@@ -124,6 +129,7 @@ final class ProfileViewModel: ObservableObject {
                 try await authService.terminateAccount(accessToken: session.accessToken, confirmText: "确认注销")
                 await authStore.clear()
                 currentEmail = nil
+                userID = nil
                 displayName = nil
                 walletSummary = nil
                 billingRecords = []

@@ -104,7 +104,7 @@ struct StorageClearBridgeAPI: JSBridgeAPIHandling {
 
 struct MenuButtonRectBridgeAPI: JSBridgeAPIHandling {
     let apiName: String = "getMenuButtonBoundingClientRect"
-    let rectProvider: @MainActor () -> CGRect
+    let rectProvider: @MainActor @Sendable () -> CGRect
 
     func handle(params: [String: AnySendable]) async throws -> [String: AnySendable] {
         let rect = await MainActor.run { rectProvider() }

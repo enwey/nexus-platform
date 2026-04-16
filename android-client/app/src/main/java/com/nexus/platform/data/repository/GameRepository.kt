@@ -7,10 +7,12 @@ import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.DiscoverHomeSnapshot
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.LibraryHomeSnapshot
+import com.nexus.platform.feature.game.data.LocalGameMetadataResolver
 
 class GameRepository(context: Context) {
     private val backendApi = PlatformBackendApi(context)
     private val authSessionStore = AuthSessionStore(context)
+    private val localMetadataResolver = LocalGameMetadataResolver(context)
 
     suspend fun getApprovedGames(): List<GameItem> {
         return if (BuildConfig.USE_MOCK_DATA) {
@@ -49,7 +51,7 @@ class GameRepository(context: Context) {
                 )
             )
         } else {
-            backendApi.getApprovedGames()
+            backendApi.getApprovedGames().map(localMetadataResolver::merge)
         }
     }
 
@@ -57,14 +59,22 @@ class GameRepository(context: Context) {
         if (BuildConfig.USE_MOCK_DATA) {
             return null
         }
-        return backendApi.getLibraryHome()
+        return backendApi.getLibraryHome()?.let { home ->
+            home.copy(
+                currentPlayingGame = home.currentPlayingGame?.let(localMetadataResolver::merge),
+                recentGames = home.recentGames.map(localMetadataResolver::merge),
+                myGames = home.myGames.map(localMetadataResolver::merge),
+                newbieMustPlay = home.newbieMustPlay.map(localMetadataResolver::merge),
+                everyonePlaying = home.everyonePlaying.map(localMetadataResolver::merge)
+            )
+        }
     }
 
     suspend fun getDiscoverGames(category: String? = null): List<GameItem> {
         return if (BuildConfig.USE_MOCK_DATA) {
             emptyList()
         } else {
-            backendApi.getDiscoverGames(category = category)
+            backendApi.getDiscoverGames(category = category).map(localMetadataResolver::merge)
         }
     }
 
@@ -72,7 +82,13 @@ class GameRepository(context: Context) {
         if (BuildConfig.USE_MOCK_DATA) {
             return null
         }
-        return backendApi.getDiscoverHome()
+        return backendApi.getDiscoverHome()?.let { home ->
+            home.copy(
+                rankedGames = home.rankedGames.map(localMetadataResolver::merge),
+                newbieMustPlay = home.newbieMustPlay.map(localMetadataResolver::merge),
+                everyonePlaying = home.everyonePlaying.map(localMetadataResolver::merge)
+            )
+        }
     }
 
     suspend fun markPlayed(appId: String) {

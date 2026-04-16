@@ -33,4 +33,12 @@ actor AppLanguageStore {
     func set(_ language: AppLanguage) {
         defaults.set(language.rawValue, forKey: key)
     }
+
+    static func currentSync(defaults: UserDefaults = .standard) -> AppLanguage {
+        guard let raw = defaults.string(forKey: "nexus.app.language"),
+              let language = AppLanguage(rawValue: raw) else {
+            return .simplifiedChinese
+        }
+        return language
+    }
 }
