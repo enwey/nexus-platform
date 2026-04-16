@@ -87,6 +87,35 @@ public class GameController {
         return gameOpsProfileService.getRuntimeProfile(appId);
     }
 
+    @GetMapping("/{appId}/runtime-ticket")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<GameService.RuntimePackageTicket> issueRuntimePackageTicket(
+            @PathVariable String appId,
+            @RequestParam(value = "version", required = false) String version,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-Nexus-Device-Id", required = false) String deviceId,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-Nexus-Supported-Package-Formats", required = false) String supportedFormats,
+            @AuthenticationPrincipal User currentUser) {
+        return gameService.issueRuntimePackageTicket(appId, version, currentUser, deviceId, supportedFormats);
+    }
+
+    @PostMapping("/{appId}/runtime-key/redeem")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<GameService.RuntimePackageKey> redeemRuntimePackageKey(
+            @PathVariable String appId,
+            @RequestBody RuntimeKeyRedeemRequest request,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-Nexus-Device-Id", required = false) String deviceId,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-Nexus-Supported-Package-Formats", required = false) String supportedFormats,
+            @AuthenticationPrincipal User currentUser) {
+        return gameService.redeemRuntimePackageKey(
+                appId,
+                request == null ? null : request.version(),
+                request == null ? null : request.ticket(),
+                currentUser,
+                deviceId,
+                supportedFormats
+        );
+    }
+
     @org.springframework.web.bind.annotation.PutMapping("/{gameId}/metadata")
     @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
     public Result<Game> updateGameMetadata(
@@ -233,4 +262,7 @@ record SubmitAuditRequest(String note, Boolean forceUpdate) {
 }
 
 record RollbackVersionRequest(String reason) {
+}
+
+record RuntimeKeyRedeemRequest(String ticket, String version) {
 }

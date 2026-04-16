@@ -18,7 +18,11 @@ android {
         val backendBaseUrl = System.getenv("BACKEND_BASE_URL")
             ?.takeIf { it.isNotBlank() }
             ?: "http://192.168.1.5:8080/api/v1"
+        val backendCertSha256 = System.getenv("BACKEND_CERT_SHA256")
+            ?.takeIf { it.isNotBlank() }
+            ?: ""
         buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
+        buildConfigField("String", "BACKEND_CERT_SHA256", "\"$backendCertSha256\"")
     }
 
     buildTypes {

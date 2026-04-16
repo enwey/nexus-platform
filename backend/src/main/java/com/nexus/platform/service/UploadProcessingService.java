@@ -6,8 +6,9 @@ import com.nexus.platform.repository.GameRepository;
 import com.nexus.platform.repository.GameVersionRepository;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.MessageDigest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ public class UploadProcessingService {
     private final GameRepository gameRepository;
     private final GameVersionRepository gameVersionRepository;
     private final MinioClient minioClient;
+    private final SecureGamePackageService secureGamePackageService;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -35,39 +37,46 @@ public class UploadProcessingService {
         try (InputStream stream = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(bucketName)
-                        .object(game.getStorageKey())
+                        .object(game.getSourceStorageKey())
                         .build())) {
-
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = stream.read(buffer)) != -1) {
-                md.update(buffer, 0, read);
-            }
-
-            byte[] hash = md.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
+            byte[] sourceZipBytes = stream.readAllBytes();
 
             long versionCount = gameVersionRepository.countByGameId(game.getId());
             String versionName = "1.0." + versionCount;
-            String md5 = sb.toString();
+            SecureGamePackageService.SecurePackage securePackage =
+                    secureGamePackageService.build(sourceZipBytes, "index.html");
+
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(game.getStorageKey())
+                            .stream(new ByteArrayInputStream(securePackage.bytes()), securePackage.bytes().length, -1)
+                            .contentType("application/zip")
+                            .build()
+            );
 
             GameVersion version = new GameVersion();
             version.setGameId(game.getId());
             version.setVersionName(versionName);
             version.setEntryFile("index.html");
             version.setStorageKey(game.getStorageKey());
+            version.setSourceStorageKey(game.getSourceStorageKey());
             version.setDownloadUrl(game.getDownloadUrl());
-            version.setMd5(md5);
+            version.setMd5(securePackage.md5());
+            version.setSourceMd5(secureGamePackageService.md5Hex(sourceZipBytes));
+            version.setPackageFormat(securePackage.format());
+            version.setPackageKeyCiphertext(securePackage.wrappedContentKey());
+            version.setPackageKeyNonce(securePackage.wrappedContentKeyNonce());
             version.setForcedUpdate(false);
             version.setStatus(GameVersion.VersionStatus.DRAFT);
             gameVersionRepository.save(version);
 
-            game.setMd5(md5);
+            game.setMd5(securePackage.md5());
+            game.setSourceMd5(version.getSourceMd5());
             game.setVersion(versionName);
+            game.setPackageFormat(securePackage.format());
+            game.setPackageKeyCiphertext(securePackage.wrappedContentKey());
+            game.setPackageKeyNonce(securePackage.wrappedContentKeyNonce());
             game.setStatus(Game.GameStatus.DRAFT);
             gameRepository.save(game);
         } catch (Exception e) {

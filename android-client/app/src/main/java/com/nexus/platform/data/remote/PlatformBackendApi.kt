@@ -6,7 +6,9 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import com.nexus.platform.core.network.BackendConfig
+import com.nexus.platform.core.network.BackendHttpClientFactory
 import com.nexus.platform.data.local.AuthSessionStore
+import com.nexus.platform.data.local.DeviceIdentityStore
 import com.nexus.platform.domain.model.DiscoverCategory
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.DiscoverHomeSnapshot
@@ -29,11 +31,14 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class PlatformBackendApi(context: Context) {
+    private companion object {
+        const val SUPPORTED_PACKAGE_FORMATS = "NEXUS_SECURE_ZIP_V1"
+    }
+
     data class ApiActionResult(
         val success: Boolean,
         val message: String? = null
@@ -44,14 +49,25 @@ class PlatformBackendApi(context: Context) {
         val privacyUrl: String
     )
 
+    data class RuntimePackageKey(
+        val key: String,
+        val algorithm: String,
+        val version: String,
+        val format: String
+    )
+
+    data class RuntimePackageTicket(
+        val ticket: String,
+        val expiresInSeconds: Long,
+        val version: String,
+        val format: String
+    )
+
     private val gson = Gson()
     private val sessionStore = AuthSessionStore(context)
+    private val deviceIdentityStore = DeviceIdentityStore(context)
     private val refreshMutex = Mutex()
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
-        .build()
+    private val client = BackendHttpClientFactory.create()
 
     suspend fun getApprovedGames(): List<GameItem> = withContext(Dispatchers.IO) {
         executeRequestWithOptionalAuthRetry { token ->
@@ -273,6 +289,86 @@ class PlatformBackendApi(context: Context) {
             )
         }
     }
+
+    suspend fun getRuntimePackageKey(appId: String, version: String): RuntimePackageKey = withContext(Dispatchers.IO) {
+        val normalizedAppId = appId.trim()
+        val normalizedVersion = version.trim()
+        val deviceId = deviceIdentityStore.runtimeDeviceId()
+        val ticket = issueRuntimePackageTicket(normalizedAppId, normalizedVersion, deviceId)
+        val response = executeRequestWithRequiredAuthRetry { token ->
+            val url = "${BackendConfig.apiBaseUrl}/game/$normalizedAppId/runtime-key/redeem"
+                .toHttpUrlOrNull()
+                ?: throw IOException("Invalid runtime package key url")
+            Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer $token")
+                .addHeader("X-Nexus-Device-Id", deviceId)
+                .addHeader("X-Nexus-Supported-Package-Formats", SUPPORTED_PACKAGE_FORMATS)
+                .post(
+                    gson.toJson(
+                        mapOf(
+                            "ticket" to ticket.ticket,
+                            "version" to ticket.version
+                        )
+                    ).toRequestBody("application/json".toMediaType())
+                )
+                .build()
+        } ?: throw IOException("Missing valid authorization token")
+
+        response.use { http ->
+            if (!http.isSuccessful) {
+                throw IOException("Failed to load runtime package key: ${http.code}")
+            }
+            val root = gson.fromJson(http.body?.string().orEmpty(), JsonObject::class.java)
+            val code = root?.get("code")?.asInt ?: -1
+            if (code != 0) {
+                throw IOException(root?.get("message")?.asString ?: "Runtime package key request failed")
+            }
+            val data = root.getAsJsonObject("data") ?: throw IOException("Runtime package key missing data")
+            RuntimePackageKey(
+                key = data.get("key")?.asString.orEmpty(),
+                algorithm = data.get("algorithm")?.asString.orEmpty(),
+                version = data.get("version")?.asString.orEmpty(),
+                format = data.get("format")?.asString.orEmpty()
+            )
+        }
+    }
+
+    private suspend fun issueRuntimePackageTicket(appId: String, version: String, deviceId: String): RuntimePackageTicket =
+        withContext(Dispatchers.IO) {
+            val response = executeRequestWithRequiredAuthRetry { token ->
+                val url = "${BackendConfig.apiBaseUrl}/game/$appId/runtime-ticket"
+                    .toHttpUrlOrNull()
+                    ?.newBuilder()
+                    ?.addQueryParameter("version", version)
+                    ?.build()
+                    ?: throw IOException("Invalid runtime package ticket url")
+                Request.Builder()
+                    .url(url)
+                    .addHeader("Authorization", "Bearer $token")
+                    .addHeader("X-Nexus-Device-Id", deviceId)
+                    .addHeader("X-Nexus-Supported-Package-Formats", SUPPORTED_PACKAGE_FORMATS)
+                    .build()
+            } ?: throw IOException("Missing valid authorization token")
+
+            response.use { http ->
+                if (!http.isSuccessful) {
+                    throw IOException("Failed to issue runtime package ticket: ${http.code}")
+                }
+                val root = gson.fromJson(http.body?.string().orEmpty(), JsonObject::class.java)
+                val code = root?.get("code")?.asInt ?: -1
+                if (code != 0) {
+                    throw IOException(root?.get("message")?.asString ?: "Runtime package ticket request failed")
+                }
+                val data = root.getAsJsonObject("data") ?: throw IOException("Runtime package ticket missing data")
+                RuntimePackageTicket(
+                    ticket = data.get("ticket")?.asString.orEmpty(),
+                    expiresInSeconds = data.get("expiresInSeconds")?.asLong ?: 0L,
+                    version = data.get("version")?.asString.orEmpty(),
+                    format = data.get("format")?.asString.orEmpty()
+                )
+            }
+        }
 
     suspend fun getLibraryHome(): LibraryHomeSnapshot? = withContext(Dispatchers.IO) {
         executeRequestWithRequiredAuthRetry { token ->

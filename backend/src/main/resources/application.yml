@@ -63,6 +63,10 @@ platform:
     android-install-url: ${PLATFORM_SHARE_ANDROID_INSTALL_URL:https://play.google.com/store/apps/details?id=com.nexus.platform}
     ios-install-url: ${PLATFORM_SHARE_IOS_INSTALL_URL:https://apps.apple.com}
     other-install-url: ${PLATFORM_SHARE_OTHER_INSTALL_URL:https://bringbox.com/download}
+  game-package:
+    master-key: ${PLATFORM_GAME_PACKAGE_MASTER_KEY:nexus-platform-dev-master-key}
+    runtime-ticket-ttl-seconds: ${PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_TTL_SECONDS:120}
+    runtime-ticket-signing-key: ${PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_SIGNING_KEY:nexus-platform-dev-runtime-ticket-signing-key}
   security:
     allow-insecure-defaults: ${PLATFORM_ALLOW_INSECURE_DEFAULTS:false}
   bootstrap-admin:

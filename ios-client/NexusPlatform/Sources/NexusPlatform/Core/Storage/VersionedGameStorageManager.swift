@@ -3,11 +3,13 @@ import CryptoKit
 import ZIPFoundation
 
 actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
+    private let securePackageV1 = "NEXUS_SECURE_ZIP_V1"
+    private let supportedPackageFormatsHeader = "NEXUS_SECURE_ZIP_V1"
     private let fileManager: FileManager
     private let gamesRoot: URL
     private let session: URLSession
 
-    init(fileManager: FileManager = .default, session: URLSession = .shared) {
+    init(fileManager: FileManager = .default, session: URLSession = BackendPinnedSession.shared) {
         self.fileManager = fileManager
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         self.gamesRoot = documents.appendingPathComponent("games", isDirectory: true)
@@ -109,7 +111,16 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
             }
         }
 
-        try fileManager.unzipItem(at: tempURL, to: staging)
+        if let securePackage = try extractSecurePackage(from: tempURL) {
+            let decryptedZIP = try await decryptSecurePackage(securePackage, package: package)
+            defer {
+                try? fileManager.removeItem(at: securePackage.workingDirectory)
+                try? fileManager.removeItem(at: decryptedZIP)
+            }
+            try fileManager.unzipItem(at: decryptedZIP, to: staging)
+        } else {
+            try fileManager.unzipItem(at: tempURL, to: staging)
+        }
         try normalizeExtractedStructure(in: staging)
 
         guard let entry = resolveEntryFile(in: staging) else {
@@ -221,12 +232,146 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
         let digest = Insecure.MD5.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }
+
+    private func extractSecurePackage(from packageURL: URL) throws -> SecurePackageContainer? {
+        let workingDirectory = fileManager.temporaryDirectory
+            .appendingPathComponent("secure_pkg_\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: workingDirectory, withIntermediateDirectories: true)
+        try fileManager.unzipItem(at: packageURL, to: workingDirectory)
+
+        let manifestURL = workingDirectory.appendingPathComponent("nexus-package.json")
+        guard fileManager.fileExists(atPath: manifestURL.path) else {
+            try? fileManager.removeItem(at: workingDirectory)
+            return nil
+        }
+
+        let manifestData = try Data(contentsOf: manifestURL)
+        let manifest = try JSONDecoder().decode(SecurePackageManifest.self, from: manifestData)
+
+        let payloadURL = workingDirectory.appendingPathComponent(manifest.payloadFile)
+        guard fileManager.fileExists(atPath: payloadURL.path) else {
+            throw StorageError.securePayloadMissing
+        }
+
+        return SecurePackageContainer(manifest: manifest, payloadURL: payloadURL, workingDirectory: workingDirectory)
+    }
+
+    private func decryptSecurePackage(_ securePackage: SecurePackageContainer, package: GamePackageDescriptor) async throws -> URL {
+        switch securePackage.manifest.format {
+        case securePackageV1:
+            return try await decryptSecurePackageV1(securePackage, package: package)
+        default:
+            throw StorageError.unsupportedSecurePackage
+        }
+    }
+
+    private func decryptSecurePackageV1(_ securePackage: SecurePackageContainer, package: GamePackageDescriptor) async throws -> URL {
+        let contentKey = try await fetchRuntimePackageKey(gameID: package.gameID, version: package.version)
+        let encryptedPayload = try Data(contentsOf: securePackage.payloadURL)
+        let nonceData = Data(base64Encoded: securePackage.manifest.encryption.nonce) ?? Data()
+        guard nonceData.count == 12 else {
+            throw StorageError.invalidSecurePackage
+        }
+        guard encryptedPayload.count > 16 else {
+            throw StorageError.invalidSecurePackage
+        }
+
+        let cipherText = encryptedPayload.dropLast(16)
+        let tag = encryptedPayload.suffix(16)
+        let sealedBox = try AES.GCM.SealedBox(
+            nonce: AES.GCM.Nonce(data: nonceData),
+            ciphertext: Data(cipherText),
+            tag: Data(tag)
+        )
+        let plainZIP = try AES.GCM.open(sealedBox, using: SymmetricKey(data: contentKey))
+        let outputURL = fileManager.temporaryDirectory.appendingPathComponent("secure_plain_\(UUID().uuidString).zip")
+        try Data(plainZIP).write(to: outputURL, options: .atomic)
+        return outputURL
+    }
+
+    private func fetchRuntimePackageKey(gameID: String, version: String) async throws -> Data {
+        guard let authSession = await AuthSessionStore.shared.current(),
+              authSession.accessToken.isEmpty == false else {
+            throw StorageError.runtimeKeyUnavailable
+        }
+        let deviceID = runtimeDeviceID()
+
+        var ticketComponents = URLComponents(
+            url: BackendEnvironment.current()
+                .apiBaseURL
+                .appendingPathComponent("game")
+                .appendingPathComponent(gameID)
+                .appendingPathComponent("runtime-ticket"),
+            resolvingAgainstBaseURL: false
+        )
+        ticketComponents?.queryItems = [URLQueryItem(name: "version", value: version)]
+        guard let ticketURL = ticketComponents?.url else {
+            throw StorageError.invalidSecurePackage
+        }
+
+        let client = BackendAPIClient(session: session, baseURL: BackendEnvironment.current().apiBaseURL)
+        guard let ticketPayload = try await client.request(
+            url: ticketURL,
+            authMode: .required,
+            extraHeaders: [
+                "X-Nexus-Device-Id": deviceID,
+                "X-Nexus-Supported-Package-Formats": supportedPackageFormatsHeader
+            ]
+        ) as? [String: Any],
+              let ticket = ticketPayload["ticket"] as? String,
+              let ticketVersion = ticketPayload["version"] as? String else {
+            throw StorageError.runtimeKeyUnavailable
+        }
+
+        let redeemURL = BackendEnvironment.current()
+            .apiBaseURL
+            .appendingPathComponent("game")
+            .appendingPathComponent(gameID)
+            .appendingPathComponent("runtime-key")
+            .appendingPathComponent("redeem")
+
+        guard let payload = try await client.request(
+            url: redeemURL,
+            method: "POST",
+            body: [
+                "ticket": ticket,
+                "version": ticketVersion
+            ],
+            authMode: .required,
+            extraHeaders: [
+                "X-Nexus-Device-Id": deviceID,
+                "X-Nexus-Supported-Package-Formats": supportedPackageFormatsHeader
+            ]
+        ) as? [String: Any],
+              let key = payload["key"] as? String,
+              let keyData = Data(base64Encoded: key),
+              keyData.isEmpty == false else {
+            throw StorageError.runtimeKeyUnavailable
+        }
+        return keyData
+    }
+}
+
+private func runtimeDeviceID() -> String {
+    let defaults = UserDefaults.standard
+    let key = "nexus.runtime.device.id"
+    if let existing = defaults.string(forKey: key)?.trimmingCharacters(in: .whitespacesAndNewlines),
+       existing.isEmpty == false {
+        return existing
+    }
+    let generated = "rtdev_" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
+    defaults.set(generated, forKey: key)
+    return generated
 }
 
 enum StorageError: LocalizedError {
     case checksumMismatch
     case entryNotFound
     case versionNotFound
+    case runtimeKeyUnavailable
+    case invalidSecurePackage
+    case securePayloadMissing
+    case unsupportedSecurePackage
 
     var errorDescription: String? {
         switch self {
@@ -236,6 +381,34 @@ enum StorageError: LocalizedError {
             return "Game entry file not found"
         case .versionNotFound:
             return "Game version does not exist"
+        case .runtimeKeyUnavailable:
+            return "Game runtime key is unavailable"
+        case .invalidSecurePackage:
+            return "Game secure package is invalid"
+        case .securePayloadMissing:
+            return "Game secure payload is missing"
+        case .unsupportedSecurePackage:
+            return "Game secure package format is unsupported"
         }
     }
+}
+
+private struct SecurePackageManifest: Decodable {
+    let format: String
+    let entryFile: String
+    let payloadFile: String
+    let sourceMd5: String?
+    let sourceSize: Int?
+    let encryption: SecurePackageEncryption
+}
+
+private struct SecurePackageEncryption: Decodable {
+    let algorithm: String
+    let nonce: String
+}
+
+private struct SecurePackageContainer {
+    let manifest: SecurePackageManifest
+    let payloadURL: URL
+    let workingDirectory: URL
 }

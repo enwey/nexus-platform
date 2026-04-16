@@ -1,5 +1,8 @@
 package com.nexus.platform.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.platform.config.GamePackageProperties;
 import com.nexus.platform.dto.GameUpdateCheckResponse;
 import com.nexus.platform.dto.GameMetadataUpdateRequest;
 import com.nexus.platform.dto.OpsGameCategoryRequest;
@@ -22,20 +25,29 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.http.Method;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,12 +60,22 @@ public class GameService {
     public record GameDownloadStream(GetObjectResponse stream, String filename) {
     }
 
+    public record RuntimePackageKey(String key, String algorithm, String version, String format) {
+    }
+
+    public record RuntimePackageTicket(String ticket, long expiresInSeconds, String version, String format) {
+    }
+
     private final GameRepository gameRepository;
     private final GameVersionRepository gameVersionRepository;
     private final OpsGameCategoryRepository gameCategoryRepository;
     private final MinioClient minioClient;
     private final AuditLogService auditLogService;
     private final UploadProcessingService uploadProcessingService;
+    private final SecureGamePackageService secureGamePackageService;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
+    private final GamePackageProperties gamePackageProperties;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -74,11 +96,12 @@ public class GameService {
             ensureBucketExists();
 
             String appId = generateAppId();
-            String storageKey = "games/" + appId + ".zip";
+            String storageKey = "games/runtime/" + appId + ".zip";
+            String sourceStorageKey = "games/source/" + appId + ".zip";
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(storageKey)
+                            .object(sourceStorageKey)
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType("application/zip")
                             .build()
@@ -89,6 +112,7 @@ public class GameService {
             game.setName(name);
             game.setDescription(description);
             game.setStorageKey(storageKey);
+            game.setSourceStorageKey(sourceStorageKey);
             game.setStatus(Game.GameStatus.PROCESSING);
             game.setDeveloperId(currentUser.getId());
             game.setDownloadUrl(buildControlPlaneDownloadUrl(appId));
@@ -381,6 +405,125 @@ public class GameService {
         }
     }
 
+    public Result<RuntimePackageTicket> issueRuntimePackageTicket(
+            String appId,
+            String version,
+            User currentUser,
+            String deviceId,
+            String supportedFormatsHeader
+    ) {
+        if (currentUser == null) {
+            return Result.error("Missing valid login token");
+        }
+        if (deviceId == null || deviceId.isBlank()) {
+            return Result.error("Device id is required");
+        }
+
+        ResolvedPackageContext context = resolvePackageContext(appId, version);
+        if (context.error() != null) {
+            return Result.error(context.error());
+        }
+        Set<String> supportedFormats = parseSupportedFormats(supportedFormatsHeader);
+        if (supportedFormats.isEmpty() == false && supportedFormats.contains(context.packageFormat()) == false) {
+            return Result.error("Current client does not support package format: " + context.packageFormat());
+        }
+
+        try {
+            long ttlSeconds = Math.max(30L, gamePackageProperties.getRuntimeTicketTtlSeconds());
+            long expiresAtEpoch = (System.currentTimeMillis() / 1000L) + ttlSeconds;
+            String jti = UUID.randomUUID().toString();
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("jti", jti);
+            payload.put("uid", currentUser.getId());
+            payload.put("did", deviceId.trim());
+            payload.put("appId", context.game().getAppId());
+            payload.put("version", context.version());
+            payload.put("format", context.packageFormat());
+            payload.put("exp", expiresAtEpoch);
+            String ticket = signRuntimeTicket(payload);
+            stringRedisTemplate.opsForValue().set(
+                    runtimeTicketKey(jti),
+                    "1",
+                    Duration.ofSeconds(ttlSeconds)
+            );
+            return Result.success(new RuntimePackageTicket(
+                    ticket,
+                    ttlSeconds,
+                    context.version(),
+                    context.packageFormat()
+            ));
+        } catch (Exception e) {
+            return Result.error("Failed to issue runtime ticket: " + e.getMessage());
+        }
+    }
+
+    public Result<RuntimePackageKey> redeemRuntimePackageKey(
+            String appId,
+            String version,
+            String ticket,
+            User currentUser,
+            String deviceId,
+            String supportedFormatsHeader
+    ) {
+        if (currentUser == null) {
+            return Result.error("Missing valid login token");
+        }
+        if (ticket == null || ticket.isBlank()) {
+            return Result.error("Runtime ticket is required");
+        }
+        if (deviceId == null || deviceId.isBlank()) {
+            return Result.error("Device id is required");
+        }
+
+        try {
+            Map<String, Object> payload = parseAndVerifyRuntimeTicket(ticket.trim());
+            long ticketUserId = parseLongValue(payload.get("uid"));
+            String ticketDeviceId = stringValue(payload.get("did"));
+            String ticketAppId = stringValue(payload.get("appId"));
+            String ticketVersion = stringValue(payload.get("version"));
+            String jti = stringValue(payload.get("jti"));
+            long expiresAtEpoch = parseLongValue(payload.get("exp"));
+            if (jti.isBlank()) {
+                return Result.error("Runtime ticket is invalid");
+            }
+            if (expiresAtEpoch <= (System.currentTimeMillis() / 1000L)) {
+                return Result.error("Runtime ticket is expired");
+            }
+            String existing = stringRedisTemplate.opsForValue().get(runtimeTicketKey(jti));
+            if (existing == null || existing.isBlank()) {
+                return Result.error("Runtime ticket is expired");
+            }
+            if (ticketUserId != currentUser.getId()
+                    || !deviceId.trim().equals(ticketDeviceId)
+                    || !appId.equals(ticketAppId)) {
+                return Result.error("Runtime ticket is invalid");
+            }
+            if (version != null && !version.isBlank() && !version.trim().equals(ticketVersion)) {
+                return Result.error("Runtime ticket does not match requested version");
+            }
+
+            ResolvedPackageContext context = resolvePackageContext(appId, ticketVersion);
+            if (context.error() != null) {
+                return Result.error(context.error());
+            }
+            Set<String> supportedFormats = parseSupportedFormats(supportedFormatsHeader);
+            if (supportedFormats.isEmpty() == false && supportedFormats.contains(context.packageFormat()) == false) {
+                return Result.error("Current client does not support package format: " + context.packageFormat());
+            }
+
+            stringRedisTemplate.delete(runtimeTicketKey(jti));
+            String key = secureGamePackageService.unwrapContentKey(context.wrappedKey(), context.wrappedNonce());
+            return Result.success(new RuntimePackageKey(
+                    key,
+                    "AES-256-GCM",
+                    context.version(),
+                    context.packageFormat()
+            ));
+        } catch (Exception e) {
+            return Result.error("Failed to redeem runtime ticket: " + e.getMessage());
+        }
+    }
+
     public Result<List<GameVersion>> getGameVersions(Long gameId, User currentUser) {
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {
@@ -436,7 +579,9 @@ public class GameService {
         game.setStatus(Game.GameStatus.PENDING);
         game.setVersion(latest.getVersionName());
         game.setMd5(latest.getMd5());
+        game.setSourceMd5(latest.getSourceMd5());
         game.setStorageKey(latest.getStorageKey());
+        game.setSourceStorageKey(latest.getSourceStorageKey());
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
 
@@ -484,7 +629,9 @@ public class GameService {
         game.setStatus(Game.GameStatus.PENDING);
         game.setVersion(version.getVersionName());
         game.setMd5(version.getMd5());
+        game.setSourceMd5(version.getSourceMd5());
         game.setStorageKey(version.getStorageKey());
+        game.setSourceStorageKey(version.getSourceStorageKey());
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
 
@@ -525,7 +672,12 @@ public class GameService {
         game.setStatus(Game.GameStatus.APPROVED);
         game.setVersion(target.getVersionName());
         game.setMd5(target.getMd5());
+        game.setSourceMd5(target.getSourceMd5());
         game.setStorageKey(target.getStorageKey());
+        game.setSourceStorageKey(target.getSourceStorageKey());
+        game.setPackageFormat(target.getPackageFormat());
+        game.setPackageKeyCiphertext(target.getPackageKeyCiphertext());
+        game.setPackageKeyNonce(target.getPackageKeyNonce());
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
 
@@ -560,7 +712,12 @@ public class GameService {
         game.setStatus(Game.GameStatus.APPROVED);
         game.setVersion(submitted.getVersionName());
         game.setMd5(submitted.getMd5());
+        game.setSourceMd5(submitted.getSourceMd5());
         game.setStorageKey(submitted.getStorageKey());
+        game.setSourceStorageKey(submitted.getSourceStorageKey());
+        game.setPackageFormat(submitted.getPackageFormat());
+        game.setPackageKeyCiphertext(submitted.getPackageKeyCiphertext());
+        game.setPackageKeyNonce(submitted.getPackageKeyNonce());
         game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
         gameRepository.save(game);
 
@@ -795,6 +952,114 @@ public class GameService {
         return trimmed.length() > 64 ? trimmed.substring(0, 64) : trimmed;
     }
 
+    private ResolvedPackageContext resolvePackageContext(String appId, String version) {
+        Game game = gameRepository.findByAppId(appId);
+        if (game == null || game.getStatus() != Game.GameStatus.APPROVED) {
+            return ResolvedPackageContext.error("Game not found");
+        }
+
+        String resolvedVersion = version == null ? "" : version.trim();
+        GameVersion resolved = resolvedVersion.isBlank()
+                ? gameVersionRepository.findTopByGameIdAndStatusOrderByCreatedAtDesc(
+                        game.getId(),
+                        GameVersion.VersionStatus.APPROVED
+                ).orElse(null)
+                : gameVersionRepository.findTopByGameIdAndVersionNameAndStatusOrderByCreatedAtDesc(
+                        game.getId(),
+                        resolvedVersion,
+                        GameVersion.VersionStatus.APPROVED
+                ).orElse(null);
+
+        String wrappedKey = resolved == null ? game.getPackageKeyCiphertext() : resolved.getPackageKeyCiphertext();
+        String wrappedNonce = resolved == null ? game.getPackageKeyNonce() : resolved.getPackageKeyNonce();
+        String packageFormat = resolved == null ? game.getPackageFormat() : resolved.getPackageFormat();
+        String keyVersion = resolved == null ? game.getVersion() : resolved.getVersionName();
+
+        if (wrappedKey == null || wrappedKey.isBlank() || wrappedNonce == null || wrappedNonce.isBlank()) {
+            return ResolvedPackageContext.error("Game package key is unavailable");
+        }
+
+        return new ResolvedPackageContext(
+                game,
+                keyVersion == null ? "" : keyVersion,
+                packageFormat == null ? "" : packageFormat,
+                wrappedKey,
+                wrappedNonce,
+                null
+        );
+    }
+
+    private String runtimeTicketKey(String ticket) {
+        return "game:runtime-ticket:" + ticket;
+    }
+
+    private String signRuntimeTicket(Map<String, Object> payload) throws Exception {
+        String payloadJson = objectMapper.writeValueAsString(payload);
+        String payloadPart = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String signaturePart = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(hmacSha256(payloadPart));
+        return payloadPart + "." + signaturePart;
+    }
+
+    private Map<String, Object> parseAndVerifyRuntimeTicket(String ticket) throws Exception {
+        String[] parts = ticket.split("\\.");
+        if (parts.length != 2) {
+            throw new IllegalStateException("Malformed runtime ticket");
+        }
+        String payloadPart = parts[0];
+        String signaturePart = parts[1];
+        byte[] expected = hmacSha256(payloadPart);
+        byte[] actual = Base64.getUrlDecoder().decode(signaturePart);
+        if (!MessageDigest.isEqual(expected, actual)) {
+            throw new IllegalStateException("Invalid runtime ticket signature");
+        }
+        byte[] payloadBytes = Base64.getUrlDecoder().decode(payloadPart);
+        return objectMapper.readValue(payloadBytes, new TypeReference<>() {});
+    }
+
+    private byte[] hmacSha256(String input) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(
+                gamePackageProperties.getRuntimeTicketSigningKey().getBytes(StandardCharsets.UTF_8),
+                "HmacSHA256"
+        ));
+        return mac.doFinal(input.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private long parseLongValue(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ignore) {
+            return 0L;
+        }
+    }
+
+    private String stringValue(Object value) {
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private Set<String> parseSupportedFormats(String headerValue) {
+        if (headerValue == null || headerValue.isBlank()) {
+            return Set.of();
+        }
+        Set<String> output = new HashSet<>();
+        for (String token : headerValue.split(",")) {
+            String normalized = token == null ? "" : token.trim();
+            if (normalized.isBlank()) {
+                continue;
+            }
+            output.add(normalized);
+        }
+        return output;
+    }
+
     private void normalizeClientUrls(Game game) {
         if (game == null || game.getAppId() == null) {
             return;
@@ -807,6 +1072,19 @@ public class GameService {
                 || downloadUrl.contains("/game/download-url/")
                 || downloadUrl.endsWith("/game/download/" + game.getAppId())) {
             game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
+        }
+    }
+
+    private record ResolvedPackageContext(
+            Game game,
+            String version,
+            String packageFormat,
+            String wrappedKey,
+            String wrappedNonce,
+            String error
+    ) {
+        private static ResolvedPackageContext error(String message) {
+            return new ResolvedPackageContext(null, "", "", "", "", message);
         }
     }
 }

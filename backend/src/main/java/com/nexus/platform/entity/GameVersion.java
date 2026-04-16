@@ -37,11 +37,26 @@ public class GameVersion {
     @Column(name = "storage_key", nullable = false, length = 255)
     private String storageKey;
 
+    @Column(name = "source_storage_key", length = 255)
+    private String sourceStorageKey;
+
     @Column(name = "download_url", length = 255)
     private String downloadUrl;
 
     @Column(name = "md5", length = 64)
     private String md5;
+
+    @Column(name = "source_md5", length = 64)
+    private String sourceMd5;
+
+    @Column(name = "package_format", length = 64)
+    private String packageFormat;
+
+    @Column(name = "package_key_ciphertext", length = 512)
+    private String packageKeyCiphertext;
+
+    @Column(name = "package_key_nonce", length = 128)
+    private String packageKeyNonce;
 
     @Column(name = "submit_note", length = 256)
     private String submitNote;

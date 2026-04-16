@@ -40,8 +40,24 @@ public class Game {
     @Column(name = "storage_key")
     private String storageKey;
 
+    @Column(name = "source_storage_key")
+    private String sourceStorageKey;
+
     private String version;
     private String md5;
+
+    @Column(name = "source_md5", length = 64)
+    private String sourceMd5;
+
+    @Column(name = "package_format", length = 64)
+    private String packageFormat;
+
+    @Column(name = "package_key_ciphertext", length = 512)
+    private String packageKeyCiphertext;
+
+    @Column(name = "package_key_nonce", length = 128)
+    private String packageKeyNonce;
+
     @Column(length = 32)
     private String category;
 

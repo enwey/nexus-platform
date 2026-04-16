@@ -1,18 +1,20 @@
 package com.nexus.platform.feature.game.data
 
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.core.network.BackendConfig
+import com.nexus.platform.core.network.BackendHttpClientFactory
 import com.nexus.platform.utils.ZipUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
@@ -21,10 +23,14 @@ import java.io.IOException
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class GameManager(private val context: Context) {
     private companion object {
         const val TAG = "GameManager"
+        const val SECURE_PACKAGE_V1 = "NEXUS_SECURE_ZIP_V1"
     }
 
     data class UpdateCheckResult(
@@ -43,16 +49,30 @@ class GameManager(private val context: Context) {
         val fromCache: Boolean
     )
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .followRedirects(false)
-        .followSslRedirects(false)
-        .build()
+    private val client = BackendHttpClientFactory.create(
+        connectTimeoutSeconds = 30,
+        readTimeoutSeconds = 30,
+        writeTimeoutSeconds = 30
+    ) {
+        followRedirects(false)
+        followSslRedirects(false)
+    }
     private val gson = Gson()
+    private val backendApi = PlatformBackendApi(context)
     private val updateScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val updateStateMap = ConcurrentHashMap<String, UpdateState>()
+
+    private data class SecurePackageManifest(
+        val format: String,
+        val entryFile: String,
+        val payloadFile: String,
+        val encryption: SecurePackageEncryption
+    )
+
+    private data class SecurePackageEncryption(
+        val algorithm: String,
+        val nonce: String
+    )
 
     private data class UpdateState(
         var hasUpdate: Boolean = false,
@@ -293,7 +313,7 @@ class GameManager(private val context: Context) {
                 throw IOException("Game package checksum mismatch")
             }
 
-            ZipUtils.unzip(zipFile, targetDir)
+            installDownloadedPackage(zipFile, targetDir, game.id, game.version)
             zipFile.delete()
             normalizeExtractedStructure(targetDir)
         }
@@ -336,7 +356,7 @@ class GameManager(private val context: Context) {
         throw IOException("Game download failed: too many redirects")
     }
 
-    private fun downloadUpdateToStaging(gameId: String, version: String, downloadUrl: String, md5: String) {
+    private suspend fun downloadUpdateToStaging(gameId: String, version: String, downloadUrl: String, md5: String) {
         val stagingDir = getStagingGameDir(gameId, version)
         deleteDirectory(stagingDir)
         stagingDir.mkdirs()
@@ -346,9 +366,89 @@ class GameManager(private val context: Context) {
             zipFile.delete()
             throw IOException("Update package checksum mismatch")
         }
-        ZipUtils.unzip(zipFile, stagingDir)
+        installDownloadedPackage(zipFile, stagingDir, gameId, version)
         zipFile.delete()
         normalizeExtractedStructure(stagingDir)
+    }
+
+    private suspend fun installDownloadedPackage(packageFile: File, targetDir: File, gameId: String, version: String) {
+        val packageWorkingDir = File(context.cacheDir, "secure_pkg_${gameId}_${System.currentTimeMillis()}")
+        deleteDirectory(packageWorkingDir)
+        packageWorkingDir.mkdirs()
+
+        try {
+            ZipUtils.unzip(packageFile, packageWorkingDir)
+            val manifestFile = File(packageWorkingDir, "nexus-package.json")
+            if (!manifestFile.exists()) {
+                deleteDirectory(targetDir)
+                targetDir.mkdirs()
+                ZipUtils.unzip(packageFile, targetDir)
+                return
+            }
+
+            val manifest = gson.fromJson(manifestFile.readText(), SecurePackageManifest::class.java)
+            val plainZipFile = decryptSecurePackagePayload(
+                packageWorkingDir = packageWorkingDir,
+                manifest = manifest,
+                gameId = gameId,
+                version = version
+            )
+
+            deleteDirectory(targetDir)
+            targetDir.mkdirs()
+            ZipUtils.unzip(plainZipFile, targetDir)
+            plainZipFile.delete()
+        } finally {
+            deleteDirectory(packageWorkingDir)
+        }
+    }
+
+    private suspend fun decryptSecurePackagePayload(
+        packageWorkingDir: File,
+        manifest: SecurePackageManifest,
+        gameId: String,
+        version: String
+    ): File {
+        return when (manifest.format) {
+            SECURE_PACKAGE_V1 -> decryptSecurePackageV1(packageWorkingDir, manifest, gameId, version)
+            else -> throw IOException("Unsupported secure package format: ${manifest.format}")
+        }
+    }
+
+    private suspend fun decryptSecurePackageV1(
+        packageWorkingDir: File,
+        manifest: SecurePackageManifest,
+        gameId: String,
+        version: String
+    ): File {
+        val payloadFile = File(packageWorkingDir, manifest.payloadFile)
+        if (!payloadFile.exists()) {
+            throw IOException("Secure payload is missing")
+        }
+
+        val runtimeKey = backendApi.getRuntimePackageKey(gameId, version)
+        val plainZipFile = File(context.cacheDir, "secure_plain_${gameId}_${System.currentTimeMillis()}.zip")
+        decryptSecurePayload(
+            payloadFile = payloadFile,
+            outputFile = plainZipFile,
+            keyBase64 = runtimeKey.key,
+            nonceBase64 = manifest.encryption.nonce
+        )
+        return plainZipFile
+    }
+
+    private fun decryptSecurePayload(payloadFile: File, outputFile: File, keyBase64: String, nonceBase64: String) {
+        val keyBytes = Base64.decode(keyBase64, Base64.DEFAULT)
+        val nonceBytes = Base64.decode(nonceBase64, Base64.DEFAULT)
+        val encryptedBytes = payloadFile.readBytes()
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            SecretKeySpec(keyBytes, "AES"),
+            GCMParameterSpec(128, nonceBytes)
+        )
+        val plainBytes = cipher.doFinal(encryptedBytes)
+        FileOutputStream(outputFile).use { it.write(plainBytes) }
     }
 
     private fun getStagingGameDir(gameId: String, version: String): File {

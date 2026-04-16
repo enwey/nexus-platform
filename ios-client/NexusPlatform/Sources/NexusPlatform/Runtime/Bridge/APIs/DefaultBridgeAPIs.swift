@@ -180,7 +180,7 @@ actor BridgeRequestClient {
     private let session: URLSession
     private let backendBaseURL: URL
 
-    init(session: URLSession = .shared, backendBaseURL: URL = BackendEnvironment.current().apiBaseURL) {
+    init(session: URLSession = BackendPinnedSession.shared, backendBaseURL: URL = BackendEnvironment.current().apiBaseURL) {
         self.session = session
         self.backendBaseURL = backendBaseURL
     }

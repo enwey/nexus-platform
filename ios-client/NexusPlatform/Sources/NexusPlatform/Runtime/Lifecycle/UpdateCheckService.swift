@@ -52,7 +52,7 @@ struct BackendGameUpdateService: GameUpdateCheckServiceProtocol {
     private let baseURL: URL
     private let session: URLSession
 
-    init(environment: BackendEnvironment = .current(), session: URLSession = .shared) {
+    init(environment: BackendEnvironment = .current(), session: URLSession = BackendPinnedSession.shared) {
         self.baseURL = environment.apiBaseURL
         self.session = session
     }

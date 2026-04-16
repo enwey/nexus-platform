@@ -26,7 +26,7 @@ struct DiscoverHomeService: DiscoverHomeServiceProtocol {
     private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
     init(
-        session: URLSession = .shared,
+        session: URLSession = BackendPinnedSession.shared,
         env: BackendEnvironment = .current(),
         metadataResolver: LocalGameMetadataResolver = .shared
     ) {

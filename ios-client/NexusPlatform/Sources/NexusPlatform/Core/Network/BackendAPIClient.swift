@@ -1,4 +1,6 @@
 import Foundation
+import CryptoKit
+import Security
 
 enum BackendAuthMode {
     case none
@@ -217,6 +219,60 @@ struct BackendAPIClient {
         }
 
         return root["data"] as Any
+    }
+}
+
+enum BackendPinnedSession {
+    static let shared: URLSession = {
+        let config = URLSessionConfiguration.default
+        let delegate = BackendPinningDelegate(environment: .current())
+        return URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+    }()
+}
+
+private final class BackendPinningDelegate: NSObject, URLSessionDelegate {
+    private let expectedCertSHA256: String
+    private let pinnedHost: String?
+    private let isHTTPS: Bool
+
+    init(environment: BackendEnvironment) {
+        self.pinnedHost = environment.apiBaseURL.host
+        self.isHTTPS = environment.apiBaseURL.scheme?.lowercased() == "https"
+
+        if let raw = ProcessInfo.processInfo.environment["BACKEND_CERT_SHA256"], raw.isEmpty == false {
+            self.expectedCertSHA256 = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        } else if let raw = Bundle.main.object(forInfoDictionaryKey: "BACKEND_CERT_SHA256") as? String, raw.isEmpty == false {
+            self.expectedCertSHA256 = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        } else {
+            self.expectedCertSHA256 = ""
+        }
+        super.init()
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              isHTTPS,
+              expectedCertSHA256.isEmpty == false,
+              let pinnedHost,
+              challenge.protectionSpace.host == pinnedHost,
+              let trust = challenge.protectionSpace.serverTrust,
+              let certificate = SecTrustGetCertificateAtIndex(trust, 0) else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        let certificateData = SecCertificateCopyData(certificate) as Data
+        let actual = SHA256.hash(data: certificateData).map { String(format: "%02x", $0) }.joined()
+        guard actual == expectedCertSHA256 else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+
+        completionHandler(.useCredential, URLCredential(trust: trust))
     }
 }
 

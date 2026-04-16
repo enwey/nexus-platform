@@ -37,7 +37,7 @@ struct DeviceSessionService: DeviceSessionServiceProtocol {
     private let baseURL: URL
     private var client: BackendAPIClient { .init(session: session, baseURL: baseURL) }
 
-    init(session: URLSession = .shared, env: BackendEnvironment = .current()) {
+    init(session: URLSession = BackendPinnedSession.shared, env: BackendEnvironment = .current()) {
         self.session = session
         self.baseURL = env.apiBaseURL
     }

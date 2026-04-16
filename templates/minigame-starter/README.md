@@ -78,6 +78,48 @@ powershell -ExecutionPolicy Bypass -File .\scripts\package.ps1
 
 输出：`release/minigame-starter.zip`
 
+## 安全包分发
+
+上传到 Nexus Platform 之后，平台不会直接向移动端分发开发者上传的明文 ZIP。
+
+实际线上链路会执行：
+
+1. 平台校验上传 ZIP
+2. 服务端生成 `NEXUS_SECURE_ZIP_V1` 安全包
+3. 使用随机内容密钥对小游戏源码 ZIP 做 AES-256-GCM 加密
+4. Android / iOS 客户端先申请短时 runtime ticket
+5. 客户端再带 ticket 与设备 ID 兑换一次性解密密钥
+6. 客户端原生层解密后再解压并启动游戏
+
+这意味着：
+
+- CDN / 下载链路拿到的是安全包，而不是可直接阅读的小游戏源码
+- 设备本地默认存的是加密外壳包
+- 解密发生在 Android / iOS 原生运行时，而不是前端 JS 层
+- 服务端会保留开发者原始 ZIP，便于后续升级安全包格式时重新打包
+
+当前推荐运行策略：
+
+- 首次安装联网授权并完成安装
+- 安装成功后，本地保留已安装版本
+- 后续已安装版本允许离线运行
+- 更新、重装、清缓存、换设备时再重新联网
+
+服务端生产环境还需要配置强随机主密钥：
+
+```bash
+PLATFORM_GAME_PACKAGE_MASTER_KEY=replace-with-a-strong-random-secret-at-least-32-chars
+PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_SIGNING_KEY=replace-with-a-strong-random-secret-at-least-32-chars
+```
+
+未替换默认开发密钥时，生产安全检查会拒绝启动。
+
+如果线上走 HTTPS，还可以进一步开启宿主证书指纹校验：
+
+```bash
+BACKEND_CERT_SHA256=<backend leaf certificate sha256 hex>
+```
+
 ## 上传前检查
 
 1. `index.html` 在 ZIP 根目录

@@ -3,23 +3,18 @@ package com.nexus.platform.data.remote
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.nexus.platform.core.network.BackendConfig
+import com.nexus.platform.core.network.BackendHttpClientFactory
 import com.nexus.platform.domain.model.AuthSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 class BackendAuthApi {
     private val gson = Gson()
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
-        .build()
+    private val client = BackendHttpClientFactory.create()
 
     suspend fun login(email: String, password: String): AuthSession = withContext(Dispatchers.IO) {
         authWithCredential(

@@ -22,6 +22,12 @@ public class SecuritySanityCheck implements CommandLineRunner {
     @Value("${security.jwt.secret}")
     private String jwtSecret;
 
+    @Value("${platform.game-package.master-key:nexus-platform-dev-master-key}")
+    private String gamePackageMasterKey;
+
+    @Value("${platform.game-package.runtime-ticket-signing-key:nexus-platform-dev-runtime-ticket-signing-key}")
+    private String runtimeTicketSigningKey;
+
     private final Environment environment;
 
     public SecuritySanityCheck(Environment environment) {
@@ -55,6 +61,19 @@ public class SecuritySanityCheck implements CommandLineRunner {
         if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.length() < 32 || jwtSecret.contains("change-this-in-dev-only")) {
             throw new IllegalStateException("Insecure JWT secret detected. Please set SECURITY_JWT_SECRET with a strong value.");
         }
+
+        if (gamePackageMasterKey == null || gamePackageMasterKey.isBlank()
+                || "nexus-platform-dev-master-key".equals(gamePackageMasterKey)
+                || gamePackageMasterKey.length() < 32) {
+            throw new IllegalStateException(
+                    "Insecure game package master key detected. Please set PLATFORM_GAME_PACKAGE_MASTER_KEY with a strong value.");
+        }
+
+        if (runtimeTicketSigningKey == null || runtimeTicketSigningKey.isBlank()
+                || "nexus-platform-dev-runtime-ticket-signing-key".equals(runtimeTicketSigningKey)
+                || runtimeTicketSigningKey.length() < 32) {
+            throw new IllegalStateException(
+                    "Insecure runtime ticket signing key detected. Please set PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_SIGNING_KEY with a strong value.");
+        }
     }
 }
-

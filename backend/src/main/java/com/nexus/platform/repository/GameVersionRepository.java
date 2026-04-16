@@ -17,6 +17,12 @@ public interface GameVersionRepository extends JpaRepository<GameVersion, Long> 
             GameVersion.VersionStatus status
     );
 
+    Optional<GameVersion> findTopByGameIdAndVersionNameAndStatusOrderByCreatedAtDesc(
+            Long gameId,
+            String versionName,
+            GameVersion.VersionStatus status
+    );
+
     Optional<GameVersion> findByIdAndGameId(Long id, Long gameId);
 
     List<GameVersion> findByGameIdOrderByCreatedAtDesc(Long gameId);
