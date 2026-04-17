@@ -18,7 +18,9 @@ public class WebConfig implements WebMvcConfigurer {
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "http://localhost:5174",
-                "http://127.0.0.1:5174"
+                "http://127.0.0.1:5174",
+                "http://47.99.34.148:81",
+                "http://47.99.34.148:82"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
@@ -37,7 +39,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:5173",
                         "http://127.0.0.1:5173",
                         "http://localhost:5174",
-                        "http://127.0.0.1:5174"
+                        "http://127.0.0.1:5174",
+                        "http://47.99.34.148:81",
+                        "http://47.99.34.148:82"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
