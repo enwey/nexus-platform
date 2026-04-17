@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # PostgreSQL 数据库
   postgres:
@@ -24,6 +22,7 @@ services:
     environment:
       NAKAMA_NAME: mygame
       NAKAMA_SERVER_KEY: defaultkeychanged
+      NAKAMA_HTTP_KEY: defaulthttpkeychanged
       NAKAMA_DATABASE_ADDRESS: postgres:5432
       NAKAMA_DATABASE_USERNAME: nexus
       NAKAMA_DATABASE_PASSWORD: nexus_password
@@ -68,8 +67,18 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET_NAME: nexus-games
+      NAKAMA_SERVER_KEY: defaultkeychanged
+      NAKAMA_HTTP_KEY: defaulthttpkeychanged
+      NAKAMA_SERVER_URL: http://nakama:7351
+      SECURITY_JWT_SECRET: nexus-local-jwt-secret-2026-change-before-prod
+      PLATFORM_ALLOW_INSECURE_DEFAULTS: "false"
+      PLATFORM_BOOTSTRAP_ADMIN_ENABLED: "true"
+      PLATFORM_BOOTSTRAP_ADMIN_USERNAME: admin
+      PLATFORM_BOOTSTRAP_ADMIN_PASSWORD: NexusLocalAdmin2026!
+      PLATFORM_BOOTSTRAP_ADMIN_EMAIL: admin@nexus.local
     depends_on:
       - postgres
+      - redis
       - minio
       - nakama
     ports:
