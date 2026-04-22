@@ -17,7 +17,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         val backendBaseUrl = System.getenv("BACKEND_BASE_URL")
             ?.takeIf { it.isNotBlank() }
-            ?: "http://192.168.1.5:8080/api/v1"
+            ?: "http://47.99.34.148:81/api/v1"
         val backendCertSha256 = System.getenv("BACKEND_CERT_SHA256")
             ?.takeIf { it.isNotBlank() }
             ?: ""
