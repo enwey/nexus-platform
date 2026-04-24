@@ -28,6 +28,15 @@ public class SecuritySanityCheck implements CommandLineRunner {
     @Value("${platform.game-package.runtime-ticket-signing-key:nexus-platform-dev-runtime-ticket-signing-key}")
     private String runtimeTicketSigningKey;
 
+    @Value("${platform.email.enabled:false}")
+    private boolean emailEnabled;
+
+    @Value("${platform.email.from-address:}")
+    private String emailFromAddress;
+
+    @Value("${spring.mail.host:}")
+    private String mailHost;
+
     private final Environment environment;
 
     public SecuritySanityCheck(Environment environment) {
@@ -74,6 +83,18 @@ public class SecuritySanityCheck implements CommandLineRunner {
                 || runtimeTicketSigningKey.length() < 32) {
             throw new IllegalStateException(
                     "Insecure runtime ticket signing key detected. Please set PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_SIGNING_KEY with a strong value.");
+        }
+
+        if (!emailEnabled) {
+            throw new IllegalStateException("Email delivery must be enabled. Please set PLATFORM_EMAIL_ENABLED=true.");
+        }
+
+        if (mailHost == null || mailHost.isBlank()) {
+            throw new IllegalStateException("Email delivery is enabled but SPRING_MAIL_HOST is not set.");
+        }
+
+        if (emailFromAddress == null || emailFromAddress.isBlank()) {
+            throw new IllegalStateException("Email delivery is enabled but PLATFORM_EMAIL_FROM is not set.");
         }
     }
 }

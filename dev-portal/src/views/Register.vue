@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="auth-page">
     <el-card class="auth-card">
       <template #header>
@@ -9,8 +9,17 @@
       </template>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item :label="lt('用户名', '使用者名稱', 'Username')" prop="username">
-          <el-input v-model="form.username" :placeholder="lt('请输入用户名', '請輸入使用者名稱', 'Enter username')" />
+        <el-form-item :label="lt('邮箱', '電子郵件', 'Email')" prop="email">
+          <el-input v-model="form.email" :placeholder="lt('请输入邮箱', '請輸入電子郵件', 'Enter email')" />
+        </el-form-item>
+
+        <el-form-item :label="lt('验证码', '驗證碼', 'Verification Code')" prop="code">
+          <div class="code-row">
+            <el-input v-model="form.code" :placeholder="lt('请输入验证码', '請輸入驗證碼', 'Enter verification code')" />
+            <el-button :loading="sendingCode" :disabled="codeCountdown > 0" @click="handleSendCode">
+              {{ codeCountdown > 0 ? `${codeCountdown}s` : lt('获取验证码', '獲取驗證碼', 'Get Code') }}
+            </el-button>
+          </div>
         </el-form-item>
 
         <el-form-item :label="lt('密码', '密碼', 'Password')" prop="password">
@@ -19,10 +28,6 @@
 
         <el-form-item :label="lt('确认密码', '確認密碼', 'Confirm Password')" prop="confirmPassword">
           <el-input v-model="form.confirmPassword" type="password" show-password :placeholder="lt('请再次输入密码', '請再次輸入密碼', 'Enter password again')" />
-        </el-form-item>
-
-        <el-form-item :label="lt('邮箱', '電子郵件', 'Email')" prop="email">
-          <el-input v-model="form.email" :placeholder="lt('请输入邮箱', '請輸入電子郵件', 'Enter email')" />
         </el-form-item>
 
         <el-form-item>
@@ -41,10 +46,10 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onBeforeUnmount, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { register } from '../api'
+import { register, sendCode } from '../api'
 import { useUserStore } from '../stores/user'
 import { useI18nLite } from '../i18n'
 
@@ -53,9 +58,12 @@ const userStore = useUserStore()
 const { lt } = useI18nLite()
 const formRef = ref()
 const loading = ref(false)
+const sendingCode = ref(false)
+const codeCountdown = ref(0)
+let countdownTimer = null
 
 const form = reactive({
-  username: '',
+  code: '',
   password: '',
   confirmPassword: '',
   email: ''
@@ -76,19 +84,57 @@ const validateConfirmPassword = (_, value, callback) => {
 }
 
 const rules = {
-  username: [
-    { required: true, message: lt('请输入用户名', '請輸入使用者名稱', 'Enter username'), trigger: 'blur' },
-    { min: 3, max: 20, message: lt('用户名长度需为 3 到 20 个字符', '使用者名稱長度需為 3 到 20 個字元', 'Username must be 3 to 20 characters'), trigger: 'blur' }
-  ],
   password: [
     { required: true, message: lt('请输入密码', '請輸入密碼', 'Enter password'), trigger: 'blur' },
-    { min: 6, message: lt('密码长度不能少于 6 位', '密碼長度不能少於 6 位', 'Password must be at least 6 characters'), trigger: 'blur' }
+    { min: 8, message: lt('密码长度不能少于 8 位', '密碼長度不能少於 8 位', 'Password must be at least 8 characters'), trigger: 'blur' }
   ],
   confirmPassword: [{ validator: validateConfirmPassword, trigger: 'blur' }],
+  code: [{ required: true, message: lt('请输入验证码', '請輸入驗證碼', 'Enter verification code'), trigger: 'blur' }],
   email: [
     { required: true, message: lt('请输入邮箱', '請輸入電子郵件', 'Enter email'), trigger: 'blur' },
     { type: 'email', message: lt('请输入正确的邮箱地址', '請輸入正確的電子郵件地址', 'Enter a valid email address'), trigger: 'blur' }
   ]
+}
+
+const clearCountdown = () => {
+  if (countdownTimer) {
+    window.clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+const startCountdown = () => {
+  clearCountdown()
+  codeCountdown.value = 60
+  countdownTimer = window.setInterval(() => {
+    codeCountdown.value -= 1
+    if (codeCountdown.value <= 0) {
+      clearCountdown()
+    }
+  }, 1000)
+}
+
+const handleSendCode = async () => {
+  if (!form.email) {
+    ElMessage.warning(lt('请先输入邮箱', '請先輸入電子郵件', 'Please enter email first'))
+    return
+  }
+
+  try {
+    sendingCode.value = true
+    await sendCode({
+      email: form.email,
+      purpose: 'REGISTER',
+      source: 'dev-portal',
+      scene: 'DEV_PORTAL_REGISTER'
+    })
+    ElMessage.success(lt('验证码已发送，请查收邮箱', '驗證碼已發送，請查收信箱', 'Verification code sent. Please check your email.'))
+    startCountdown()
+  } catch (error) {
+    ElMessage.error(error.message || lt('发送验证码失败', '發送驗證碼失敗', 'Failed to send verification code'))
+  } finally {
+    sendingCode.value = false
+  }
 }
 
 const handleRegister = async () => {
@@ -97,9 +143,10 @@ const handleRegister = async () => {
     loading.value = true
 
     const res = await register({
-      username: form.username,
       password: form.password,
-      email: form.email
+      email: form.email,
+      code: form.code,
+      accountType: 'DEVELOPER'
     })
 
     userStore.setSession(res.data.user, res.data.token, res.data.refreshToken)
@@ -111,6 +158,10 @@ const handleRegister = async () => {
     loading.value = false
   }
 }
+
+onBeforeUnmount(() => {
+  clearCountdown()
+})
 </script>
 
 <style scoped>
@@ -137,6 +188,15 @@ const handleRegister = async () => {
 
 .full-width {
   width: 100%;
+}
+
+.code-row {
+  display: flex;
+  gap: 12px;
+}
+
+.code-row .el-input {
+  flex: 1;
 }
 
 .auth-footer {

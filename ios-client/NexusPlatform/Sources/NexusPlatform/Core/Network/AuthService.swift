@@ -61,7 +61,8 @@ struct AuthService: AuthServiceProtocol {
         let payload = try await postObject(path: path, body: [
             "email": email,
             "password": password,
-            "code": code
+            "code": code,
+            "accountType": "PLAYER"
         ])
         return try parseAuthSession(from: payload, email: email, path: path)
     }

@@ -19,6 +19,17 @@ spring:
       port: ${SPRING_REDIS_PORT:6379}
       password: ${SPRING_REDIS_PASSWORD:}
       database: ${SPRING_REDIS_DATABASE:0}
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
   servlet:
     multipart:
       max-file-size: 100MB
@@ -74,6 +85,10 @@ platform:
     username: ${PLATFORM_BOOTSTRAP_ADMIN_USERNAME:admin}
     password: ${PLATFORM_BOOTSTRAP_ADMIN_PASSWORD:}
     email: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:admin@nexus.local}
+  email:
+    enabled: ${PLATFORM_EMAIL_ENABLED:false}
+    from-address: ${PLATFORM_EMAIL_FROM:${SPRING_MAIL_USERNAME:noreply@nexus.local}}
+    from-name: ${PLATFORM_EMAIL_FROM_NAME:Nexus Platform}
 
 logging:
   level:

@@ -43,7 +43,7 @@ public class User {
     @PrePersist
     protected void onCreate() {
         if (role == null) {
-            role = UserRole.DEVELOPER;
+            role = UserRole.PLAYER;
         }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
@@ -56,6 +56,7 @@ public class User {
 
     public enum UserRole {
         ADMIN,
-        DEVELOPER
+        DEVELOPER,
+        PLAYER
     }
 }

@@ -18,7 +18,7 @@ public class UserService {
     private final AccountOpsService accountOpsService;
     private final PasswordEncoder passwordEncoder;
 
-    public Result<AuthResponse> register(String email, String password, String code) {
+    public Result<AuthResponse> register(String email, String password, String code, String accountType) {
         String normalizedEmail = normalizeEmail(email);
         if (normalizedEmail == null) {
             return Result.error("Email is required");
@@ -26,7 +26,11 @@ public class UserService {
         if (!isStrongPassword(password)) {
             return Result.error("Password must be at least 8 chars and include letters and digits");
         }
-        if (userRepository.existsByEmail(normalizedEmail)) {
+        User.UserRole role = resolveRegisterRole(accountType);
+        if (role == null) {
+            return Result.error("Invalid account type");
+        }
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             return Result.error("Email already registered");
         }
         Result<Void> verifyResult = accountOpsService.verifyRegisterCode(normalizedEmail, code);
@@ -39,6 +43,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(password));
         user.setEmail(normalizedEmail);
         user.setPhone(null);
+        user.setRole(role);
 
         User savedUser = userRepository.save(user);
         String accessToken = authTokenService.issueAccessToken(savedUser);
@@ -56,9 +61,9 @@ public class UserService {
             return Result.error(429, blockedReason);
         }
 
-        User user = userRepository.findByEmail(normalizedLoginId).orElse(null);
+        User user = userRepository.findByEmailIgnoreCase(normalizedLoginId).orElse(null);
         if (user == null) {
-            user = userRepository.findByUsername(normalizedLoginId).orElse(null);
+            user = userRepository.findByUsernameIgnoreCase(normalizedLoginId).orElse(null);
         }
         if (user == null) {
             loginSecurityService.onLoginFailed(normalizedLoginId, clientIp);
@@ -119,5 +124,17 @@ public class UserService {
         }
         String value = email.trim().toLowerCase();
         return value.isEmpty() ? null : value;
+    }
+
+    private User.UserRole resolveRegisterRole(String accountType) {
+        if (accountType == null || accountType.isBlank()) {
+            return User.UserRole.PLAYER;
+        }
+        String normalized = accountType.trim().toUpperCase();
+        return switch (normalized) {
+            case "PLAYER", "CONSUMER" -> User.UserRole.PLAYER;
+            case "DEVELOPER" -> User.UserRole.DEVELOPER;
+            default -> null;
+        };
     }
 }

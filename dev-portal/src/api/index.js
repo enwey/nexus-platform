@@ -33,6 +33,14 @@ export const register = (data) => {
   })
 }
 
+export const sendCode = (data) => {
+  return request({
+    url: '/user/send-code',
+    method: 'post',
+    data
+  })
+}
+
 export const getCurrentUser = () => {
   return request({
     url: '/user/me',

@@ -23,6 +23,14 @@ public class RolePermissionService {
                     Permission.GAME_DEVELOPER_WRITE,
                     Permission.GAME_AUDIT_SUBMIT,
                     Permission.GAME_VERSION_ROLLBACK
+            ),
+            User.UserRole.PLAYER, EnumSet.of(
+                    Permission.USER_PROFILE_READ,
+                    Permission.USER_PROFILE_WRITE,
+                    Permission.USER_WALLET_READ,
+                    Permission.USER_LOGOUT,
+                    Permission.LIBRARY_READ,
+                    Permission.LIBRARY_WRITE
             )
     );
 

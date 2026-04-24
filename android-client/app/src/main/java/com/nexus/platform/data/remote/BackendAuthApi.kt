@@ -48,6 +48,7 @@ class BackendAuthApi {
             addProperty("password", password)
             if (!code.isNullOrBlank()) {
                 addProperty("code", code)
+                addProperty("accountType", "PLAYER")
             }
         }
         val body = gson.toJson(payload).toRequestBody("application/json; charset=utf-8".toMediaType())

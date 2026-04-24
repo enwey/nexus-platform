@@ -26,6 +26,8 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -35,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AccountOpsService {
     private static final String CODE_PURPOSE_REGISTER = "REGISTER";
     private static final String CODE_PURPOSE_RESET = "RESET_PASSWORD";
@@ -47,6 +50,10 @@ public class AccountOpsService {
     private final VerificationCodeLogRepository verificationCodeLogRepository;
     private final AuthTokenService authTokenService;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationCodeEmailService verificationCodeEmailService;
+
+    @Value("${platform.security.allow-insecure-defaults:false}")
+    private boolean allowInsecureDefaults;
 
     public Result<VerificationCodeResponse> sendCode(String email, String purpose, VerificationCodeIssueContext context) {
         String normalizedEmail = normalizeEmail(email);
@@ -61,7 +68,7 @@ public class AccountOpsService {
             recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
             return result;
         }
-        boolean emailExists = userRepository.existsByEmail(normalizedEmail);
+        boolean emailExists = userRepository.existsByEmailIgnoreCase(normalizedEmail);
         if (CODE_PURPOSE_REGISTER.equals(normalizedPurpose) && emailExists) {
             Result<VerificationCodeResponse> result = Result.error("Email already registered");
             recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
@@ -73,9 +80,33 @@ public class AccountOpsService {
             return result;
         }
         String code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
-        redisTemplate.opsForValue().set(codeKey(normalizedPurpose, normalizedEmail), code, java.time.Duration.ofMinutes(5));
-        Result<VerificationCodeResponse> result = Result.success(new VerificationCodeResponse(normalizedEmail, normalizedPurpose, 300, code));
-        recordVerificationCodeLog(normalizedEmail, normalizedPurpose, code, context, true, null);
+        String verificationKey = codeKey(normalizedPurpose, normalizedEmail);
+        redisTemplate.opsForValue().set(verificationKey, code, java.time.Duration.ofMinutes(5));
+
+        String debugCode = null;
+        try {
+            if (verificationCodeEmailService.isEnabled()) {
+                verificationCodeEmailService.sendVerificationCode(normalizedEmail, normalizedPurpose, code);
+            } else if (allowInsecureDefaults) {
+                debugCode = code;
+                log.warn("Email delivery is disabled. Returning debug verification code in relaxed mode for {}", normalizedEmail);
+            } else {
+                redisTemplate.delete(verificationKey);
+                Result<VerificationCodeResponse> result = Result.error("Email delivery is unavailable");
+                recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
+                return result;
+            }
+        } catch (Exception e) {
+            redisTemplate.delete(verificationKey);
+            Result<VerificationCodeResponse> result = Result.error("Failed to send verification email");
+            recordVerificationCodeLog(normalizedEmail, normalizedPurpose, null, context, false, result.getMessage());
+            return result;
+        }
+
+        Result<VerificationCodeResponse> result = Result.success(
+                new VerificationCodeResponse(normalizedEmail, normalizedPurpose, 300, debugCode)
+        );
+        recordVerificationCodeLog(normalizedEmail, normalizedPurpose, debugCode, context, true, null);
         return result;
     }
 
@@ -106,7 +137,7 @@ public class AccountOpsService {
             return Result.error("Verification code is invalid or expired");
         }
 
-        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail).orElse(null);
         if (user == null) {
             return Result.error("User not found");
         }

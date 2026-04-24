@@ -33,7 +33,7 @@ public class UserController {
 
     @PostMapping("/register")
     public Result<AuthResponse> register(@RequestBody RegisterRequest request) {
-        return userService.register(request.email(), request.password(), request.code());
+        return userService.register(request.email(), request.password(), request.code(), request.accountType());
     }
 
     @PostMapping("/login")
@@ -191,7 +191,7 @@ public class UserController {
     }
 }
 
-record RegisterRequest(String email, String password, String code) {}
+record RegisterRequest(String email, String password, String code, String accountType) {}
 record LoginRequest(String email, String username, String password) {}
 record RefreshRequest(String refreshToken) {}
 record SendCodeRequest(String email, String purpose, String source, String scene) {}

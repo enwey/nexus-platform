@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="auth-page">
     <el-card class="auth-card">
       <template #header>
@@ -9,8 +9,8 @@
       </template>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item :label="lt('用户名', '使用者名稱', 'Username')" prop="username">
-          <el-input v-model="form.username" :placeholder="lt('请输入用户名', '請輸入使用者名稱', 'Enter username')" />
+        <el-form-item :label="lt('邮箱', '電子郵件', 'Email')" prop="email">
+          <el-input v-model="form.email" :placeholder="lt('请输入邮箱', '請輸入電子郵件', 'Enter email')" />
         </el-form-item>
 
         <el-form-item :label="lt('密码', '密碼', 'Password')" prop="password">
@@ -47,12 +47,15 @@ const formRef = ref()
 const loading = ref(false)
 
 const form = reactive({
-  username: '',
+  email: '',
   password: ''
 })
 
 const rules = {
-  username: [{ required: true, message: lt('请输入用户名', '請輸入使用者名稱', 'Enter username'), trigger: 'blur' }],
+  email: [
+    { required: true, message: lt('请输入邮箱', '請輸入電子郵件', 'Enter email'), trigger: 'blur' },
+    { type: 'email', message: lt('请输入正确的邮箱地址', '請輸入正確的電子郵件地址', 'Enter a valid email address'), trigger: 'blur' }
+  ],
   password: [{ required: true, message: lt('请输入密码', '請輸入密碼', 'Enter password'), trigger: 'blur' }]
 }
 
