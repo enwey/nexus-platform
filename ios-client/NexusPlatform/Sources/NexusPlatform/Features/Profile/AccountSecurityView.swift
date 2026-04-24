@@ -28,30 +28,28 @@ struct AccountSecurityView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
+        VStack(spacing: 20) {
+            menuCard
 
-            VStack(spacing: 20) {
-                menuCard
-
-                if isLoggedIn == false {
-                    primaryButton(title: copy.loginButton, color: Color(hex: 0x6B4EFF)) {
-                        onRequestLogin?()
-                    }
-                } else {
-                    primaryButton(title: copy.logoutButton, color: Color(hex: 0xE5484D)) {
-                        showLogoutConfirm = true
-                    }
+            if isLoggedIn == false {
+                primaryButton(title: copy.loginButton, color: Color(hex: 0x6B4EFF)) {
+                    onRequestLogin?()
+                }
+            } else {
+                primaryButton(title: copy.logoutButton, color: Color(hex: 0xE5484D)) {
+                    showLogoutConfirm = true
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 12)
-
-            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
         .confirmationDialog(copy.logoutButton, isPresented: $showLogoutConfirm, titleVisibility: .visible) {
             Button(copy.confirm, role: .destructive) {
                 onLogoutCurrent?()
@@ -72,43 +70,8 @@ struct AccountSecurityView: View {
             AccountTerminationView(language: selectedLanguage)
         }
         .overlay(alignment: .bottom) {
-            if let toastMessage {
-                Text(toastMessage)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.black.opacity(0.82), in: Capsule())
-                    .padding(.bottom, 26)
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            self.toastMessage = nil
-                        }
-                    }
-            }
+            NativeToastOverlay(message: $toastMessage)
         }
-    }
-
-    private var header: some View {
-        HStack(spacing: 0) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 48, height: 48)
-            }
-            .buttonStyle(.plain)
-
-            Text(copy.title)
-                .font(.system(size: 28, weight: .heavy))
-                .foregroundStyle(.white)
-
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
     }
 
     private var menuCard: some View {
@@ -303,12 +266,19 @@ private struct ChangePasswordView: View {
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
     }
 
     private func sendCode() {
         Task {
             do {
-                try await authService.sendCode(email: email, purpose: "CHANGE_PASSWORD", scene: "PROFILE_CHANGE_PASSWORD")
+                try await authService.sendCode(
+                    email: email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                    purpose: "CHANGE_PASSWORD",
+                    source: "ios-client",
+                    scene: "PROFILE_CHANGE_PASSWORD"
+                )
                 await MainActor.run {
                     message = copy.codeSent
                     startCooldown()
@@ -326,6 +296,12 @@ private struct ChangePasswordView: View {
             guard code.isEmpty == false, password.isEmpty == false else {
                 await MainActor.run {
                     message = copy.incomplete
+                }
+                return
+            }
+            guard password.count >= 8 else {
+                await MainActor.run {
+                    message = copy.passwordTooShort
                 }
                 return
             }
@@ -373,7 +349,7 @@ private struct ChangePasswordView: View {
                     .foregroundStyle(.white)
                     .frame(width: 48, height: 48)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NativeNavigationButtonStyle())
 
             Text(title)
                 .font(.system(size: 28, weight: .heavy))
@@ -429,6 +405,8 @@ private struct DeviceManagementView: View {
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
         .onAppear { viewModel.load() }
     }
 
@@ -442,7 +420,7 @@ private struct DeviceManagementView: View {
                     .foregroundStyle(.white)
                     .frame(width: 48, height: 48)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NativeNavigationButtonStyle())
 
             Text(copy.title)
                 .font(.system(size: 28, weight: .heavy))
@@ -496,7 +474,7 @@ private struct AccountTerminationView: View {
                         .foregroundStyle(.white)
                         .frame(width: 48, height: 48)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(NativeNavigationButtonStyle())
 
                 Text(copy.title)
                     .font(.system(size: 28, weight: .heavy))
@@ -550,6 +528,8 @@ private struct AccountTerminationView: View {
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
         .task {
             while countdown > 0 {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -721,17 +701,18 @@ private struct ChangePasswordCopy {
     let update: String
     let codeSent: String
     let incomplete: String
+    let passwordTooShort: String
     let passwordMismatch: String
     let success: String
 
     static func forLanguage(_ language: AppLanguage) -> ChangePasswordCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "修改密码", code: "验证码", sendCode: "发送验证码", newPassword: "新密码", confirmPassword: "确认新密码", update: "更新密码", codeSent: "验证码已发送", incomplete: "请填写完整信息", passwordMismatch: "两次输入的密码不一致", success: "密码已更新")
+            return .init(title: "修改密码", code: "验证码", sendCode: "发送验证码", newPassword: "新密码", confirmPassword: "确认新密码", update: "更新密码", codeSent: "验证码已发送", incomplete: "请填写完整信息", passwordTooShort: "密码长度不能少于 8 位", passwordMismatch: "两次输入的密码不一致", success: "密码已更新")
         case .traditionalChinese:
-            return .init(title: "修改密碼", code: "驗證碼", sendCode: "發送驗證碼", newPassword: "新密碼", confirmPassword: "確認新密碼", update: "更新密碼", codeSent: "驗證碼已發送", incomplete: "請填寫完整資訊", passwordMismatch: "兩次輸入的密碼不一致", success: "密碼已更新")
+            return .init(title: "修改密碼", code: "驗證碼", sendCode: "發送驗證碼", newPassword: "新密碼", confirmPassword: "確認新密碼", update: "更新密碼", codeSent: "驗證碼已發送", incomplete: "請填寫完整資訊", passwordTooShort: "密碼長度不能少於 8 位", passwordMismatch: "兩次輸入的密碼不一致", success: "密碼已更新")
         case .english:
-            return .init(title: "Change Password", code: "Code", sendCode: "Send Code", newPassword: "New Password", confirmPassword: "Confirm New Password", update: "Update Password", codeSent: "Code sent", incomplete: "Please complete all fields", passwordMismatch: "Passwords do not match", success: "Password updated")
+            return .init(title: "Change Password", code: "Code", sendCode: "Send Code", newPassword: "New Password", confirmPassword: "Confirm Password", update: "Update Password", codeSent: "Code sent", incomplete: "Please complete all fields", passwordTooShort: "Password must be at least 8 characters", passwordMismatch: "Passwords do not match", success: "Password updated")
         }
     }
 }

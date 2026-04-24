@@ -31,7 +31,7 @@ function safeRemove(key) {
 }
 
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://47.99.34.148:81/api/v1',
   timeout: 30000
 })
 

@@ -54,6 +54,24 @@ public record DiscoverFeedItem(
         );
     }
 
+    public DiscoverFeedItem withDownloadUrl(String overrideDownloadUrl) {
+        return new DiscoverFeedItem(
+                appId,
+                name,
+                description,
+                iconUrl,
+                coverUrl,
+                logoUrl,
+                overrideDownloadUrl,
+                version,
+                md5,
+                requiresOnline,
+                hotScore,
+                category,
+                tags
+        );
+    }
+
     private static String blankToNull(String value) {
         if (value == null) {
             return null;

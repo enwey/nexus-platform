@@ -2,6 +2,8 @@ import SwiftUI
 
 @MainActor
 final class BillingDetailViewModel: ObservableObject {
+    private static var cache: [Int64: BillingDetail] = [:]
+
     @Published private(set) var detail: BillingDetail?
     @Published private(set) var isLoading = false
     @Published private(set) var message: String?
@@ -13,21 +15,28 @@ final class BillingDetailViewModel: ObservableObject {
     }
 
     func load(id: Int64, fallback: BillingRecord) {
+        if let cached = Self.cache[id] {
+            detail = cached
+        } else if detail == nil {
+            detail = BillingDetail(
+                id: fallback.id,
+                type: fallback.type,
+                title: fallback.title,
+                subtitle: fallback.subtitle,
+                amount: fallback.amount,
+                createdAtText: fallback.createdAtText,
+                receiptURL: ""
+            )
+        }
+
         Task {
             isLoading = true
             defer { isLoading = false }
             do {
-                detail = try await service.fetchBillingDetail(id: id)
+                let loaded = try await service.fetchBillingDetail(id: id)
+                detail = loaded
+                Self.cache[id] = loaded
             } catch {
-                detail = BillingDetail(
-                    id: fallback.id,
-                    type: fallback.type,
-                    title: fallback.title,
-                    subtitle: fallback.subtitle,
-                    amount: fallback.amount,
-                    createdAtText: fallback.createdAtText,
-                    receiptURL: ""
-                )
                 message = error.localizedDescription
             }
         }
@@ -42,15 +51,12 @@ final class BillingDetailViewModel: ObservableObject {
 struct BillingDetailView: View {
     let record: BillingRecord
 
-    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = BillingDetailViewModel()
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-
-            VStack(alignment: .leading, spacing: 0) {
-                if let detail = viewModel.detail {
+        ZStack(alignment: .topLeading) {
+            if let detail = viewModel.detail {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(detail.title)
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.white)
@@ -80,72 +86,76 @@ struct BillingDetailView: View {
                         .font(.system(size: 14))
                         .foregroundStyle(Color(hex: 0xA0A0A0))
                         .padding(.top, 4)
-                } else if viewModel.isLoading {
-                    Text(copy.empty)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                } else {
+                }
+                .transition(NativeMotion.contentRevealTransition)
+            } else if viewModel.isLoading {
+                billingDetailSkeleton
+                    .transition(NativeMotion.stateSwapTransition)
+            } else {
+                NativeStateCard {
                     Text(copy.empty)
                         .font(.system(size: 14))
                         .foregroundStyle(Color(hex: 0xA0A0A0))
                 }
+                .transition(NativeMotion.stateSwapTransition)
+            }
 
-                if let message = viewModel.message {
+            if let message = viewModel.message {
+                NativeStateCard {
                     Text(message)
                         .font(.system(size: 13))
                         .foregroundStyle(Color(hex: 0xA0A0A0))
-                        .padding(.top, 12)
+                        .multilineTextAlignment(.center)
                 }
+                .padding(.top, 12)
             }
-            .padding(.horizontal, 24)
 
-            Spacer()
+            if viewModel.isLoading && viewModel.detail != nil {
+                NativeSectionRefreshOverlay(lineWidths: [88, 60], cornerRadius: 18)
+                    .padding(.top, 12)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 24)
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading)
+        .animation(NativeMotion.overlayTransition, value: viewModel.detail != nil)
         .onAppear {
             viewModel.load(id: record.id, fallback: record)
-        }
-    }
-
-    private var header: some View {
-        VStack(spacing: 0) {
-            Spacer()
-                .frame(height: 20)
-
-            HStack(spacing: 0) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
-                }
-                .buttonStyle(.plain)
-
-                Text(copy.title)
-                    .font(.system(size: 28, weight: .heavy))
-                    .foregroundStyle(.white)
-
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-
-            Spacer()
-                .frame(height: 20)
         }
     }
 
     private var copy: BillingDetailCopy {
         .forLanguage(AppLanguageStore.currentSync())
     }
+
+    private var billingDetailSkeleton: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            NativeSkeletonBlock(width: 184, height: 28, cornerRadius: 10)
+            Spacer().frame(height: 10)
+            NativeSkeletonBlock(width: 236, height: 14, cornerRadius: 7)
+            Spacer().frame(height: 18)
+            NativeSkeletonBlock(width: 124, height: 15, cornerRadius: 7)
+            Spacer().frame(height: 8)
+            NativeSkeletonBlock(width: 108, height: 15, cornerRadius: 7)
+            Spacer().frame(height: 8)
+            NativeSkeletonBlock(width: 168, height: 15, cornerRadius: 7)
+            Spacer().frame(height: 8)
+            NativeSkeletonBlock(height: 14, cornerRadius: 7)
+        }
+    }
 }
 
 private struct BillingDetailCopy {
     let title: String
+    let loading: String
     let empty: String
+    let refreshing: String
     let amountFormat: String
     let typeFormat: String
     let timeFormat: String
@@ -156,7 +166,9 @@ private struct BillingDetailCopy {
         case .simplifiedChinese:
             return .init(
                 title: "交易详情",
+                loading: "加载详情中...",
                 empty: "暂无交易详情",
+                refreshing: "正在刷新",
                 amountFormat: "金额：%@",
                 typeFormat: "类型：%@",
                 timeFormat: "时间：%@",
@@ -165,7 +177,9 @@ private struct BillingDetailCopy {
         case .traditionalChinese:
             return .init(
                 title: "交易詳情",
+                loading: "載入詳情中...",
                 empty: "暫無交易詳情",
+                refreshing: "正在刷新",
                 amountFormat: "金額：%@",
                 typeFormat: "類型：%@",
                 timeFormat: "時間：%@",
@@ -174,7 +188,9 @@ private struct BillingDetailCopy {
         case .english:
             return .init(
                 title: "Transaction Detail",
+                loading: "Loading detail...",
                 empty: "No transaction detail",
+                refreshing: "Refreshing",
                 amountFormat: "Amount: %@",
                 typeFormat: "Type: %@",
                 timeFormat: "Time: %@",

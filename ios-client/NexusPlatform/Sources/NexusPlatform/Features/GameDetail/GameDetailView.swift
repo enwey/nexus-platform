@@ -53,6 +53,8 @@ struct GameDetailView: View {
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
         .onAppear { viewModel.load(appID: game.id) }
     }
 
@@ -94,6 +96,7 @@ struct GameDetailView: View {
             .frame(width: 88, height: 48)
             .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .padding(16)
+            .buttonStyle(NativeNavigationButtonStyle())
         }
         .frame(maxWidth: .infinity)
         .frame(height: 280)

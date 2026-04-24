@@ -7,15 +7,8 @@ struct LibraryView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            if viewModel.isLoading {
-                VStack(spacing: 14) {
-                    ProgressView()
-                    Text(copy.loading)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 120)
+            if viewModel.isLoading && hasLibraryContent == false && viewModel.allGames.isEmpty {
+                librarySkeleton
             } else {
                 VStack(alignment: .leading, spacing: 24) {
                     if hasLibraryContent {
@@ -45,6 +38,67 @@ struct LibraryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { viewModel.load() }
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading && (hasLibraryContent || viewModel.allGames.isEmpty == false))
+        .overlay(alignment: .top) {
+            if viewModel.isLoading && (hasLibraryContent || viewModel.allGames.isEmpty == false) {
+                NativeRefreshPill(text: copy.refreshing)
+                    .padding(.top, 10)
+            }
+        }
+    }
+
+    private var librarySkeleton: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x24253A), Color(hex: 0x1C1C1F)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(height: 260)
+                .overlay(alignment: .bottomLeading) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        NativeSkeletonBlock(width: 78, height: 22, cornerRadius: 12)
+                        NativeSkeletonText(widths: [186, 232], lineHeight: 14)
+                        NativeSkeletonBlock(width: 116, height: 42, cornerRadius: 21)
+                    }
+                    .padding(24)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                )
+
+            skeletonSection(titleWidth: 118)
+            skeletonSection(titleWidth: 132)
+
+            Text(copy.loading)
+                .font(.system(size: 12))
+                .foregroundStyle(Color(hex: 0x6F7076))
+                .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
+        .padding(.bottom, 96)
+    }
+
+    private func skeletonSection(titleWidth: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            NativeSkeletonBlock(width: titleWidth, height: 26, cornerRadius: 8)
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
+                ForEach(0..<8, id: \.self) { _ in
+                    VStack(spacing: 8) {
+                        NativeSkeletonBlock(height: 76, cornerRadius: 18)
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(1, contentMode: .fit)
+                        NativeSkeletonBlock(width: 56, height: 10, cornerRadius: 5)
+                        NativeSkeletonBlock(width: 42, height: 24, cornerRadius: 12)
+                    }
+                }
+            }
+        }
     }
 
     private var hasLibraryContent: Bool {
@@ -340,6 +394,7 @@ struct LibraryView: View {
 private struct LibraryCopy {
     let title: String
     let loading: String
+    let refreshing: String
     let runningTag: String
     let resumeSubtitle: String
     let resumeAction: String
@@ -365,6 +420,7 @@ private struct LibraryCopy {
             return .init(
                 title: "我的库",
                 loading: "正在准备你的游戏库...",
+                refreshing: "正在刷新",
                 runningTag: "进行中",
                 resumeSubtitle: "继续上次的进度，马上回到游戏里。",
                 resumeAction: "继续游玩",
@@ -388,6 +444,7 @@ private struct LibraryCopy {
             return .init(
                 title: "我的庫",
                 loading: "正在準備你的遊戲庫...",
+                refreshing: "正在刷新",
                 runningTag: "進行中",
                 resumeSubtitle: "繼續上次的進度，馬上回到遊戲裡。",
                 resumeAction: "繼續遊玩",
@@ -411,6 +468,7 @@ private struct LibraryCopy {
             return .init(
                 title: "Library",
                 loading: "Preparing your library...",
+                refreshing: "Refreshing",
                 runningTag: "Running",
                 resumeSubtitle: "Jump back into your last session right away.",
                 resumeAction: "Continue",

@@ -25,7 +25,12 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +57,10 @@ import com.nexus.platform.domain.model.DiscoverCategory
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.ui.components.GameLogo
+import com.nexus.platform.ui.components.SectionRefreshOverlay
+import com.nexus.platform.ui.components.SkeletonMotionTokens
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonText
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
@@ -82,6 +91,7 @@ fun DiscoverScreen(
     onRankingClick: () -> Unit
 ) {
     val allCategoryLabel = stringResource(R.string.discover_category_all)
+    var showInitialSkeleton by rememberSaveable { mutableStateOf(games.isEmpty()) }
     val resolvedCategories = remember(categories, allCategoryLabel) {
         val allItem = DiscoverCategory(key = "all", label = allCategoryLabel)
         val fromServer = categories
@@ -110,6 +120,14 @@ fun DiscoverScreen(
         if (refreshing) {
             delay(450)
             refreshing = false
+        }
+    }
+    LaunchedEffect(games, hero, categories) {
+        if (games.isNotEmpty() || hero != null || categories.isNotEmpty()) {
+            showInitialSkeleton = false
+        } else if (showInitialSkeleton) {
+            delay(900)
+            showInitialSkeleton = false
         }
     }
 
@@ -146,7 +164,10 @@ fun DiscoverScreen(
             .fillMaxSize()
             .pullRefresh(pullRefreshState)
     ) {
-        LazyColumn(
+        if (games.isEmpty() && !refreshing && showInitialSkeleton) {
+            DiscoverSkeleton()
+        } else {
+            LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -163,6 +184,26 @@ fun DiscoverScreen(
                             heroTarget?.let(onGameClick)
                         }
                     )
+                    AnimatedVisibility(
+                        visible = refreshing,
+                        enter = fadeIn(animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis)) +
+                            slideInVertically(
+                                animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+                                initialOffsetY = { -it / 4 }
+                            ),
+                        exit = fadeOut(animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis)) +
+                            slideOutVertically(
+                                animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis),
+                                targetOffsetY = { -it / 5 }
+                            )
+                    ) {
+                        SectionRefreshOverlay(
+                            modifier = Modifier.matchParentSize(),
+                            lineWidths = listOf(108.dp, 72.dp),
+                            cornerRadius = 20.dp,
+                            label = stringResource(R.string.common_loading)
+                        )
+                    }
                 }
             }
 
@@ -185,12 +226,34 @@ fun DiscoverScreen(
         if (isAllCategory) {
             item {
                 Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                SectionHeader(
-                    title = stringResource(R.string.discover_section_rank),
-                    action = stringResource(R.string.discover_view_more),
-                    onActionClick = onRankingClick
-                )
-            }
+                    Box {
+                        SectionHeader(
+                            title = stringResource(R.string.discover_section_rank),
+                            action = stringResource(R.string.discover_view_more),
+                            onActionClick = onRankingClick
+                        )
+                        AnimatedVisibility(
+                            visible = refreshing,
+                            enter = fadeIn(animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis)) +
+                                slideInVertically(
+                                    animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+                                    initialOffsetY = { -it / 4 }
+                                ),
+                            exit = fadeOut(animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis)) +
+                                slideOutVertically(
+                                    animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis),
+                                    targetOffsetY = { -it / 5 }
+                                )
+                        ) {
+                            SectionRefreshOverlay(
+                                modifier = Modifier.matchParentSize(),
+                                lineWidths = listOf(84.dp, 58.dp),
+                                cornerRadius = 18.dp,
+                                label = stringResource(R.string.common_loading)
+                            )
+                        }
+                    }
+                }
             }
 
             if (rankedGames.isEmpty()) {
@@ -219,10 +282,32 @@ fun DiscoverScreen(
         if (myGameSource.isNotEmpty()) {
             item {
                 Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
-                    SectionHeader(
-                        title = selectedCategory.label,
-                        action = null
-                    )
+                    Box {
+                        SectionHeader(
+                            title = selectedCategory.label,
+                            action = null
+                        )
+                        AnimatedVisibility(
+                            visible = refreshing,
+                            enter = fadeIn(animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis)) +
+                                slideInVertically(
+                                    animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+                                    initialOffsetY = { -it / 4 }
+                                ),
+                            exit = fadeOut(animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis)) +
+                                slideOutVertically(
+                                    animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis),
+                                    targetOffsetY = { -it / 5 }
+                                )
+                        ) {
+                            SectionRefreshOverlay(
+                                modifier = Modifier.matchParentSize(),
+                                lineWidths = listOf(72.dp, 54.dp),
+                                cornerRadius = 18.dp,
+                                label = stringResource(R.string.common_loading)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -258,7 +343,11 @@ fun DiscoverScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (loadedCount < myGameSource.size) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            repeat(2) { index ->
+                                DiscoverSkeletonRow(rank = loadedGames.size + index + 1)
+                            }
+                        }
                     } else {
                         Text(
                             text = stringResource(R.string.library_load_end),
@@ -269,14 +358,109 @@ fun DiscoverScreen(
                 }
             }
         }
+            }
         }
         PullRefreshIndicator(
             refreshing = refreshing,
             state = pullRefreshState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 8.dp)
+                .padding(top = 8.dp),
+            backgroundColor = BackgroundSurface,
+            contentColor = Primary
         )
+    }
+}
+
+@Composable
+private fun DiscoverSkeleton() {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+        item {
+            Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xFF24253A), BackgroundSurface)))
+                        .padding(20.dp),
+                    contentAlignment = Alignment.BottomStart
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        SkeletonBlock(width = 52.dp, height = 20.dp, cornerRadius = 8.dp)
+                        SkeletonText(widths = listOf(184.dp, 228.dp), lineHeight = 14.dp)
+                    }
+                }
+            }
+        }
+        item {
+            Row(
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(56.dp, 72.dp, 72.dp, 72.dp).forEach { width ->
+                    SkeletonBlock(width = width, height = 34.dp, cornerRadius = 17.dp)
+                }
+            }
+        }
+        item {
+            Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SkeletonBlock(width = 102.dp, height = 24.dp, cornerRadius = 8.dp)
+                        SkeletonBlock(width = 62.dp, height = 12.dp, cornerRadius = 6.dp)
+                    }
+                    repeat(3) { index ->
+                        DiscoverSkeletonRow(rank = index + 1)
+                    }
+                }
+            }
+        }
+        item {
+            Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = TopLevelBottomPadding)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SkeletonBlock(width = 78.dp, height = 24.dp, cornerRadius = 8.dp)
+                    repeat(4) { index ->
+                        DiscoverSkeletonRow(rank = index + 1)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiscoverSkeletonRow(rank: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(BackgroundSurface)
+            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = rank.toString(),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White.copy(alpha = 0.12f)
+        )
+        SkeletonBlock(width = 52.dp, height = 52.dp, cornerRadius = 12.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            SkeletonBlock(width = 128.dp, height = 14.dp, cornerRadius = 7.dp)
+            Spacer(modifier = Modifier.height(6.dp))
+            SkeletonBlock(width = 166.dp, height = 12.dp, cornerRadius = 6.dp)
+        }
     }
 }
 

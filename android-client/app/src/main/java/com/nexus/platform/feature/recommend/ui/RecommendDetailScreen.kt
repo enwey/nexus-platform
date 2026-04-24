@@ -1,5 +1,7 @@
 package com.nexus.platform.feature.recommend.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,6 +39,9 @@ import com.nexus.platform.R
 import com.nexus.platform.domain.model.RecommendTodayItem
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.ui.components.GameLogo
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonMotionTokens
+import com.nexus.platform.ui.components.SkeletonText
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
@@ -72,12 +77,27 @@ fun RecommendDetailScreen(
                         .fillMaxWidth()
                         .height(420.dp)
                 ) {
-                    AsyncImage(
-                        model = item.coverUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    if (item.coverUrl.isBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Brush.linearGradient(listOf(Color(0xFF24253A), BackgroundSurface)))
+                                .padding(24.dp),
+                            contentAlignment = Alignment.BottomStart
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                SkeletonBlock(width = 76.dp, height = 14.dp, cornerRadius = 7.dp)
+                                SkeletonText(widths = listOf(188.dp, 236.dp), lineHeight = 16.dp, spacing = 10.dp, cornerRadius = 8.dp)
+                            }
+                        }
+                    } else {
+                        AsyncImage(
+                            model = item.coverUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -134,23 +154,38 @@ fun RecommendDetailScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(18.dp))
                                 .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
-                                .background(BackgroundSurfaceElevated)
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                            .background(BackgroundSurfaceElevated)
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Crossfade(
+                            targetState = game.iconUrl.isBlank(),
+                            animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+                            label = "recommendDetailGameIcon"
+                        ) { showSkeletonIcon ->
                             Box(
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(BackgroundSurface)
                             ) {
-                                GameLogo(
-                                    iconUrl = game.iconUrl,
-                                    seed = "${game.id}_detail",
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                if (showSkeletonIcon) {
+                                    SkeletonBlock(modifier = Modifier.fillMaxSize(), height = 56.dp, cornerRadius = 12.dp)
+                                } else {
+                                    GameLogo(
+                                        iconUrl = game.iconUrl,
+                                        seed = "${game.id}_detail",
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                             }
-                            Spacer(modifier = Modifier.size(12.dp))
+                        }
+                        Spacer(modifier = Modifier.size(12.dp))
+                        Crossfade(
+                            targetState = game.description.ifBlank { game.category },
+                            animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+                            label = "recommendDetailGameMeta"
+                        ) { subtitle ->
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = game.name,
@@ -158,30 +193,31 @@ fun RecommendDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = game.description.ifBlank { game.category },
+                                    text = subtitle,
                                     color = TextMuted,
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(Brush.linearGradient(listOf(PrimaryStart, PrimaryEnd)))
-                                    .clickable { onPlayClick() }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = item.actionText.ifBlank { stringResource(R.string.discover_quick_play) },
-                                    color = TextMain,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(Brush.linearGradient(listOf(PrimaryStart, PrimaryEnd)))
+                                .clickable { onPlayClick() }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = item.actionText.ifBlank { stringResource(R.string.discover_quick_play) },
+                                color = TextMain,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
+            }
             }
         }
     }

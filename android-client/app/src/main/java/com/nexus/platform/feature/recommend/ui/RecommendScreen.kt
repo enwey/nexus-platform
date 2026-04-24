@@ -1,5 +1,11 @@
 package com.nexus.platform.feature.recommend.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,9 +52,14 @@ import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.RecommendTodayItem
 import com.nexus.platform.ui.components.GameLogo
+import com.nexus.platform.ui.components.SectionRefreshOverlay
+import com.nexus.platform.ui.components.SkeletonMotionTokens
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonText
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.BorderLight
+import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
 
 private val TopLevelBottomPadding = 96.dp
@@ -89,13 +100,9 @@ fun RecommendScreen(
             contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = TopLevelBottomPadding),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            if (loading) {
-                item {
-                    Text(
-                        text = stringResource(R.string.loading_games),
-                        color = TextMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+            if (loading && items.isEmpty()) {
+                items(3) {
+                    RecommendSkeletonCard()
                 }
             } else if (items.isEmpty()) {
                 item {
@@ -109,6 +116,7 @@ fun RecommendScreen(
                 itemsIndexed(items, key = { index, item -> "${item.appId}_$index" }) { _, item ->
                     RecommendTodayCard(
                         item = item,
+                        isRefreshing = loading,
                         onClick = { onCardClick(item, gameMap[item.appId]) },
                         onPlayClick = {
                             gameMap[item.appId]?.let(onGameClick)
@@ -122,14 +130,57 @@ fun RecommendScreen(
             state = pullRefreshState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 8.dp)
+                .padding(top = 8.dp),
+            backgroundColor = BackgroundSurface,
+            contentColor = Primary
         )
+    }
+}
+
+@Composable
+private fun RecommendSkeletonCard() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(420.dp)
+            .clip(RoundedCornerShape(32.dp))
+            .border(1.dp, BorderLight, RoundedCornerShape(32.dp))
+            .background(Brush.linearGradient(listOf(Color(0xFF24253A), BackgroundSurface)))
+            .padding(22.dp)
+    ) {
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            SkeletonBlock(width = 74.dp, height = 12.dp, cornerRadius = 6.dp)
+            androidx.compose.foundation.layout.Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                SkeletonText(widths = listOf(210.dp, 168.dp), lineHeight = 22.dp, spacing = 10.dp, cornerRadius = 8.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SkeletonBlock(width = 44.dp, height = 44.dp, cornerRadius = 10.dp)
+                    Spacer(modifier = Modifier.size(10.dp))
+                    androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+                        SkeletonBlock(width = 96.dp, height = 12.dp, cornerRadius = 6.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SkeletonBlock(width = 54.dp, height = 10.dp, cornerRadius = 5.dp)
+                    }
+                    SkeletonBlock(width = 84.dp, height = 32.dp, cornerRadius = 16.dp)
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun RecommendTodayCard(
     item: RecommendTodayItem,
+    isRefreshing: Boolean,
     onClick: () -> Unit,
     onPlayClick: () -> Unit
 ) {
@@ -233,6 +284,26 @@ private fun RecommendTodayCard(
                     }
                 }
             }
+        }
+        AnimatedVisibility(
+            visible = isRefreshing,
+            enter = fadeIn(animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis)) +
+                slideInVertically(
+                    animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+                    initialOffsetY = { -it / 4 }
+                ),
+            exit = fadeOut(animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis)) +
+                slideOutVertically(
+                    animationSpec = tween(SkeletonMotionTokens.OverlayExitMillis),
+                    targetOffsetY = { -it / 5 }
+                )
+        ) {
+            SectionRefreshOverlay(
+                modifier = Modifier.matchParentSize(),
+                lineWidths = listOf(90.dp, 60.dp),
+                cornerRadius = 32.dp,
+                label = stringResource(R.string.common_loading)
+            )
         }
     }
 }

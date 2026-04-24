@@ -33,14 +33,7 @@ function safeRemove(key) {
 function resolveApiBaseUrl() {
   const envBaseUrl = import.meta.env.VITE_API_BASE_URL
   if (envBaseUrl) return envBaseUrl
-
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    const protocol = window.location.protocol || 'http:'
-    const host = window.location.hostname
-    return `${protocol}//${host}:8080/api/v1`
-  }
-
-  return 'http://localhost:8080/api/v1'
+  return 'http://47.99.34.148:81/api/v1'
 }
 
 const request = axios.create({

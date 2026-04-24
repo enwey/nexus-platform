@@ -16,15 +16,18 @@ struct ReceiptPageView: View {
                 errorMessage: $errorMessage
             )
             .id(reloadToken)
+            .opacity(isLoading || errorMessage != nil ? 0.001 : 1)
+            .animation(NativeMotion.overlayTransition, value: isLoading)
+            .animation(NativeMotion.overlayTransition, value: errorMessage != nil)
 
             if isLoading {
-                ProgressView(copy.loading)
-                    .padding(16)
-                    .nexusGlassCard()
+                receiptSkeleton
+                    .padding(.horizontal, 24)
+                    .transition(NativeMotion.stateSwapTransition)
             }
 
             if let errorMessage {
-                VStack(spacing: 10) {
+                NativeStateCard {
                     Text(errorMessage)
                         .font(.footnote)
                         .multilineTextAlignment(.center)
@@ -36,13 +39,34 @@ struct ReceiptPageView: View {
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(AppTheme.ColorToken.auroraBlue)
                 }
-                .padding(16)
-                .nexusGlassCard()
+                .padding(.horizontal, 24)
+                .transition(NativeMotion.stateSwapTransition)
             }
         }
         .nexusPageBackground()
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
+        .animation(NativeMotion.overlayTransition, value: isLoading)
+        .animation(NativeMotion.overlayTransition, value: errorMessage != nil)
+    }
+
+    private var receiptSkeleton: some View {
+        VStack(spacing: 16) {
+            NativeSkeletonBlock(height: 18, cornerRadius: 9)
+            NativeSkeletonBlock(height: 18, cornerRadius: 9)
+            NativeSkeletonBlock(height: 18, cornerRadius: 9)
+            NativeSkeletonBlock(width: 168, height: 16, cornerRadius: 8)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity)
+        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     private var copy: ReceiptCopy {

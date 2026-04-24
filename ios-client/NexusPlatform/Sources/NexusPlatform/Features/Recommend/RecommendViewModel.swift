@@ -32,8 +32,10 @@ final class RecommendViewModel: ObservableObject {
                 items = recommends
                 gamesByID = Dictionary(uniqueKeysWithValues: games.map { ($0.id, $0) })
             } catch {
-                items = []
-                gamesByID = [:]
+                if items.isEmpty {
+                    items = []
+                    gamesByID = [:]
+                }
                 errorMessage = error.localizedDescription
             }
         }

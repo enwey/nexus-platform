@@ -44,7 +44,7 @@ struct BackendEnvironment {
            let url = URL(string: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
-        return BackendEnvironment(apiBaseURL: URL(string: "http://localhost:8080/api/v1")!)
+        return BackendEnvironment(apiBaseURL: URL(string: "http://47.99.34.148:81/api/v1")!)
     }
 }
 

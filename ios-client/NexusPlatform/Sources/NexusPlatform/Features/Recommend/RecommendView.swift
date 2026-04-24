@@ -10,16 +10,16 @@ struct RecommendView: View {
                     errorBanner(error)
                 }
 
-                if viewModel.isLoading {
-                    Text(copy.loading)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                if viewModel.isLoading && viewModel.items.isEmpty {
+                    ForEach(0..<3, id: \.self) { _ in
+                        RecommendSkeletonCard()
+                    }
                 } else if viewModel.items.isEmpty {
-                    Text(copy.empty)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    NativeStateCard {
+                        Text(copy.empty)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color(hex: 0xA0A0A0))
+                    }
                 } else {
                     ForEach(viewModel.items) { item in
                         NavigationLink(
@@ -28,7 +28,7 @@ struct RecommendView: View {
                                 game: resolvedGame(for: item)
                             )
                         ) {
-                            RecommendCard(item: item, copy: copy)
+                            RecommendCard(item: item, copy: copy, isRefreshing: viewModel.isLoading)
                         }
                         .buttonStyle(.plain)
                     }
@@ -43,19 +43,22 @@ struct RecommendView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { viewModel.load() }
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading && viewModel.items.isEmpty == false)
+        .overlay(alignment: .top) {
+            if viewModel.isLoading && viewModel.items.isEmpty == false {
+                NativeRefreshPill(text: copy.refreshing)
+                    .padding(.top, 10)
+            }
+        }
     }
 
     private func errorBanner(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(Color(hex: 0xFFB3B3))
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(hex: 0x3A1616), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(hex: 0x7A2C2C), lineWidth: 1)
-            )
+        NativeStateCard {
+            Text(text)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color(hex: 0xFFB3B3))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private func resolvedGame(for item: RecommendTodayItem) -> Game {
@@ -79,9 +82,55 @@ struct RecommendView: View {
     }
 }
 
+private struct RecommendSkeletonCard: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 32, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [Color(hex: 0x24253A), Color(hex: 0x1A1A1D)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(height: 420)
+            .overlay {
+                VStack(alignment: .leading, spacing: 0) {
+                    NativeSkeletonBlock(width: 74, height: 12, cornerRadius: 6)
+
+                    Spacer()
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        NativeSkeletonText(widths: [210, 168], lineHeight: 22, spacing: 10, cornerRadius: 8)
+
+                        HStack(spacing: 10) {
+                            NativeSkeletonBlock(width: 44, height: 44, cornerRadius: 10)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                NativeSkeletonBlock(width: 96, height: 12, cornerRadius: 6)
+                                NativeSkeletonBlock(width: 54, height: 10, cornerRadius: 5)
+                            }
+
+                            Spacer()
+
+                            NativeSkeletonBlock(width: 84, height: 32, cornerRadius: 16)
+                        }
+                        .padding(10)
+                        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
+                .padding(22)
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+            )
+    }
+}
+
 private struct RecommendCard: View {
     let item: RecommendTodayItem
     let copy: RecommendCopy
+    var isRefreshing: Bool = false
 
     var body: some View {
         ZStack {
@@ -157,12 +206,19 @@ private struct RecommendCard: View {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
                 .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
+        .overlay {
+            if isRefreshing {
+                NativeSectionRefreshOverlay(lineWidths: [90, 60], cornerRadius: 32)
+            }
+        }
+        .animation(NativeMotion.overlayTransition, value: isRefreshing)
     }
 }
 
 private struct RecommendCopy {
     let title: String
     let loading: String
+    let refreshing: String
     let empty: String
     let defaultCategory: String
     let defaultGameCategory: String
@@ -171,11 +227,11 @@ private struct RecommendCopy {
     static func forLanguage(_ language: AppLanguage) -> RecommendCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "推荐", loading: "加载中...", empty: "今天还没有新的推荐", defaultCategory: "今日推荐", defaultGameCategory: "全部", play: "立即秒开")
+            return .init(title: "推荐", loading: "加载中...", refreshing: "正在刷新", empty: "今天还没有新的推荐", defaultCategory: "今日推荐", defaultGameCategory: "全部", play: "立即秒开")
         case .traditionalChinese:
-            return .init(title: "推薦", loading: "載入中...", empty: "今天還沒有新的推薦", defaultCategory: "今日推薦", defaultGameCategory: "全部", play: "立即秒開")
+            return .init(title: "推薦", loading: "載入中...", refreshing: "正在刷新", empty: "今天還沒有新的推薦", defaultCategory: "今日推薦", defaultGameCategory: "全部", play: "立即秒開")
         case .english:
-            return .init(title: "Recommend", loading: "Loading...", empty: "No new recommendations today", defaultCategory: "Today's Pick", defaultGameCategory: "All", play: "Play Now")
+            return .init(title: "Recommend", loading: "Loading...", refreshing: "Refreshing", empty: "No new recommendations today", defaultCategory: "Today's Pick", defaultGameCategory: "All", play: "Play Now")
         }
     }
 }

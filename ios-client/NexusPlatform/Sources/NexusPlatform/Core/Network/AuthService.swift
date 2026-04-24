@@ -16,8 +16,8 @@ enum AuthError: LocalizedError {
 
 protocol AuthServiceProtocol: Sendable {
     func login(email: String, password: String) async throws -> AuthSession
-    func sendCode(email: String, purpose: String, scene: String?) async throws
-    func register(email: String, password: String, code: String) async throws -> AuthSession
+    func sendCode(email: String, purpose: String, source: String, scene: String?) async throws
+    func register(email: String, password: String, code: String, accountType: String) async throws -> AuthSession
     func resetPassword(email: String, code: String, newPassword: String) async throws
     func logout(accessToken: String?) async throws
     func terminateAccount(accessToken: String?, confirmText: String) async throws
@@ -42,10 +42,11 @@ struct AuthService: AuthServiceProtocol {
         return try parseAuthSession(from: payload, email: email, path: path)
     }
 
-    func sendCode(email: String, purpose: String, scene: String? = nil) async throws {
+    func sendCode(email: String, purpose: String, source: String = "ios-client", scene: String? = nil) async throws {
         var payload: [String: Any] = [
             "email": email,
-            "purpose": purpose
+            "purpose": purpose,
+            "source": source
         ]
         if let scene, scene.isEmpty == false {
             payload["scene"] = scene
@@ -56,13 +57,13 @@ struct AuthService: AuthServiceProtocol {
         ])
     }
 
-    func register(email: String, password: String, code: String) async throws -> AuthSession {
+    func register(email: String, password: String, code: String, accountType: String = "PLAYER") async throws -> AuthSession {
         let path = "user/register"
         let payload = try await postObject(path: path, body: [
             "email": email,
             "password": password,
             "code": code,
-            "accountType": "PLAYER"
+            "accountType": accountType
         ])
         return try parseAuthSession(from: payload, email: email, path: path)
     }

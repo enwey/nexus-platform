@@ -1,6 +1,8 @@
 package com.nexus.platform.feature.profile.ui
 
 import android.content.Intent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,6 +67,8 @@ import com.nexus.platform.ui.theme.PrimaryEnd
 import com.nexus.platform.ui.theme.PrimaryStart
 import com.nexus.platform.ui.theme.TextMain
 import com.nexus.platform.ui.theme.TextMuted
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonMotionTokens
 import kotlinx.coroutines.launch
 
 private val TopLevelBottomPadding = 96.dp
@@ -123,6 +127,8 @@ fun ProfileScreen(
         }
     }
 
+    val showSkeleton = isLoggedIn && profile == null && wallet == null
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -130,71 +136,83 @@ fun ProfileScreen(
             .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = TopLevelBottomPadding),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        UserCard(
-            profile = profile,
-            isLoggedIn = isLoggedIn,
-            onLoginClick = onRequestLogin
-        )
-        WalletCard(
-            wallet = wallet,
-            onBillClick = { requireLogin { context.startActivity(Intent(context, BillingActivity::class.java)) } },
-            onHowToEarnClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
-        )
-        ReferralCard(onClick = { requireLogin { context.startActivity(Intent(context, ReferralActivity::class.java)) } })
-        MenuGroup(
-            items = listOf(
-                stringResource(R.string.profile_security),
-                stringResource(R.string.profile_cloud_sync),
-                stringResource(R.string.profile_clear_cache),
-                stringResource(R.string.profile_language)
-            ),
-            rightTexts = listOf(
-                null,
-                if (isLoggedIn && cloudSyncEnabled) stringResource(R.string.profile_sync_enabled) else stringResource(R.string.profile_sync_disabled),
-                cacheSizeText,
-                stringResource(currentLanguage.labelRes)
-            ),
-            onItemClick = { index ->
-                when (index) {
-                    0 -> requireLogin { context.startActivity(Intent(context, AccountSecurityActivity::class.java)) }
-                    1 -> requireLogin {
-                        val targetEnabled = !cloudSyncEnabled
-                        cloudSyncStore.setEnabled(targetEnabled)
-                        cloudSyncEnabled = targetEnabled
-                        if (targetEnabled) {
-                            scope.launch {
-                                val synced = runCatching { backendApi.getLibraryHome() }.getOrNull()
-                                if (synced != null) {
-                                    val mergedGames = (synced.recentGames + synced.myGames + listOfNotNull(synced.currentPlayingGame))
-                                        .distinctBy { it.id }
-                                    catalogCacheStore.saveGames(mergedGames)
-                                    engagementStore.applyCloudState(
-                                        currentPlayingGameId = synced.currentPlayingGame?.id,
-                                        recentGameIds = synced.recentGames.map { it.id },
-                                        favoriteGameIds = synced.myGames.map { it.id }
-                                    )
-                                    showCenterToast(context, context.getString(R.string.profile_sync_enabled))
-                                } else {
-                                    showCenterToast(context, context.getString(R.string.common_error_network))
+        Crossfade(
+            targetState = showSkeleton,
+            animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+            label = "profileContent"
+        ) { showingSkeleton ->
+            if (showingSkeleton) {
+                ProfileSkeleton()
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                    UserCard(
+                        profile = profile,
+                        isLoggedIn = isLoggedIn,
+                        onLoginClick = onRequestLogin
+                    )
+                    WalletCard(
+                        wallet = wallet,
+                        onBillClick = { requireLogin { context.startActivity(Intent(context, BillingActivity::class.java)) } },
+                        onHowToEarnClick = { context.startActivity(Intent(context, ReferralActivity::class.java)) }
+                    )
+                    ReferralCard(onClick = { requireLogin { context.startActivity(Intent(context, ReferralActivity::class.java)) } })
+                    MenuGroup(
+                        items = listOf(
+                            stringResource(R.string.profile_security),
+                            stringResource(R.string.profile_cloud_sync),
+                            stringResource(R.string.profile_clear_cache),
+                            stringResource(R.string.profile_language)
+                        ),
+                        rightTexts = listOf(
+                            null,
+                            if (isLoggedIn && cloudSyncEnabled) stringResource(R.string.profile_sync_enabled) else stringResource(R.string.profile_sync_disabled),
+                            cacheSizeText,
+                            stringResource(currentLanguage.labelRes)
+                        ),
+                        onItemClick = { index ->
+                            when (index) {
+                                0 -> requireLogin { context.startActivity(Intent(context, AccountSecurityActivity::class.java)) }
+                                1 -> requireLogin {
+                                    val targetEnabled = !cloudSyncEnabled
+                                    cloudSyncStore.setEnabled(targetEnabled)
+                                    cloudSyncEnabled = targetEnabled
+                                    if (targetEnabled) {
+                                        scope.launch {
+                                            val synced = runCatching { backendApi.getLibraryHome() }.getOrNull()
+                                            if (synced != null) {
+                                                val mergedGames = (synced.recentGames + synced.myGames + listOfNotNull(synced.currentPlayingGame))
+                                                    .distinctBy { it.id }
+                                                catalogCacheStore.saveGames(mergedGames)
+                                                engagementStore.applyCloudState(
+                                                    currentPlayingGameId = synced.currentPlayingGame?.id,
+                                                    recentGameIds = synced.recentGames.map { it.id },
+                                                    favoriteGameIds = synced.myGames.map { it.id }
+                                                )
+                                                showCenterToast(context, context.getString(R.string.profile_sync_enabled))
+                                            } else {
+                                                showCenterToast(context, context.getString(R.string.common_error_network))
+                                            }
+                                        }
+                                    } else {
+                                        showCenterToast(context, context.getString(R.string.profile_sync_disabled))
+                                    }
                                 }
+                                2 -> {
+                                    scope.launch {
+                                        val cleared = LocalCacheManager.clearLocalCaches(context)
+                                        cacheSizeText = LocalCacheManager.formatBytes(LocalCacheManager.computeCacheBytes(context))
+                                        cloudSyncEnabled = if (isLoggedIn) cloudSyncStore.isEnabled() else false
+                                        val msg = "${context.getString(R.string.profile_cache_cleared)} (${LocalCacheManager.formatBytes(cleared)})"
+                                        showCenterToast(context, msg)
+                                    }
+                                }
+                                3 -> showLanguageDialog = true
                             }
-                        } else {
-                            showCenterToast(context, context.getString(R.string.profile_sync_disabled))
                         }
-                    }
-                    2 -> {
-                        scope.launch {
-                            val cleared = LocalCacheManager.clearLocalCaches(context)
-                            cacheSizeText = LocalCacheManager.formatBytes(LocalCacheManager.computeCacheBytes(context))
-                            cloudSyncEnabled = if (isLoggedIn) cloudSyncStore.isEnabled() else false
-                            val msg = "${context.getString(R.string.profile_cache_cleared)} (${LocalCacheManager.formatBytes(cleared)})"
-                            showCenterToast(context, msg)
-                        }
-                    }
-                    3 -> showLanguageDialog = true
+                    )
                 }
             }
-        )
+        }
     }
 
     if (showLanguageDialog) {
@@ -227,6 +245,95 @@ fun ProfileScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun ProfileSkeleton() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        SkeletonBlock(width = 80.dp, height = 80.dp, cornerRadius = 40.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            SkeletonBlock(width = 136.dp, height = 26.dp, cornerRadius = 10.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+            SkeletonBlock(width = 88.dp, height = 18.dp, cornerRadius = 9.dp)
+        }
+        SkeletonBlock(width = 82.dp, height = 34.dp, cornerRadius = 17.dp)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(164.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Brush.linearGradient(listOf(Color(0xFF24253A), BackgroundSurface)))
+            .padding(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                SkeletonBlock(width = 68.dp, height = 12.dp, cornerRadius = 6.dp)
+                Spacer(modifier = Modifier.height(10.dp))
+                SkeletonBlock(width = 142.dp, height = 34.dp, cornerRadius = 10.dp)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                SkeletonBlock(modifier = Modifier.weight(1f), height = 38.dp, cornerRadius = 12.dp)
+                SkeletonBlock(modifier = Modifier.weight(1f), height = 38.dp, cornerRadius = 12.dp)
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(Brush.linearGradient(listOf(PrimaryStart.copy(alpha = 0.12f), PrimaryEnd.copy(alpha = 0.12f))))
+            .border(1.dp, Primary, RoundedCornerShape(20.dp))
+            .padding(20.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            SkeletonBlock(width = 42.dp, height = 42.dp, cornerRadius = 21.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                SkeletonBlock(width = 108.dp, height = 14.dp, cornerRadius = 7.dp)
+                Spacer(modifier = Modifier.height(10.dp))
+                SkeletonBlock(width = 186.dp, height = 12.dp, cornerRadius = 6.dp)
+            }
+            SkeletonBlock(width = 64.dp, height = 28.dp, cornerRadius = 14.dp)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(BackgroundSurface)
+            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+    ) {
+        repeat(4) { index ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SkeletonBlock(width = 96.dp, height = 14.dp, cornerRadius = 7.dp)
+                SkeletonBlock(width = if (index == 0) 14.dp else 62.dp, height = 12.dp, cornerRadius = 6.dp)
+            }
+            if (index != 3) {
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(BorderLight)
+                )
+            }
+        }
     }
 }
 

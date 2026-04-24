@@ -25,5 +25,7 @@ struct LibrarySectionListView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
     }
 }

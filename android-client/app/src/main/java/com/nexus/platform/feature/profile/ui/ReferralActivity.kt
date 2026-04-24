@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,8 @@ import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.Primary
 import com.nexus.platform.ui.theme.TextMuted
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonMotionTokens
 import kotlinx.coroutines.launch
 
 class ReferralActivity : ComponentActivity() {
@@ -65,10 +69,15 @@ private fun ReferralScreen(onBackClick: () -> Unit) {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var summary by remember { mutableStateOf<ReferralSummary?>(null) }
     var records by remember { mutableStateOf<List<ReferralRecord>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        summary = backendApi.getReferralSummary()
-        records = backendApi.getReferralRecords()
+        try {
+            summary = backendApi.getReferralSummary()
+            records = backendApi.getReferralRecords()
+        } finally {
+            loading = false
+        }
     }
 
     fun copyLink(link: String) {
@@ -105,46 +114,93 @@ private fun ReferralScreen(onBackClick: () -> Unit) {
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.referral_summary_invites, summary?.inviteCount ?: 0),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Text(
-            text = stringResource(R.string.referral_summary_reward, summary?.totalReward ?: "0"),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(link, modifier = Modifier.weight(1f), color = Primary)
-            Text(
-                stringResource(R.string.referral_link_copy),
-                color = Primary,
-                modifier = Modifier.clickable { copyLink(link) }
-            )
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(stringResource(R.string.referral_share_more), color = Primary, modifier = Modifier.clickable { share("system", link) })
-            Text(stringResource(R.string.referral_share_whatsapp), color = Primary, modifier = Modifier.clickable { share("whatsapp", link) })
-            Text(stringResource(R.string.referral_share_facebook), color = Primary, modifier = Modifier.clickable { share("facebook", link) })
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        if (records.isEmpty()) {
-            Text(stringResource(R.string.referral_no_records), color = TextMuted)
-        } else {
-            records.forEach { record ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(record.title, fontWeight = FontWeight.SemiBold)
-                        Text(record.subtitle, color = TextMuted)
-                        Text(record.createdAt, color = TextMuted)
+        Crossfade(
+            targetState = loading,
+            animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+            label = "referralContent"
+        ) { isLoading ->
+            if (isLoading) {
+                ReferralSkeleton()
+            } else {
+                Column {
+                    Text(
+                        text = stringResource(R.string.referral_summary_invites, summary?.inviteCount ?: 0),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.referral_summary_reward, summary?.totalReward ?: "0"),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(link, modifier = Modifier.weight(1f), color = Primary)
+                        Text(
+                            stringResource(R.string.referral_link_copy),
+                            color = Primary,
+                            modifier = Modifier.clickable { copyLink(link) }
+                        )
                     }
-                    Text(record.reward)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(stringResource(R.string.referral_share_more), color = Primary, modifier = Modifier.clickable { share("system", link) })
+                        Text(stringResource(R.string.referral_share_whatsapp), color = Primary, modifier = Modifier.clickable { share("whatsapp", link) })
+                        Text(stringResource(R.string.referral_share_facebook), color = Primary, modifier = Modifier.clickable { share("facebook", link) })
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (records.isEmpty()) {
+                        Text(stringResource(R.string.referral_no_records), color = TextMuted)
+                    } else {
+                        records.forEach { record ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(record.title, fontWeight = FontWeight.SemiBold)
+                                    Text(record.subtitle, color = TextMuted)
+                                    Text(record.createdAt, color = TextMuted)
+                                }
+                                Text(record.reward)
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ReferralSkeleton() {
+    SkeletonBlock(width = 116.dp, height = 16.dp, cornerRadius = 8.dp)
+    Spacer(modifier = Modifier.height(8.dp))
+    SkeletonBlock(width = 132.dp, height = 16.dp, cornerRadius = 8.dp)
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        SkeletonBlock(modifier = Modifier.weight(1f), height = 16.dp, cornerRadius = 8.dp)
+        Spacer(modifier = Modifier.weight(0.08f))
+        SkeletonBlock(width = 44.dp, height = 16.dp, cornerRadius = 8.dp)
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        SkeletonBlock(width = 62.dp, height = 16.dp, cornerRadius = 8.dp)
+        SkeletonBlock(width = 78.dp, height = 16.dp, cornerRadius = 8.dp)
+        SkeletonBlock(width = 72.dp, height = 16.dp, cornerRadius = 8.dp)
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+    repeat(4) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                SkeletonBlock(width = 142.dp, height = 14.dp, cornerRadius = 7.dp)
+                Spacer(modifier = Modifier.height(6.dp))
+                SkeletonBlock(width = 176.dp, height = 12.dp, cornerRadius = 6.dp)
+                Spacer(modifier = Modifier.height(6.dp))
+                SkeletonBlock(width = 88.dp, height = 12.dp, cornerRadius = 6.dp)
+            }
+            SkeletonBlock(width = 46.dp, height = 14.dp, cornerRadius = 7.dp)
         }
     }
 }

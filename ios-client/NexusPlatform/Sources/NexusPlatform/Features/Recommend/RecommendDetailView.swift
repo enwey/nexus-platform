@@ -31,22 +31,43 @@ struct RecommendDetailView: View {
             }
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
     }
 
     private var hero: some View {
         ZStack(alignment: .topLeading) {
-            AsyncImage(url: URL(string: item.coverURL)) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Rectangle().fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+            AsyncImage(
+                url: URL(string: item.coverURL),
+                transaction: Transaction(animation: NativeMotion.overlayTransition)
+            ) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .transition(NativeMotion.contentRevealTransition)
+                default:
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: 0x24253A), Color(hex: 0x1A1A1D)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(alignment: .bottomLeading) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                NativeSkeletonBlock(width: 76, height: 14, cornerRadius: 7)
+                                NativeSkeletonText(widths: [188, 236], lineHeight: 16, spacing: 10, cornerRadius: 8)
+                            }
+                            .padding(24)
+                        }
+                        .transition(NativeMotion.stateSwapTransition)
+                }
             }
 
             LinearGradient(
@@ -54,18 +75,6 @@ struct RecommendDetailView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.black.opacity(0.45), in: Circle())
-            }
-            .padding(.top, 52)
-            .padding(.leading, 20)
         }
         .frame(height: 420)
         .clipped()
@@ -73,11 +82,20 @@ struct RecommendDetailView: View {
 
     private var gameCard: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: URL(string: game.iconUrl)) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(hex: 0x232326))
+            AsyncImage(
+                url: URL(string: resolvedGameIconURL),
+                transaction: Transaction(animation: NativeMotion.overlayTransition)
+            ) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .transition(NativeMotion.contentRevealTransition)
+                default:
+                    NativeSkeletonIcon(size: 56, cornerRadius: 12)
+                        .transition(NativeMotion.stateSwapTransition)
+                }
             }
             .frame(width: 56, height: 56)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -119,10 +137,19 @@ struct RecommendDetailView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
+        .animation(NativeMotion.overlayTransition, value: item.coverURL)
+        .animation(NativeMotion.overlayTransition, value: resolvedGameIconURL)
     }
 
     private var resolvedTitle: String {
         item.cardTitle.isEmpty ? item.gameName : item.cardTitle
+    }
+
+    private var resolvedGameIconURL: String {
+        if game.iconUrl.isEmpty == false {
+            return game.iconUrl
+        }
+        return item.gameIconURL
     }
 
     private var copy: RecommendDetailCopy {
@@ -131,6 +158,7 @@ struct RecommendDetailView: View {
 }
 
 private struct RecommendDetailCopy {
+    let title: String
     let defaultTag: String
     let defaultGameCategory: String
     let play: String
@@ -138,11 +166,11 @@ private struct RecommendDetailCopy {
     static func forLanguage(_ language: AppLanguage) -> RecommendDetailCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(defaultTag: "专题", defaultGameCategory: "精选游戏", play: "立即秒开")
+            return .init(title: "推荐详情", defaultTag: "专题", defaultGameCategory: "精选游戏", play: "立即秒开")
         case .traditionalChinese:
-            return .init(defaultTag: "專題", defaultGameCategory: "精選遊戲", play: "立即秒開")
+            return .init(title: "推薦詳情", defaultTag: "專題", defaultGameCategory: "精選遊戲", play: "立即秒開")
         case .english:
-            return .init(defaultTag: "Feature", defaultGameCategory: "Featured", play: "Play Now")
+            return .init(title: "Recommendation", defaultTag: "Feature", defaultGameCategory: "Featured", play: "Play Now")
         }
     }
 }

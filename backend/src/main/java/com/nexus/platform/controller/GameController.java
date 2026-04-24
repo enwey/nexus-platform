@@ -7,6 +7,10 @@ import com.nexus.platform.dto.GameUpdateCheckResponse;
 import com.nexus.platform.dto.GameOpsDtos.RuntimeProfileResponse;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.util.List;
+import java.util.Locale;
 import com.nexus.platform.service.GameOpsProfileService;
 import com.nexus.platform.service.GameService;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +56,10 @@ public class GameController {
     }
 
     @GetMapping("/public/list")
-    public Result<java.util.List<Game>> getPublicGameList() {
-        return gameService.getGameList(null);
+    public Result<List<Game>> getPublicGameList(HttpServletRequest request) {
+        Result<List<Game>> result = gameService.getGameList(null);
+        rewriteGameUrls(result.getData(), request);
+        return result;
     }
 
     @GetMapping("/categories")
@@ -64,9 +70,15 @@ public class GameController {
     @GetMapping("/check-update")
     public Result<GameUpdateCheckResponse> checkUpdate(
             @RequestParam("appId") String appId,
-            @RequestParam("localVersion") String localVersion
+            @RequestParam("localVersion") String localVersion,
+            HttpServletRequest request
     ) {
-        return gameService.checkUpdate(appId, localVersion);
+        Result<GameUpdateCheckResponse> result = gameService.checkUpdate(appId, localVersion);
+        GameUpdateCheckResponse response = result.getData();
+        if (response != null) {
+            response.setDownloadUrl(rewriteLoopbackDownloadUrl(response.getDownloadUrl(), request));
+        }
+        return result;
     }
 
     @GetMapping("/list/page")
@@ -252,6 +264,69 @@ public class GameController {
             @RequestBody(required = false) AuditDecisionRequest decision) {
         String reason = decision == null ? null : decision.reason();
         return gameService.rejectGame(id, currentUser, request.getRequestURI(), reason);
+    }
+
+    private void rewriteGameUrls(List<Game> games, HttpServletRequest request) {
+        if (games == null || request == null) {
+            return;
+        }
+        games.forEach(game -> {
+            if (game != null) {
+                game.setDownloadUrl(rewriteLoopbackDownloadUrl(game.getDownloadUrl(), request));
+            }
+        });
+    }
+
+    private String rewriteLoopbackDownloadUrl(String rawUrl, HttpServletRequest request) {
+        if (rawUrl == null || rawUrl.isBlank() || request == null) {
+            return rawUrl;
+        }
+        try {
+            URI uri = URI.create(rawUrl);
+            String host = uri.getHost();
+            if (!isLoopbackHost(host)) {
+                return rawUrl;
+            }
+            return resolveBaseUrl(request) + uri.getPath()
+                    + (uri.getQuery() == null || uri.getQuery().isBlank() ? "" : "?" + uri.getQuery());
+        } catch (Exception ignored) {
+            return rawUrl;
+        }
+    }
+
+    private String resolveBaseUrl(HttpServletRequest request) {
+        String scheme = firstNonBlank(request.getHeader("X-Forwarded-Proto"), request.getScheme());
+        String host = firstNonBlank(request.getHeader("X-Forwarded-Host"), null);
+        if (host == null || host.isBlank()) {
+            host = request.getServerName();
+            int port = request.getServerPort();
+            boolean appendPort = ("http".equalsIgnoreCase(scheme) && port != 80)
+                    || ("https".equalsIgnoreCase(scheme) && port != 443);
+            if (appendPort) {
+                host = host + ":" + port;
+            }
+        }
+        return scheme + "://" + host;
+    }
+
+    private boolean isLoopbackHost(String host) {
+        if (host == null) {
+            return false;
+        }
+        String normalized = host.trim().toLowerCase(Locale.ROOT);
+        return "localhost".equals(normalized)
+                || "127.0.0.1".equals(normalized)
+                || "::1".equals(normalized);
+    }
+
+    private String firstNonBlank(String first, String second) {
+        if (first != null && !first.isBlank()) {
+            return first.trim();
+        }
+        if (second != null && !second.isBlank()) {
+            return second.trim();
+        }
+        return null;
     }
 }
 

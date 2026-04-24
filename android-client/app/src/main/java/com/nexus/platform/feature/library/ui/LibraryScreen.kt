@@ -71,6 +71,8 @@ import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.domain.model.DiscoverHeroCard
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.ui.components.GameLogo
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonText
 import com.nexus.platform.ui.theme.AccentGreen
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurfaceElevated
@@ -114,8 +116,10 @@ fun LibraryScreen(
             .fillMaxSize()
             .pullRefresh(pullRefreshState)
     ) {
+        val hasLibraryContent =
+            uiState.currentPlayingGame != null || uiState.recentGames.isNotEmpty() || uiState.myGames.isNotEmpty()
         when {
-            uiState.loading -> LoadingState()
+            uiState.loading && !hasLibraryContent && uiState.games.isEmpty() -> LibrarySkeletonState()
             !uiState.errorMessage.isNullOrBlank() -> ErrorState(uiState.errorMessage.orEmpty())
             uiState.currentPlayingGame == null && uiState.recentGames.isEmpty() && uiState.myGames.isEmpty() ->
                 ColdStartState(
@@ -130,8 +134,78 @@ fun LibraryScreen(
             state = pullRefreshState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 8.dp)
+                .padding(top = 8.dp),
+            backgroundColor = BackgroundSurfaceElevated,
+            contentColor = Primary
         )
+    }
+}
+
+@Composable
+private fun LibrarySkeletonState() {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = LibraryContentInset,
+            end = LibraryContentInset,
+            top = LibraryContentInset,
+            bottom = TopLevelBottomPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Brush.linearGradient(listOf(Color(0xFF24253A), BackgroundSurfaceElevated)))
+                    .border(1.dp, BorderLight, RoundedCornerShape(32.dp))
+                    .padding(24.dp),
+                contentAlignment = Alignment.BottomStart
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    SkeletonBlock(width = 78.dp, height = 22.dp, cornerRadius = 12.dp)
+                    SkeletonText(widths = listOf(186.dp, 232.dp), lineHeight = 14.dp)
+                    SkeletonBlock(width = 116.dp, height = 42.dp, cornerRadius = 21.dp)
+                }
+            }
+        }
+        item { LibrarySkeletonSection(titleWidth = 118.dp) }
+        item { LibrarySkeletonSection(titleWidth = 132.dp) }
+    }
+}
+
+@Composable
+private fun LibrarySkeletonSection(titleWidth: androidx.compose.ui.unit.Dp) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        SkeletonBlock(width = titleWidth, height = 26.dp, cornerRadius = 8.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            repeat(2) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    repeat(4) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SkeletonBlock(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f),
+                                height = 76.dp,
+                                cornerRadius = 18.dp
+                            )
+                            SkeletonBlock(width = 56.dp, height = 10.dp, cornerRadius = 5.dp)
+                            SkeletonBlock(width = 42.dp, height = 24.dp, cornerRadius = 12.dp)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -266,11 +340,33 @@ private fun ContentState(
                 }
                 item {
                     if (myLoadedCount < myGameSource.size) {
-                        Box(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            repeat(2) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    repeat(4) {
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            SkeletonBlock(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .aspectRatio(1f),
+                                                height = 76.dp,
+                                                cornerRadius = 18.dp
+                                            )
+                                            SkeletonBlock(width = 56.dp, height = 10.dp, cornerRadius = 5.dp)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     } else {
                         Box(

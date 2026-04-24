@@ -3,6 +3,7 @@ import UIKit
 
 @MainActor
 final class ReferralViewModel: ObservableObject {
+    @Published private(set) var isLoading = false
     @Published private(set) var summary: ReferralSummary?
     @Published private(set) var records: [ReferralRecord] = []
     @Published private(set) var message: String?
@@ -15,6 +16,8 @@ final class ReferralViewModel: ObservableObject {
 
     func load() {
         Task {
+            isLoading = true
+            defer { isLoading = false }
             do {
                 async let summaryTask = service.fetchSummary()
                 async let recordsTask = service.fetchRecords(limit: 20)
@@ -33,141 +36,138 @@ final class ReferralViewModel: ObservableObject {
 }
 
 struct ReferralView: View {
-    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ReferralViewModel()
     @State private var toastMessage: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
+        ScrollView(showsIndicators: false) {
+            ZStack(alignment: .topLeading) {
+                if viewModel.isLoading {
+                    referralSkeleton
+                        .transition(NativeMotion.stateSwapTransition)
+                } else {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(String(format: copy.invitesSummary, viewModel.summary?.inviteCount ?? 0))
+                            .font(.system(size: 17))
+                            .foregroundStyle(.white)
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(String(format: copy.invitesSummary, viewModel.summary?.inviteCount ?? 0))
-                        .font(.system(size: 17))
-                        .foregroundStyle(.white)
+                        Text(String(format: copy.rewardSummary, viewModel.summary?.totalReward ?? "0"))
+                            .font(.system(size: 17))
+                            .foregroundStyle(.white)
+                            .padding(.top, 4)
 
-                    Text(String(format: copy.rewardSummary, viewModel.summary?.totalReward ?? "0"))
-                        .font(.system(size: 17))
-                        .foregroundStyle(.white)
-                        .padding(.top, 4)
+                        Spacer()
+                            .frame(height: 12)
 
-                    Spacer()
-                        .frame(height: 12)
+                        HStack(alignment: .top, spacing: 12) {
+                            Text(linkText)
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color(hex: 0x6B4EFF))
+                                .frame(maxWidth: .infinity, alignment: .leading)
 
-                    HStack(alignment: .top, spacing: 12) {
-                        Text(linkText)
-                            .font(.system(size: 14))
-                            .foregroundStyle(Color(hex: 0x6B4EFF))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        Button(copy.copy) {
-                            UIPasteboard.general.string = linkText
-                            toastMessage = copy.linkCopied
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Color(hex: 0x6B4EFF))
-                        .font(.system(size: 14, weight: .medium))
-                    }
-
-                    Spacer()
-                        .frame(height: 12)
-
-                    HStack(spacing: 16) {
-                        shareButton(title: copy.shareMore, channel: "system", text: linkText)
-                        shareButton(title: copy.shareWhatsApp, channel: "whatsapp", text: linkText)
-                        shareButton(title: copy.shareFacebook, channel: "facebook", text: linkText)
-                    }
-
-                    Spacer()
-                        .frame(height: 16)
-
-                    if viewModel.records.isEmpty {
-                        Text(copy.noRecords)
-                            .font(.system(size: 14))
-                            .foregroundStyle(Color(hex: 0xA0A0A0))
-                    } else {
-                        ForEach(viewModel.records) { record in
-                            HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(record.title)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                    Text(record.subtitle)
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                                    Text(record.createdAt)
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                                }
-                                Spacer()
-                                Text(record.reward)
-                                    .font(.system(size: 15, weight: .medium))
-                                    .foregroundStyle(.white)
+                            Button(copy.copy) {
+                                UIPasteboard.general.string = linkText
+                                toastMessage = copy.linkCopied
                             }
-                            .padding(.vertical, 8)
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color(hex: 0x6B4EFF))
+                            .font(.system(size: 14, weight: .medium))
+                        }
+
+                        Spacer()
+                            .frame(height: 12)
+
+                        HStack(spacing: 16) {
+                            shareButton(title: copy.shareMore, channel: "system", text: linkText)
+                            shareButton(title: copy.shareWhatsApp, channel: "whatsapp", text: linkText)
+                            shareButton(title: copy.shareFacebook, channel: "facebook", text: linkText)
+                        }
+
+                        Spacer()
+                            .frame(height: 16)
+
+                        if viewModel.records.isEmpty {
+                            Text(copy.noRecords)
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color(hex: 0xA0A0A0))
+                        } else {
+                            ForEach(viewModel.records) { record in
+                                HStack(alignment: .top) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(record.title)
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                        Text(record.subtitle)
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(Color(hex: 0xA0A0A0))
+                                        Text(record.createdAt)
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(Color(hex: 0xA0A0A0))
+                                    }
+                                    Spacer()
+                                    Text(record.reward)
+                                        .font(.system(size: 15, weight: .medium))
+                                        .foregroundStyle(.white)
+                                }
+                                .padding(.vertical, 8)
+                            }
                         }
                     }
-
-                    if let message = viewModel.message {
-                        Text(message)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color(hex: 0xA0A0A0))
-                            .padding(.top, 12)
-                    }
+                    .transition(NativeMotion.contentRevealTransition)
                 }
-                .padding(.horizontal, 24)
+
+                if let message = viewModel.message {
+                    Text(message)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .padding(.top, 12)
+                }
             }
+            .padding(.horizontal, 24)
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
         .onAppear { viewModel.load() }
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading)
+        .animation(NativeMotion.overlayTransition, value: viewModel.records.isEmpty)
         .overlay(alignment: .bottom) {
-            if let toastMessage {
-                Text(toastMessage)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.black.opacity(0.82), in: Capsule())
-                    .padding(.bottom, 26)
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            self.toastMessage = nil
-                        }
-                    }
-            }
+            NativeToastOverlay(message: $toastMessage)
         }
     }
 
-    private var header: some View {
-        VStack(spacing: 0) {
-            Spacer()
-                .frame(height: 20)
-
-            HStack(spacing: 0) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
-                }
-                .buttonStyle(.plain)
-
-                Text(copy.title)
-                    .font(.system(size: 28, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .padding(.leading, 0)
-
-                Spacer()
+    private var referralSkeleton: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            NativeSkeletonBlock(width: 116, height: 16, cornerRadius: 8)
+            Spacer().frame(height: 8)
+            NativeSkeletonBlock(width: 132, height: 16, cornerRadius: 8)
+            Spacer().frame(height: 12)
+            HStack(spacing: 12) {
+                NativeSkeletonBlock(height: 16, cornerRadius: 8)
+                NativeSkeletonBlock(width: 44, height: 16, cornerRadius: 8)
             }
-            .padding(.horizontal, 24)
-
-            Spacer()
-                .frame(height: 16)
+            Spacer().frame(height: 12)
+            HStack(spacing: 16) {
+                NativeSkeletonBlock(width: 62, height: 16, cornerRadius: 8)
+                NativeSkeletonBlock(width: 78, height: 16, cornerRadius: 8)
+                NativeSkeletonBlock(width: 72, height: 16, cornerRadius: 8)
+            }
+            Spacer().frame(height: 20)
+            ForEach(0..<4, id: \.self) { _ in
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        NativeSkeletonBlock(width: 142, height: 14, cornerRadius: 7)
+                        NativeSkeletonBlock(width: 176, height: 12, cornerRadius: 6)
+                        NativeSkeletonBlock(width: 88, height: 12, cornerRadius: 6)
+                    }
+                    Spacer()
+                    NativeSkeletonBlock(width: 46, height: 14, cornerRadius: 7)
+                }
+                .padding(.vertical, 8)
+            }
         }
     }
 

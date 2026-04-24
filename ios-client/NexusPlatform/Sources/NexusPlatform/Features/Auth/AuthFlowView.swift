@@ -9,12 +9,18 @@ struct AuthFlowView: View {
         case reset
     }
 
+    private enum NavigationDirection {
+        case forward
+        case backward
+    }
+
     let onAuthenticated: (AuthSession) -> Void
 
     @Environment(\.openURL) private var openURL
-    @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @State private var screen: Screen = .login
     @State private var language: AppLanguage = AppLanguageStore.currentSync()
+    @State private var navigationDirection: NavigationDirection = .forward
     @State private var email = ""
     @State private var password = ""
     @State private var passwordVisible = false
@@ -39,17 +45,15 @@ struct AuthFlowView: View {
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 0) {
-                    topBar(copy: copy)
-                    titleBlock(copy: copy)
-                    formBlock(copy: copy)
-                    footerBlock(copy: copy)
-                }
+                authContent(copy: copy)
+                    .id(screen)
+                    .transition(screenTransition)
                 .padding(.horizontal, 24)
                 .padding(.top, 12)
                 .padding(.bottom, 32)
             }
         }
+        .animation(.snappy(duration: 0.32, extraBounce: 0.02), value: screen)
         .task {
             language = await AppLanguageStore.shared.current()
             legalLinks = await legalConfigService.fetchLinks()
@@ -60,33 +64,54 @@ struct AuthFlowView: View {
         }
     }
 
+    private func authContent(copy: AuthCopy) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            topBar(copy: copy)
+            titleBlock(copy: copy)
+            formBlock(copy: copy)
+            footerBlock(copy: copy)
+        }
+    }
+
+    private var screenTransition: AnyTransition {
+        switch navigationDirection {
+        case .forward:
+            return .asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            )
+        case .backward:
+            return .asymmetric(
+                insertion: .move(edge: .leading).combined(with: .opacity),
+                removal: .move(edge: .trailing).combined(with: .opacity)
+            )
+        }
+    }
+
     @ViewBuilder
     private func topBar(copy: AuthCopy) -> some View {
         HStack {
             if screen == .login {
                 Spacer()
                 Button {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 36, height: 36)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(NativeNavigationButtonStyle())
             } else {
                 Button {
-                    withAnimation(.easeInOut(duration: 0.24)) {
-                        screen = .login
-                        message = nil
-                    }
+                    switchScreen(to: .login)
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 36, height: 36)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(NativeNavigationButtonStyle())
                 Spacer()
             }
         }
@@ -191,10 +216,7 @@ struct AuthFlowView: View {
                 HStack {
                     Spacer()
                     Button(copy.forgotPassword) {
-                        withAnimation(.easeInOut(duration: 0.24)) {
-                            screen = .reset
-                            message = nil
-                        }
+                        switchScreen(to: .reset)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(Color(hex: 0x6B4EFF))
@@ -237,10 +259,7 @@ struct AuthFlowView: View {
                     .foregroundStyle(Color(hex: 0x6B4EFF))
                     .fontWeight(.bold)
                     .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.24)) {
-                            screen = copy.footerTarget(for: screen)
-                            message = nil
-                        }
+                        switchScreen(to: copy.footerTarget(for: screen))
                     }
             }
             .font(.system(size: 15))
@@ -250,7 +269,7 @@ struct AuthFlowView: View {
     }
 
     private var normalizedEmail: String {
-        email.trimmingCharacters(in: .whitespacesAndNewlines)
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private var normalizedCode: String {
@@ -292,7 +311,7 @@ struct AuthFlowView: View {
         do {
             let purpose = screen == .register ? "REGISTER" : "RESET_PASSWORD"
             let scene = screen == .register ? "AUTH_REGISTER" : "AUTH_FORGOT_PASSWORD"
-            try await service.sendCode(email: normalizedEmail, purpose: purpose, scene: scene)
+            try await service.sendCode(email: normalizedEmail, purpose: purpose, source: "ios-client", scene: scene)
             message = copy.codeSent
             startCooldown(seconds: 60)
         } catch {
@@ -315,10 +334,14 @@ struct AuthFlowView: View {
                     message = copy.passwordRequired
                     return
                 }
+                guard password.count >= 8 else {
+                    message = copy.passwordTooShort
+                    return
+                }
                 let session = try await service.login(email: normalizedEmail, password: password)
                 await AuthSessionStore.shared.save(session)
                 onAuthenticated(session)
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             case .register:
                 guard normalizedEmail.contains("@") else {
                     message = copy.invalidEmail
@@ -326,6 +349,10 @@ struct AuthFlowView: View {
                 }
                 guard password.isEmpty == false else {
                     message = copy.passwordRequired
+                    return
+                }
+                guard password.count >= 8 else {
+                    message = copy.passwordTooShort
                     return
                 }
                 guard normalizedCode.isEmpty == false else {
@@ -343,11 +370,12 @@ struct AuthFlowView: View {
                 let session = try await service.register(
                     email: normalizedEmail,
                     password: password,
-                    code: normalizedCode
+                    code: normalizedCode,
+                    accountType: "PLAYER"
                 )
                 await AuthSessionStore.shared.save(session)
                 onAuthenticated(session)
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             case .reset:
                 guard normalizedEmail.contains("@") else {
                     message = copy.invalidEmail
@@ -361,12 +389,17 @@ struct AuthFlowView: View {
                     message = copy.passwordRequired
                     return
                 }
+                guard password.count >= 8 else {
+                    message = copy.passwordTooShort
+                    return
+                }
                 try await service.resetPassword(
                     email: normalizedEmail,
                     code: normalizedCode,
                     newPassword: password
                 )
                 message = copy.resetSuccess
+                navigationDirection = .backward
                 screen = .login
                 password = ""
                 passwordVisible = false
@@ -391,6 +424,27 @@ struct AuthFlowView: View {
                     codeCooldown = max(0, remaining)
                 }
             }
+        }
+    }
+
+    private func switchScreen(to target: Screen) {
+        navigationDirection = navigationDirectionForTransition(from: screen, to: target)
+        message = nil
+        screen = target
+    }
+
+    private func navigationDirectionForTransition(from current: Screen, to target: Screen) -> NavigationDirection {
+        screenRank(target) >= screenRank(current) ? .forward : .backward
+    }
+
+    private func screenRank(_ screen: Screen) -> Int {
+        switch screen {
+        case .login:
+            return 0
+        case .register:
+            return 1
+        case .reset:
+            return 2
         }
     }
 
@@ -520,6 +574,7 @@ private struct AuthCopy {
     let emailRequired: String
     let invalidEmail: String
     let passwordRequired: String
+    let passwordTooShort: String
     let codeRequired: String
     let termsRequired: String
     let passwordMismatch: String
@@ -617,6 +672,7 @@ private struct AuthCopy {
                 emailRequired: "请输入邮箱",
                 invalidEmail: "请输入正确的邮箱地址",
                 passwordRequired: "请输入密码",
+                passwordTooShort: "密码长度不能少于 8 位",
                 codeRequired: "请输入验证码",
                 termsRequired: "请先勾选用户协议和隐私政策",
                 passwordMismatch: "两次输入的密码不一致",
@@ -657,6 +713,7 @@ private struct AuthCopy {
                 emailRequired: "請輸入電子郵件",
                 invalidEmail: "請輸入正確的電子郵件地址",
                 passwordRequired: "請輸入密碼",
+                passwordTooShort: "密碼長度不能少於 8 位",
                 codeRequired: "請輸入驗證碼",
                 termsRequired: "請先勾選使用者協議和隱私政策",
                 passwordMismatch: "兩次輸入的密碼不一致",
@@ -697,6 +754,7 @@ private struct AuthCopy {
                 emailRequired: "Please enter your email",
                 invalidEmail: "Please enter a valid email address",
                 passwordRequired: "Please enter your password",
+                passwordTooShort: "Password must be at least 8 characters",
                 codeRequired: "Please enter the verification code",
                 termsRequired: "Please agree to the user agreement and privacy policy first",
                 passwordMismatch: "The passwords do not match",

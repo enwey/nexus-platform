@@ -72,7 +72,7 @@ FileUtils.rm_rf(PROJECT_PATH) if PROJECT_PATH.exist?
 
 bundle_suffix = sanitize_bundle_suffix(ENV.fetch('USER', 'local'))
 default_bundle_id = "com.nexusplatform.#{bundle_suffix}.host"
-default_backend_url = ENV.fetch('BACKEND_BASE_URL', 'http://192.168.1.5:8080/api/v1')
+default_backend_url = ENV.fetch('BACKEND_BASE_URL', 'http://47.99.34.148:81/api/v1')
 product_bundle_identifier = ENV.fetch('PRODUCT_BUNDLE_IDENTIFIER', default_bundle_id)
 development_team = ENV['DEVELOPMENT_TEAM']
 

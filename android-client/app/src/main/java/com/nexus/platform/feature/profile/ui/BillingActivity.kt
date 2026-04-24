@@ -5,6 +5,8 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +38,8 @@ import com.nexus.platform.domain.model.BillingRecord
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.NexusPlatformTheme
 import com.nexus.platform.ui.theme.TextMuted
+import com.nexus.platform.ui.components.SkeletonBlock
+import com.nexus.platform.ui.components.SkeletonMotionTokens
 
 class BillingActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
@@ -65,9 +69,14 @@ private fun BillingScreen(
     val context = LocalContext.current
     val backendApi = remember(context) { PlatformBackendApi(context) }
     var records by remember { mutableStateOf<List<BillingRecord>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        records = backendApi.getBillingRecords()
+        try {
+            records = backendApi.getBillingRecords()
+        } finally {
+            loading = false
+        }
     }
 
     Column(
@@ -94,25 +103,54 @@ private fun BillingScreen(
             )
         }
         Spacer(modifier = Modifier.height(18.dp))
-        if (records.isEmpty()) {
-            Text(stringResource(R.string.billing_empty), color = TextMuted)
-        } else {
-            records.forEach { record ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenDetail(record.id) }
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(record.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                        Text(record.subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted)
-                        Text(record.createdAt, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        Crossfade(
+            targetState = loading,
+            animationSpec = tween(SkeletonMotionTokens.OverlayEnterMillis),
+            label = "billingContent"
+        ) { isLoading ->
+            if (isLoading) {
+                BillingSkeleton()
+            } else if (records.isEmpty()) {
+                Text(stringResource(R.string.billing_empty), color = TextMuted)
+            } else {
+                records.forEach { record ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenDetail(record.id) }
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(record.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                            Text(record.subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                            Text(record.createdAt, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                        }
+                        Text(record.amount, style = MaterialTheme.typography.bodyLarge)
                     }
-                    Text(record.amount, style = MaterialTheme.typography.bodyLarge)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BillingSkeleton() {
+    repeat(5) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                SkeletonBlock(width = 136.dp, height = 16.dp, cornerRadius = 8.dp)
+                Spacer(modifier = Modifier.height(6.dp))
+                SkeletonBlock(width = 188.dp, height = 12.dp, cornerRadius = 6.dp)
+                Spacer(modifier = Modifier.height(6.dp))
+                SkeletonBlock(width = 96.dp, height = 12.dp, cornerRadius = 6.dp)
+            }
+            SkeletonBlock(width = 52.dp, height = 16.dp, cornerRadius = 8.dp)
         }
     }
 }

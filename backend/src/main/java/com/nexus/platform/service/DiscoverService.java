@@ -7,6 +7,7 @@ import com.nexus.platform.dto.DiscoverCommunityItem;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.entity.Game;
 import com.nexus.platform.entity.GameOpsProfile;
+import com.nexus.platform.entity.GameVersion;
 import com.nexus.platform.entity.OpsCollection;
 import com.nexus.platform.entity.OpsCollectionGameRel;
 import com.nexus.platform.entity.OpsContentItem;
@@ -14,6 +15,7 @@ import com.nexus.platform.entity.OpsContentSlot;
 import com.nexus.platform.entity.OpsGameCategory;
 import com.nexus.platform.repository.GameOpsProfileRepository;
 import com.nexus.platform.repository.GameRepository;
+import com.nexus.platform.repository.GameVersionRepository;
 import com.nexus.platform.repository.OpsCollectionGameRelRepository;
 import com.nexus.platform.repository.OpsCollectionRepository;
 import com.nexus.platform.repository.OpsContentItemRepository;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,12 +43,15 @@ public class DiscoverService {
 
     private final GameRepository gameRepository;
     private final GameOpsProfileRepository gameOpsProfileRepository;
+    private final GameVersionRepository gameVersionRepository;
     private final OpsContentSlotRepository opsContentSlotRepository;
     private final OpsContentItemRepository opsContentItemRepository;
     private final OpsGameCategoryRepository gameCategoryRepository;
     private final OpsCollectionRepository opsCollectionRepository;
     private final OpsCollectionGameRelRepository opsCollectionGameRelRepository;
     private final UserGameActionLogRepository actionLogRepository;
+    @Value("${platform.public-base-url}")
+    private String publicBaseUrl;
 
     public Result<List<DiscoverFeedItem>> getFeed(int limit, String category) {
         int normalizedLimit = Math.max(1, Math.min(limit, 100));
@@ -147,6 +153,7 @@ public class DiscoverService {
     }
 
     private DiscoverFeedItem toDiscoverFeedItemWithOpsProfile(Game game) {
+        normalizeClientGame(game);
         long hotScore = calculateHotScoreByAge(game);
         String category = detectCategory(game);
         DiscoverFeedItem base = DiscoverFeedItem.from(game, hotScore, category, List.of("Recommended", "Featured"));
@@ -288,12 +295,13 @@ public class DiscoverService {
     }
 
     private DiscoverCommunityItem toCommunityItem(Game game, OpsContentItem item) {
+        normalizeClientGame(game);
         String fallbackTitle = textOrFallback(item.getTitle(), game.getName());
         return new DiscoverCommunityItem(
                 game.getAppId(),
                 textOrFallback(game.getName(), ""),
                 detectCategory(game),
-                textOrFallback(game.getIconUrl(), ""),
+                resolveCommunityIconUrl(game),
                 textOrFallback(item.getBadgeText(), "編輯精選"),
                 fallbackTitle,
                 textOrFallback(item.getCoverUrl(), resolveDiscoverCoverUrl(game)),
@@ -346,5 +354,56 @@ public class DiscoverService {
             return profile.getDiscoverCardCoverUrl();
         }
         return game.getIconUrl();
+    }
+
+    private String resolveCommunityIconUrl(Game game) {
+        if (game.getIconUrl() != null && !game.getIconUrl().isBlank()) {
+            return game.getIconUrl();
+        }
+        GameOpsProfile profile = gameOpsProfileRepository.findByGameId(game.getId()).orElse(null);
+        if (profile == null) {
+            return "";
+        }
+        if (profile.getDiscoverCardLogoUrl() != null && !profile.getDiscoverCardLogoUrl().isBlank()) {
+            return profile.getDiscoverCardLogoUrl();
+        }
+        if (profile.getRuntimeLogoUrl() != null && !profile.getRuntimeLogoUrl().isBlank()) {
+            return profile.getRuntimeLogoUrl();
+        }
+        if (profile.getDiscoverCardCoverUrl() != null && !profile.getDiscoverCardCoverUrl().isBlank()) {
+            return profile.getDiscoverCardCoverUrl();
+        }
+        return "";
+    }
+
+    private void normalizeClientGame(Game game) {
+        if (game == null || game.getAppId() == null) {
+            return;
+        }
+        if (game.getId() != null) {
+            gameVersionRepository
+                    .findTopByGameIdAndStatusOrderByCreatedAtDesc(game.getId(), GameVersion.VersionStatus.APPROVED)
+                    .ifPresent(latestApproved -> {
+                        if (latestApproved.getVersionName() != null && !latestApproved.getVersionName().isBlank()) {
+                            game.setVersion(latestApproved.getVersionName());
+                        }
+                        if (latestApproved.getMd5() != null && !latestApproved.getMd5().isBlank()) {
+                            game.setMd5(latestApproved.getMd5());
+                        }
+                    });
+        }
+        if (game.getRequiresOnline() == null) {
+            game.setRequiresOnline(false);
+        }
+        String downloadUrl = game.getDownloadUrl();
+        if (downloadUrl == null || downloadUrl.isBlank()
+                || downloadUrl.contains("/game/download-url/")
+                || downloadUrl.endsWith("/game/download/" + game.getAppId())) {
+            game.setDownloadUrl(buildControlPlaneDownloadUrl(game.getAppId()));
+        }
+    }
+
+    private String buildControlPlaneDownloadUrl(String appId) {
+        return publicBaseUrl.replaceAll("/+$", "") + "/game/download/" + appId;
     }
 }

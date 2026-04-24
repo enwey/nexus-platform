@@ -62,7 +62,7 @@ security:
     refresh-ttl-days: ${SECURITY_JWT_REFRESH_TTL_DAYS:14}
 
 platform:
-  public-base-url: ${PLATFORM_PUBLIC_BASE_URL:http://localhost:8080/api/v1}
+  public-base-url: ${PLATFORM_PUBLIC_BASE_URL:http://47.99.34.148:81/api/v1}
   cdn-base-url: ${PLATFORM_CDN_BASE_URL:}
   legal:
     terms-title: ${PLATFORM_LEGAL_TERMS_TITLE:Nexus User Agreement}
@@ -96,6 +96,9 @@ logging:
     org.springframework.web: INFO
 
 management:
+  health:
+    mail:
+      enabled: ${MANAGEMENT_HEALTH_MAIL_ENABLED:false}
   endpoints:
     web:
       exposure:

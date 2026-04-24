@@ -51,6 +51,8 @@ final class ProfileViewModel: ObservableObject {
 
     func loadSession() {
         Task {
+            isLoading = true
+            defer { isLoading = false }
             selectedLanguage = await languageStore.current()
             cloudSyncEnabled = await cloudSyncStore.isEnabled()
             let session = await authStore.current()

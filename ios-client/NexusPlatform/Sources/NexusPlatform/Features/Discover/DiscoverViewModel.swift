@@ -2,6 +2,7 @@ import Foundation
 
 @MainActor
 final class DiscoverViewModel: ObservableObject {
+    @Published private(set) var isLoading = false
     @Published private(set) var categories: [String] = ["全部"]
     @Published private(set) var selectedCategory: String = "全部"
     @Published private(set) var games: [Game] = []
@@ -24,6 +25,8 @@ final class DiscoverViewModel: ObservableObject {
 
     func load() {
         Task {
+            isLoading = true
+            defer { isLoading = false }
             do {
                 errorMessage = nil
                 let home = try await homeService.fetchHome(limit: 20)
@@ -65,12 +68,14 @@ final class DiscoverViewModel: ObservableObject {
                     heroGame = nil
                 }
             } catch {
-                games = []
-                topRanked = []
-                categories = ["全部"]
-                hero = nil
-                heroGame = nil
-                heroFallbackMessage = nil
+                if games.isEmpty {
+                    games = []
+                    topRanked = []
+                    categories = ["全部"]
+                    hero = nil
+                    heroGame = nil
+                    heroFallbackMessage = nil
+                }
                 errorMessage = error.localizedDescription
             }
         }

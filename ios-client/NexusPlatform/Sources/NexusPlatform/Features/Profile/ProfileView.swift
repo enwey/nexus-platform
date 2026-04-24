@@ -12,11 +12,19 @@ struct ProfileView: View {
     @State private var showSecurity = false
 
     var body: some View {
-        VStack(spacing: 24) {
-            userCard
-            walletCard
-            referralCard
-            menuGroup
+        ZStack(alignment: .top) {
+            if viewModel.isLoading {
+                profileSkeleton
+                    .transition(NativeMotion.stateSwapTransition)
+            } else {
+                VStack(spacing: 24) {
+                    userCard
+                    walletCard
+                    referralCard
+                    menuGroup
+                }
+                .transition(NativeMotion.contentRevealTransition)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.leading, 24)
@@ -56,25 +64,7 @@ struct ProfileView: View {
             Button(copy.cancel, role: .cancel) {}
         }
         .overlay(alignment: .bottom) {
-            if let toastMessage {
-                Text(toastMessage)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.black.opacity(0.82), in: Capsule())
-                    .padding(.bottom, 26)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                if self.toastMessage == toastMessage {
-                                    self.toastMessage = nil
-                                }
-                            }
-                        }
-                }
-            }
+            NativeToastOverlay(message: $toastMessage)
         }
         .navigationDestination(isPresented: $showBilling) {
             BillingListView()
@@ -92,6 +82,85 @@ struct ProfileView: View {
                 onLanguageSelect: { viewModel.setLanguage($0) },
                 onRequestLogin: { showAuthFlow = true },
                 onLogoutCurrent: { viewModel.logout() }
+            )
+        }
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading)
+    }
+
+    private var profileSkeleton: some View {
+        Group {
+            HStack(alignment: .center, spacing: 20) {
+                NativeSkeletonBlock(width: 80, height: 80, cornerRadius: 40)
+                VStack(alignment: .leading, spacing: 10) {
+                    NativeSkeletonBlock(width: 136, height: 26, cornerRadius: 10)
+                    NativeSkeletonBlock(width: 88, height: 18, cornerRadius: 9)
+                }
+                Spacer()
+                NativeSkeletonBlock(width: 82, height: 34, cornerRadius: 17)
+            }
+
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x24253A), Color(hex: 0x1C1C1F)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(height: 164)
+                .overlay {
+                    VStack(alignment: .leading, spacing: 0) {
+                        NativeSkeletonBlock(width: 68, height: 12, cornerRadius: 6)
+                        Spacer().frame(height: 10)
+                        NativeSkeletonBlock(width: 142, height: 34, cornerRadius: 10)
+                        Spacer()
+                        HStack(spacing: 12) {
+                            NativeSkeletonBlock(height: 38, cornerRadius: 12)
+                            NativeSkeletonBlock(height: 38, cornerRadius: 12)
+                        }
+                    }
+                    .padding(20)
+                }
+
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(hex: 0x1C1C1F))
+                .frame(height: 96)
+                .overlay {
+                    HStack(spacing: 16) {
+                        NativeSkeletonBlock(width: 42, height: 42, cornerRadius: 21)
+                        VStack(alignment: .leading, spacing: 10) {
+                            NativeSkeletonBlock(width: 108, height: 14, cornerRadius: 7)
+                            NativeSkeletonBlock(width: 186, height: 12, cornerRadius: 6)
+                        }
+                        Spacer()
+                        NativeSkeletonBlock(width: 64, height: 28, cornerRadius: 14)
+                    }
+                    .padding(20)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
+                )
+
+            VStack(spacing: 0) {
+                ForEach(0..<4, id: \.self) { index in
+                    HStack {
+                        NativeSkeletonBlock(width: 96, height: 14, cornerRadius: 7)
+                        Spacer()
+                        NativeSkeletonBlock(width: index == 0 ? 14 : 62, height: 12, cornerRadius: 6)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 18)
+
+                    if index != 3 {
+                        divider
+                    }
+                }
+            }
+            .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
             )
         }
     }
@@ -411,47 +480,58 @@ private struct BillingListView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 0) {
-                if viewModel.isLoading {
-                    ProgressView(copy.loading)
-                        .padding(.vertical, 20)
+            ZStack(alignment: .topLeading) {
+                if viewModel.isLoading && viewModel.records.isEmpty {
+                    billingListSkeleton
+                        .transition(NativeMotion.stateSwapTransition)
                 } else if viewModel.records.isEmpty {
-                    Text(copy.empty)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                        .padding(.vertical, 20)
+                    NativeStateCard {
+                        Text(copy.empty)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(hex: 0xA0A0A0))
+                    }
+                    .padding(.vertical, 20)
+                    .transition(NativeMotion.stateSwapTransition)
                 } else {
-                    ForEach(viewModel.records) { record in
-                        NavigationLink(destination: BillingDetailView(record: record)) {
-                            HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(record.title)
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                    Text(record.subtitle.isEmpty ? record.type : record.subtitle)
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                                    if record.createdAtText.isEmpty == false {
-                                        Text(record.createdAtText)
-                                            .font(.system(size: 11))
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(viewModel.records) { record in
+                            NavigationLink(destination: BillingDetailView(record: record)) {
+                                HStack(alignment: .top) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(record.title)
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                        Text(record.subtitle.isEmpty ? record.type : record.subtitle)
+                                            .font(.system(size: 12))
                                             .foregroundStyle(Color(hex: 0xA0A0A0))
+                                        if record.createdAtText.isEmpty == false {
+                                            Text(record.createdAtText)
+                                                .font(.system(size: 11))
+                                                .foregroundStyle(Color(hex: 0xA0A0A0))
+                                        }
                                     }
+                                    Spacer()
+                                    Text(amountText(record.amount))
+                                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                                        .foregroundStyle(amountText(record.amount).hasPrefix("-") ? Color(hex: 0xEF5A5A) : Color(hex: 0x36C282))
                                 }
-                                Spacer()
-                                Text(amountText(record.amount))
-                                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(amountText(record.amount).hasPrefix("-") ? Color(hex: 0xEF5A5A) : Color(hex: 0x36C282))
                             }
                             .padding(.vertical, 16)
-                        }
-                        .buttonStyle(.plain)
+                            .buttonStyle(.plain)
 
-                        if record.id != viewModel.records.last?.id {
-                            Rectangle()
-                                .fill(Color(hex: 0x2D2D31))
-                                .frame(height: 1)
+                            if record.id != viewModel.records.last?.id {
+                                Rectangle()
+                                    .fill(Color(hex: 0x2D2D31))
+                                    .frame(height: 1)
+                            }
                         }
                     }
+                    .transition(NativeMotion.contentRevealTransition)
+                }
+
+                if viewModel.isLoading && viewModel.records.isEmpty == false {
+                    NativeSectionRefreshOverlay(lineWidths: [90, 60], cornerRadius: 18)
+                        .padding(.top, 10)
                 }
             }
             .padding(24)
@@ -460,7 +540,11 @@ private struct BillingListView: View {
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
         .onAppear { viewModel.load() }
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading)
+        .animation(NativeMotion.overlayTransition, value: viewModel.records.isEmpty)
     }
 
     private func amountText(_ value: Decimal) -> String {
@@ -472,20 +556,54 @@ private struct BillingListView: View {
     private var copy: BillingListCopy {
         .forLanguage(AppLanguageStore.currentSync())
     }
+
+    private var billingListSkeleton: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<5, id: \.self) { index in
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        NativeSkeletonBlock(width: 136, height: 14, cornerRadius: 7)
+                        NativeSkeletonBlock(width: 182, height: 12, cornerRadius: 6)
+                        NativeSkeletonBlock(width: 96, height: 11, cornerRadius: 5)
+                    }
+                    Spacer()
+                    NativeSkeletonBlock(width: 54, height: 14, cornerRadius: 7)
+                }
+                .padding(.vertical, 16)
+
+                if index != 4 {
+                    Rectangle()
+                        .fill(Color(hex: 0x2D2D31))
+                        .frame(height: 1)
+                }
+            }
+        }
+    }
 }
 
 @MainActor
 private final class BillingListViewModel: ObservableObject {
+    private static var cachedRecords: [BillingRecord] = []
+
     @Published var records: [BillingRecord] = []
     @Published var isLoading = false
 
     private let service: BillingServiceProtocol = BillingService()
 
     func load() {
+        if records.isEmpty, Self.cachedRecords.isEmpty == false {
+            records = Self.cachedRecords
+        }
+
         Task {
             isLoading = true
             defer { isLoading = false }
-            records = (try? await service.fetchBillingList(limit: 20)) ?? []
+            if let loaded = try? await service.fetchBillingList(limit: 20) {
+                records = loaded
+                Self.cachedRecords = loaded
+            } else if records.isEmpty {
+                records = []
+            }
         }
     }
 }
@@ -603,15 +721,16 @@ private struct BillingListCopy {
     let title: String
     let loading: String
     let empty: String
+    let refreshing: String
 
     static func forLanguage(_ language: AppLanguage) -> BillingListCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "账单", loading: "加载中...", empty: "暂无账单记录")
+            return .init(title: "账单", loading: "加载中...", empty: "暂无账单记录", refreshing: "正在刷新")
         case .traditionalChinese:
-            return .init(title: "帳單", loading: "載入中...", empty: "暫無帳單記錄")
+            return .init(title: "帳單", loading: "載入中...", empty: "暫無帳單記錄", refreshing: "正在刷新")
         case .english:
-            return .init(title: "Billing", loading: "Loading...", empty: "No billing records")
+            return .init(title: "Billing", loading: "Loading...", empty: "No billing records", refreshing: "Refreshing")
         }
     }
 }

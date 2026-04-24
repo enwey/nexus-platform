@@ -1064,6 +1064,18 @@ public class GameService {
         if (game == null || game.getAppId() == null) {
             return;
         }
+        if (game.getId() != null) {
+            gameVersionRepository
+                    .findTopByGameIdAndStatusOrderByCreatedAtDesc(game.getId(), GameVersion.VersionStatus.APPROVED)
+                    .ifPresent(latestApproved -> {
+                        if (latestApproved.getVersionName() != null && !latestApproved.getVersionName().isBlank()) {
+                            game.setVersion(latestApproved.getVersionName());
+                        }
+                        if (latestApproved.getMd5() != null && !latestApproved.getMd5().isBlank()) {
+                            game.setMd5(latestApproved.getMd5());
+                        }
+                    });
+        }
         if (game.getRequiresOnline() == null) {
             game.setRequiresOnline(false);
         }

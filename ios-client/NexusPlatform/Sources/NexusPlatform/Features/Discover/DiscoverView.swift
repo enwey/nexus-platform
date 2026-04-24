@@ -5,32 +5,36 @@ struct DiscoverView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                Spacer()
-                    .frame(height: 12)
+            if viewModel.isLoading && viewModel.games.isEmpty && viewModel.topRanked.isEmpty {
+                discoverSkeleton
+            } else {
+                VStack(alignment: .leading, spacing: 20) {
+                    Spacer()
+                        .frame(height: 12)
 
-                bannerSection
-                    .padding(.horizontal, 24)
-
-                categorySection
-                    .padding(.horizontal, 24)
-
-                if let error = viewModel.errorMessage, error.isEmpty == false {
-                    errorBanner(error)
+                    bannerSection
                         .padding(.horizontal, 24)
-                }
 
-                if viewModel.selectedCategory == "全部" {
-                    rankingSection
+                    categorySection
                         .padding(.horizontal, 24)
+
+                    if let error = viewModel.errorMessage, error.isEmpty == false {
+                        errorBanner(error)
+                            .padding(.horizontal, 24)
+                    }
+
+                    if viewModel.selectedCategory == "全部" {
+                        rankingSection
+                            .padding(.horizontal, 24)
+                    }
+
+                    feedSection
+                        .padding(.horizontal, 24)
+
+                    footer
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 96)
                 }
-
-                feedSection
-                    .padding(.horizontal, 24)
-
-                footer
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 96)
             }
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
@@ -38,6 +42,99 @@ struct DiscoverView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { viewModel.load() }
+        .animation(NativeMotion.overlayTransition, value: isRefreshingContent)
+        .overlay(alignment: .top) {
+            if viewModel.isLoading && (viewModel.games.isEmpty == false || viewModel.topRanked.isEmpty == false) {
+                NativeRefreshPill(text: copy.refreshing)
+                    .padding(.top, 10)
+            }
+        }
+    }
+
+    private var isRefreshingContent: Bool {
+        viewModel.isLoading && (viewModel.games.isEmpty == false || viewModel.topRanked.isEmpty == false)
+    }
+
+    private var discoverSkeleton: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Spacer().frame(height: 14)
+
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x24253A), Color(hex: 0x1C1C1F)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(height: 180)
+                .overlay(alignment: .bottomLeading) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        NativeSkeletonBlock(width: 52, height: 20, cornerRadius: 8)
+                        NativeSkeletonText(widths: [184, 228], lineHeight: 14)
+                    }
+                    .padding(20)
+                }
+                .padding(.horizontal, 24)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(0..<5, id: \.self) { index in
+                        NativeSkeletonBlock(width: index == 0 ? 56 : 72, height: 34, cornerRadius: 17)
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    NativeSkeletonBlock(width: 102, height: 24, cornerRadius: 8)
+                    Spacer()
+                    NativeSkeletonBlock(width: 62, height: 12, cornerRadius: 6)
+                }
+
+                ForEach(0..<3, id: \.self) { index in
+                    discoverRowSkeleton(rank: index + 1)
+                }
+            }
+            .padding(.horizontal, 24)
+
+            VStack(alignment: .leading, spacing: 12) {
+                NativeSkeletonBlock(width: 78, height: 24, cornerRadius: 8)
+                ForEach(0..<4, id: \.self) { index in
+                    discoverRowSkeleton(rank: index + 1)
+                }
+            }
+            .padding(.horizontal, 24)
+
+            footer
+                .padding(.horizontal, 24)
+                .padding(.bottom, 96)
+        }
+    }
+
+    private func discoverRowSkeleton(rank: Int) -> some View {
+        HStack(spacing: 12) {
+            Text("\(rank)")
+                .font(.system(size: 22, weight: .heavy))
+                .foregroundStyle(Color.white.opacity(0.12))
+                .frame(width: 28, height: 28)
+
+            NativeSkeletonBlock(width: 52, height: 52, cornerRadius: 12)
+
+            VStack(alignment: .leading, spacing: 6) {
+                NativeSkeletonBlock(width: 128, height: 14, cornerRadius: 7)
+                NativeSkeletonBlock(width: 166, height: 12, cornerRadius: 6)
+            }
+
+            Spacer()
+        }
+        .padding(12)
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+        )
     }
 
     private var bannerSection: some View {
@@ -94,6 +191,12 @@ struct DiscoverView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 180)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                if isRefreshingContent {
+                    NativeSectionRefreshOverlay(lineWidths: [108, 72], cornerRadius: 20)
+                }
+            }
+            .animation(NativeMotion.overlayTransition, value: isRefreshingContent)
         }
         .buttonStyle(.plain)
     }
@@ -146,6 +249,12 @@ struct DiscoverView: View {
                 }
             }
         }
+        .overlay {
+            if isRefreshingContent {
+                NativeSectionRefreshOverlay(lineWidths: [96, 58], cornerRadius: 18)
+            }
+        }
+        .animation(NativeMotion.overlayTransition, value: isRefreshingContent)
     }
 
     private func rankedItem(game: Game, rank: Int) -> some View {
@@ -207,6 +316,12 @@ struct DiscoverView: View {
                 }
             }
         }
+        .overlay {
+            if isRefreshingContent {
+                NativeSectionRefreshOverlay(lineWidths: [84, 54], cornerRadius: 18)
+            }
+        }
+        .animation(NativeMotion.overlayTransition, value: isRefreshingContent)
     }
 
     private var footer: some View {
@@ -254,15 +369,16 @@ private struct DiscoverCopy {
     let empty: String
     let loadEnd: String
     let hot: String
+    let refreshing: String
 
     static func forLanguage(_ language: AppLanguage) -> DiscoverCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "发现", rankTitle: "排行榜", viewMore: "查看更多", empty: "暂无内容", loadEnd: "已经到底啦", hot: "热门")
+            return .init(title: "发现", rankTitle: "排行榜", viewMore: "查看更多", empty: "暂无内容", loadEnd: "已经到底啦", hot: "热门", refreshing: "正在刷新")
         case .traditionalChinese:
-            return .init(title: "發現", rankTitle: "排行榜", viewMore: "查看更多", empty: "暫無內容", loadEnd: "已經到底了", hot: "熱門")
+            return .init(title: "發現", rankTitle: "排行榜", viewMore: "查看更多", empty: "暫無內容", loadEnd: "已經到底了", hot: "熱門", refreshing: "正在刷新")
         case .english:
-            return .init(title: "Discover", rankTitle: "Ranking", viewMore: "View More", empty: "No content yet", loadEnd: "You've reached the end", hot: "Hot")
+            return .init(title: "Discover", rankTitle: "Ranking", viewMore: "View More", empty: "No content yet", loadEnd: "You've reached the end", hot: "Hot", refreshing: "Refreshing")
         }
     }
 }

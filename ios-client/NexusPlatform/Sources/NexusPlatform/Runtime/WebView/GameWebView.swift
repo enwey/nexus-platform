@@ -6,13 +6,17 @@ struct GameWebView: UIViewRepresentable {
     let bridge: JSBridge
     let schemeHandler: WKURLSchemeHandler
     let sdkScript: String
+    let layoutMetrics: GameLayoutMetrics
     @Binding var isLoading: Bool
+    @Binding var isContentVisible: Bool
+    @Binding var errorMessage: String?
     var onWebViewReady: ((WKWebView) -> Void)?
 
     func makeUIView(context: Context) -> WKWebView {
         let builder = WebViewConfigBuilder(
             schemeHandler: schemeHandler,
-            injectedSDKScript: sdkScript
+            injectedSDKScript: sdkScript,
+            layoutMetrics: layoutMetrics
         )
         let configuration = builder.build()
 
@@ -20,6 +24,13 @@ struct GameWebView: UIViewRepresentable {
         webView.scrollView.bounces = false
         webView.scrollView.alwaysBounceVertical = false
         webView.scrollView.alwaysBounceHorizontal = false
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        webView.scrollView.contentInset = .zero
+        webView.scrollView.scrollIndicatorInsets = .zero
+        webView.scrollView.automaticallyAdjustsScrollIndicatorInsets = false
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
         webView.navigationDelegate = context.coordinator
 
         Task { @MainActor in
@@ -31,7 +42,16 @@ struct GameWebView: UIViewRepresentable {
         return webView
     }
 
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        guard context.coordinator.lastLayoutMetrics != layoutMetrics else { return }
+        context.coordinator.lastLayoutMetrics = layoutMetrics
+        let script = WebViewConfigBuilder(
+            schemeHandler: schemeHandler,
+            injectedSDKScript: sdkScript,
+            layoutMetrics: layoutMetrics
+        ).layoutUpdateScript()
+        uiView.evaluateJavaScript(script, completionHandler: nil)
+    }
 
     static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
         Task { @MainActor in
@@ -45,25 +65,48 @@ struct GameWebView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate {
         fileprivate let parent: GameWebView
+        fileprivate var lastLayoutMetrics: GameLayoutMetrics
 
         init(_ parent: GameWebView) {
             self.parent = parent
+            self.lastLayoutMetrics = parent.layoutMetrics
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             parent.isLoading = true
+            parent.isContentVisible = false
+            parent.errorMessage = nil
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             parent.isLoading = false
+            parent.isContentVisible = true
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             parent.isLoading = false
+            parent.isContentVisible = false
+            parent.errorMessage = parent.userVisibleMessage(for: error)
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             parent.isLoading = false
+            parent.isContentVisible = false
+            parent.errorMessage = parent.userVisibleMessage(for: error)
         }
+
+        func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+            parent.isContentVisible = false
+        }
+    }
+}
+
+private extension GameWebView {
+    func userVisibleMessage(for error: Error) -> String {
+        let message = error.localizedDescription.lowercased()
+        if message.contains("offline") || message.contains("internet connection") {
+            return "游戏页面载入失败，请重试"
+        }
+        return "游戏页面载入失败，请重试"
     }
 }
