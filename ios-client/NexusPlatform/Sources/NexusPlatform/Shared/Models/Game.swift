@@ -88,7 +88,13 @@ struct Game: Identifiable, Decodable, Hashable, Sendable {
         resolveLocalizedValue(values: localizedDescriptions, language: language, fallback: description)
     }
 
-    func applyingPresentation(name: String? = nil, description: String? = nil, iconUrl: String? = nil) -> Game {
+    func applyingPresentation(
+        name: String? = nil,
+        description: String? = nil,
+        iconUrl: String? = nil,
+        localizedNames: [String: String]? = nil,
+        localizedDescriptions: [String: String]? = nil
+    ) -> Game {
         Game(
             id: id,
             name: name ?? self.name,
@@ -98,8 +104,8 @@ struct Game: Identifiable, Decodable, Hashable, Sendable {
             version: version,
             md5: md5,
             category: category,
-            localizedNames: localizedNames,
-            localizedDescriptions: localizedDescriptions
+            localizedNames: localizedNames ?? self.localizedNames,
+            localizedDescriptions: localizedDescriptions ?? self.localizedDescriptions
         )
     }
 

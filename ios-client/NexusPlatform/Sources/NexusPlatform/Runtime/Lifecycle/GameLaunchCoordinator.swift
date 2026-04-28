@@ -14,13 +14,13 @@ enum GameLaunchError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .updateCheckFailed(let msg):
-            return "更新检查失败：\(msg)"
+            return AppText.launchUpdateCheckFailed(msg)
         case .packageInstallFailed(let msg):
-            return "游戏包安装失败：\(msg)"
+            return AppText.packageInstallFailed(msg)
         case .forceUpdateFailed(let msg):
-            return "强制更新失败：\(msg)"
+            return AppText.forceUpdateFailed(msg)
         case .fallbackDownloadFailed(let msg):
-            return "首包下载失败：\(msg)"
+            return AppText.fallbackDownloadFailed(msg)
         }
     }
 }

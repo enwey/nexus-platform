@@ -220,7 +220,7 @@ class ImageApi(private val context: Context) : ApiHandler {
                 val values = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
                     put(MediaStore.Images.Media.MIME_TYPE, URLConnection.guessContentTypeFromName(fileName) ?: "image/jpeg")
-                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Nexus")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/BringBox")
                 }
                 val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                     ?: throw IllegalStateException("Failed to create media item")
@@ -229,7 +229,7 @@ class ImageApi(private val context: Context) : ApiHandler {
                 } ?: throw IllegalStateException("Failed to open output stream")
                 mapOf("savedFilePath" to uri.toString(), "errMsg" to "saveImageToPhotosAlbum:ok")
             } else {
-                val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Nexus")
+                val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "BringBox")
                 if (!dir.exists()) dir.mkdirs()
                 val target = File(dir, fileName)
                 input.use { src -> FileOutputStream(target).use { dst -> src.copyTo(dst) } }

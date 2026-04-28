@@ -25,12 +25,13 @@ cmd /c android-client\gradlew.bat -p android-client assembleDebug
 
 ## 真机联调（重要）
 
-默认 `BACKEND_BASE_URL` 是 `http://10.0.2.2:8080/api/v1`（模拟器专用）。
+默认首选环境变量是 `PLATFORM_API_BASE_URL`，默认值是 `http://47.99.34.148:81/api/v1`。
+`BACKEND_BASE_URL` 仍可继续使用，但仅作为兼容旧配置的回退值。
 
 真机必须使用局域网地址重新编译：
 
 ```powershell
-$env:BACKEND_BASE_URL='http://<你的电脑局域网IP>:8080/api/v1'
+$env:PLATFORM_API_BASE_URL='http://<你的电脑局域网IP>:8080/api/v1'
 . .\scripts\env-local.ps1
 cmd /c android-client\gradlew.bat -p android-client assembleDebug
 ```

@@ -16,11 +16,11 @@ enum WalletServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "钱包数据响应无效"
+            return AppText.invalidWalletResponse()
         case .failed(let message):
-            return message.isEmpty ? "获取钱包失败" : message
+            return message.isEmpty ? AppText.fetchWalletFailed() : message
         }
     }
 }

@@ -56,7 +56,7 @@ struct ReceiptPageView: View {
         VStack(spacing: 16) {
             NativeSkeletonBlock(height: 18, cornerRadius: 9)
             NativeSkeletonBlock(height: 18, cornerRadius: 9)
-            NativeSkeletonBlock(height: 18, cornerRadius: 9)
+            NativeSkeletonBlock(width: 228, height: 18, cornerRadius: 9)
             NativeSkeletonBlock(width: 168, height: 16, cornerRadius: 8)
         }
         .padding(.horizontal, 18)

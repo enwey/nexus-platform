@@ -54,5 +54,6 @@ protocol GameStorageManagerProtocol: Sendable {
     /// Cleanup stale versions after new version is activated.
     func pruneObsoleteVersions(gameID: String, keeping versions: Set<String>) async throws
 
+    func cacheSizeInBytes() async -> Int64
     func clearAllLocalCaches() async throws
 }

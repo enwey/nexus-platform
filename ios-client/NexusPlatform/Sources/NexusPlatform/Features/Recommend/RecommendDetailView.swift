@@ -3,7 +3,7 @@ import SwiftUI
 struct RecommendDetailView: View {
     let item: RecommendTodayItem
     let game: Game
-    @Environment(\.dismiss) private var dismiss
+    @State private var language: AppLanguage = AppLanguageStore.currentSync()
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -11,15 +11,17 @@ struct RecommendDetailView: View {
                 hero
 
                 VStack(alignment: .leading, spacing: 14) {
-                    Text(item.articleTag.isEmpty ? copy.defaultTag : item.articleTag)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Color(hex: 0x6B4EFF))
+                    if resolvedTag.isEmpty == false {
+                        Text(resolvedTag)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Color(hex: 0x6B4EFF))
+                    }
 
                     Text(item.articleTitle.isEmpty ? resolvedTitle : item.articleTitle)
                         .font(.system(size: 30, weight: .black))
                         .foregroundStyle(.white)
 
-                    Text(item.articleBody.isEmpty ? game.description : item.articleBody)
+                    Text(item.articleBody.isEmpty ? localizedGameDescription : item.articleBody)
                         .font(.system(size: 14))
                         .foregroundStyle(Color(hex: 0xA0A0A0))
 
@@ -34,12 +36,20 @@ struct RecommendDetailView: View {
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .nexusTabBarHidden()
+        .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
+            if let language = notification.object as? AppLanguage {
+                self.language = language
+            } else {
+                language = AppLanguageStore.currentSync()
+            }
+        }
     }
 
     private var hero: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .bottom) {
             AsyncImage(
                 url: URL(string: item.coverURL),
                 transaction: Transaction(animation: NativeMotion.overlayTransition)
@@ -71,13 +81,14 @@ struct RecommendDetailView: View {
             }
 
             LinearGradient(
-                colors: [.clear, Color.black.opacity(0.58)],
+                colors: [Color.clear, Color.black.opacity(0.58)],
                 startPoint: .top,
                 endPoint: .bottom
             )
         }
         .frame(height: 420)
         .clipped()
+        .ignoresSafeArea(edges: .top)
     }
 
     private var gameCard: some View {
@@ -101,11 +112,11 @@ struct RecommendDetailView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(game.name)
+                Text(game.localizedName(for: language))
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
 
-                Text(game.description.isEmpty ? (game.category ?? copy.defaultGameCategory) : game.description)
+                Text(localizedGameDescription.isEmpty ? (game.category ?? copy.defaultGameCategory) : localizedGameDescription)
                     .font(.system(size: 12))
                     .foregroundStyle(Color(hex: 0xA0A0A0))
                     .lineLimit(1)
@@ -115,9 +126,9 @@ struct RecommendDetailView: View {
 
             AuthGateLaunchLink(game: game) {
                 Text(item.actionText.isEmpty ? copy.play : item.actionText)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 14)
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(
                         LinearGradient(
@@ -125,9 +136,8 @@ struct RecommendDetailView: View {
                             startPoint: .leading,
                             endPoint: .trailing
                         ),
-                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        in: Capsule()
                     )
-                    .foregroundStyle(.white)
             }
             .buttonStyle(.plain)
         }
@@ -142,7 +152,7 @@ struct RecommendDetailView: View {
     }
 
     private var resolvedTitle: String {
-        item.cardTitle.isEmpty ? item.gameName : item.cardTitle
+        item.cardTitle.isEmpty ? game.localizedName(for: language) : item.cardTitle
     }
 
     private var resolvedGameIconURL: String {
@@ -152,8 +162,17 @@ struct RecommendDetailView: View {
         return item.gameIconURL
     }
 
+    private var resolvedTag: String {
+        let candidates = [item.articleTag, item.cardCategory, game.category ?? ""]
+        return candidates.first(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false }) ?? ""
+    }
+
     private var copy: RecommendDetailCopy {
         .forLanguage(AppLanguageStore.currentSync())
+    }
+
+    private var localizedGameDescription: String {
+        game.localizedDescription(for: language)
     }
 }
 
@@ -166,11 +185,11 @@ private struct RecommendDetailCopy {
     static func forLanguage(_ language: AppLanguage) -> RecommendDetailCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "推荐详情", defaultTag: "专题", defaultGameCategory: "精选游戏", play: "立即秒开")
+            return .init(title: "推荐详情", defaultTag: "专题", defaultGameCategory: "精选游戏", play: "秒开")
         case .traditionalChinese:
-            return .init(title: "推薦詳情", defaultTag: "專題", defaultGameCategory: "精選遊戲", play: "立即秒開")
+            return .init(title: "推薦詳情", defaultTag: "專題", defaultGameCategory: "精選遊戲", play: "秒開")
         case .english:
-            return .init(title: "Recommendation", defaultTag: "Feature", defaultGameCategory: "Featured", play: "Play Now")
+            return .init(title: "Recommendation", defaultTag: "Feature", defaultGameCategory: "Featured", play: "Play")
         }
     }
 }

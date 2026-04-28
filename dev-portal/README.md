@@ -28,7 +28,8 @@ npm run build:dev-portal
 
 ## 环境变量
 
-- `VITE_API_BASE_URL`（默认 `http://localhost:8080/api/v1`）
+- `VITE_PLATFORM_API_BASE_URL`（首选，默认 `http://47.99.34.148:81/api/v1`）
+- `VITE_API_BASE_URL`（兼容旧配置，优先级低于 `VITE_PLATFORM_API_BASE_URL`）
 
 ## 会话说明
 

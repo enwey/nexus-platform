@@ -17,9 +17,9 @@ enum LibraryHomeServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "游戏库数据响应无效"
+            return AppText.invalidLibraryResponse()
         }
     }
 }
@@ -107,7 +107,11 @@ struct LibraryHomeService: LibraryHomeServiceProtocol {
         normalized["id"] = row["appId"] ?? row["id"] ?? UUID().uuidString
         normalized["description"] = row["description"] ?? ""
         normalized["iconUrl"] = row["iconUrl"] ?? row["coverUrl"] ?? ""
-        normalized["downloadUrl"] = row["downloadUrl"] ?? ""
+        if let rawURL = row["downloadUrl"] as? String {
+            normalized["downloadUrl"] = normalizeBackendURL(rawURL)
+        } else {
+            normalized["downloadUrl"] = ""
+        }
         normalized["version"] = row["version"] ?? "0.0.0"
         normalized["md5"] = row["md5"] ?? ""
         guard let json = try? JSONSerialization.data(withJSONObject: normalized),
@@ -122,5 +126,18 @@ struct LibraryHomeService: LibraryHomeServiceProtocol {
             return nil
         }
         return await metadataResolver.merge(game)
+    }
+
+    private func normalizeBackendURL(_ raw: String) -> String {
+        guard raw.isEmpty == false else { return raw }
+        guard var components = URLComponents(string: raw) else { return raw }
+        let host = components.host?.lowercased() ?? ""
+        if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+            components.scheme = baseURL.scheme
+            components.host = baseURL.host
+            components.port = baseURL.port
+            return components.string ?? raw
+        }
+        return raw
     }
 }

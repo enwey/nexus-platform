@@ -15,7 +15,9 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        val backendBaseUrl = System.getenv("BACKEND_BASE_URL")
+        val backendBaseUrl = System.getenv("PLATFORM_API_BASE_URL")
+            ?.takeIf { it.isNotBlank() }
+            ?: System.getenv("BACKEND_BASE_URL")
             ?.takeIf { it.isNotBlank() }
             ?: "http://47.99.34.148:81/api/v1"
         val backendCertSha256 = System.getenv("BACKEND_CERT_SHA256")

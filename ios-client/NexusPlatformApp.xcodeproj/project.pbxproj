@@ -3,10 +3,13 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0008C60F16CC4E7A8FEA5B7E /* Resources/BringBox.png in Resources */ = {isa = PBXBuildFile; fileRef = 0008C60E16CC4E7A8FEA5B7E /* Resources/BringBox.png */; };
+		0008C61116CC4E7A8FEA5B7E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0008C61016CC4E7A8FEA5B7E /* Assets.xcassets */; };
+		0008C61316CC4E7A8FEA5B7E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0008C61216CC4E7A8FEA5B7E /* LaunchScreen.storyboard */; };
 		0023DB01F0345E52EB249E5B /* LegalConfigService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B26C17A06E18029EF196BC /* LegalConfigService.swift */; };
 		0233A3C534CD3599102BBF53 /* NexusBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2775849AFB2FACBEE348C25 /* NexusBridge.swift */; };
 		058815BCB06AC865DEBA35AB /* GameLaunchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64695B8F4AEF982B94C19A8F /* GameLaunchCoordinator.swift */; };
@@ -82,6 +85,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0008C60E16CC4E7A8FEA5B7E /* Resources/BringBox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Resources/BringBox.png; sourceTree = "<group>"; };
+		0008C61016CC4E7A8FEA5B7E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0008C61216CC4E7A8FEA5B7E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		00F7A6FB8740C2358AAC8835 /* AuthFlowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthFlowView.swift; sourceTree = "<group>"; };
 		03A0FA38AC23BDBE6124F644 /* UpdateCheckService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateCheckService.swift; sourceTree = "<group>"; };
 		06CAE689097E8C50790C069A /* DiscoverHomeService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiscoverHomeService.swift; sourceTree = "<group>"; };
@@ -177,7 +183,6 @@
 				87DBFD28A0CA8E30B1AC5739 /* JSBridge.swift */,
 				6532B9DE9E29F6CFDC0FA1A6 /* JSBridgeProtocol.swift */,
 			);
-			name = Bridge;
 			path = Bridge;
 			sourceTree = "<group>";
 		};
@@ -186,7 +191,6 @@
 			children = (
 				853191FDD44878E938520B5E /* DefaultBridgeAPIs.swift */,
 			);
-			name = APIs;
 			path = APIs;
 			sourceTree = "<group>";
 		};
@@ -199,7 +203,6 @@
 				332388E3EBF01D4D783D6E00 /* CloudSyncStore.swift */,
 				BC9E4F06A568D244505900D0 /* GameEngagementStore.swift */,
 			);
-			name = Persistence;
 			path = Persistence;
 			sourceTree = "<group>";
 		};
@@ -209,7 +212,6 @@
 				398AE07D3789A0CB8986E730 /* Models */,
 				7A500DA5BE1353CBC2B4119D /* PasswordVisibilityField.swift */,
 			);
-			name = Shared;
 			path = Shared;
 			sourceTree = "<group>";
 		};
@@ -218,7 +220,6 @@
 			children = (
 				0F7CA8C41E8CC7E30BAF5F2A /* Game.swift */,
 			);
-			name = Models;
 			path = Models;
 			sourceTree = "<group>";
 		};
@@ -230,7 +231,6 @@
 				6ADE91E4474960BE027E632F /* Storage */,
 				EAC46929AEEA2D477034CCBF /* Theme */,
 			);
-			name = Core;
 			path = Core;
 			sourceTree = "<group>";
 		};
@@ -240,7 +240,6 @@
 				843D514508AD9A3C92499C33 /* GameWebView.swift */,
 				318720A9C095D424E5ADDD78 /* WebViewConfigBuilder.swift */,
 			);
-			name = WebView;
 			path = WebView;
 			sourceTree = "<group>";
 		};
@@ -251,7 +250,6 @@
 				535A64DACD87BC4D0B5B95D4 /* DiscoverView.swift */,
 				586C2542FC08D6934B7F9FDC /* DiscoverViewModel.swift */,
 			);
-			name = Discover;
 			path = Discover;
 			sourceTree = "<group>";
 		};
@@ -264,7 +262,6 @@
 				9C8A3766ECFDFFA2052F28A9 /* SchemeHandler */,
 				5A188770D5D89765144E5E28 /* WebView */,
 			);
-			name = Runtime;
 			path = Runtime;
 			sourceTree = "<group>";
 		};
@@ -273,7 +270,6 @@
 			children = (
 				B2775849AFB2FACBEE348C25 /* NexusBridge.swift */,
 			);
-			name = Bridge;
 			path = Bridge;
 			sourceTree = "<group>";
 		};
@@ -284,7 +280,6 @@
 				3C04926B55AAC1271F2EAFD9 /* LocalGameMetadataResolver.swift */,
 				9330EAF9805A77EA344EAD03 /* VersionedGameStorageManager.swift */,
 			);
-			name = Storage;
 			path = Storage;
 			sourceTree = "<group>";
 		};
@@ -299,7 +294,6 @@
 				EAC799DE3176F3875DCD9AB1 /* Profile */,
 				D421E47A993DE23812AFE169 /* Recommend */,
 			);
-			name = Features;
 			path = Features;
 			sourceTree = "<group>";
 		};
@@ -308,7 +302,6 @@
 			children = (
 				20DB681478CE1A51AD99F746 /* CapsuleMenuOverlay.swift */,
 			);
-			name = CapsuleMenu;
 			path = CapsuleMenu;
 			sourceTree = "<group>";
 		};
@@ -327,7 +320,6 @@
 				7F8E7B7A50909C8C1F9E2F8B /* RuntimeUpdateStateStore.swift */,
 				03A0FA38AC23BDBE6124F644 /* UpdateCheckService.swift */,
 			);
-			name = Lifecycle;
 			path = Lifecycle;
 			sourceTree = "<group>";
 		};
@@ -347,7 +339,6 @@
 				FB8BAA0E4684F7BB4472F5B4 /* UserProfileService.swift */,
 				53EFF2723E759B1A3E9CA20E /* WalletService.swift */,
 			);
-			name = Network;
 			path = Network;
 			sourceTree = "<group>";
 		};
@@ -361,7 +352,6 @@
 				8C143BE021DE4949B2DCA72A /* SystemApis.swift */,
 				5CD065B4E6D0796C0C9C1DE3 /* UnsupportedApi.swift */,
 			);
-			name = API;
 			path = API;
 			sourceTree = "<group>";
 		};
@@ -371,7 +361,6 @@
 				789D71A1F5A8F06AFF9F4432 /* GameDetailView.swift */,
 				FDBE58DFC301D6E94320B7B8 /* GameDetailViewModel.swift */,
 			);
-			name = GameDetail;
 			path = GameDetail;
 			sourceTree = "<group>";
 		};
@@ -380,7 +369,6 @@
 			children = (
 				FDEE619CFBB1F3CCE8EDFBF4 /* NexusPlatform */,
 			);
-			name = Sources;
 			path = Sources;
 			sourceTree = "<group>";
 		};
@@ -391,7 +379,6 @@
 				7A02F83A8662B7E696E50C84 /* NexusSchemeHandler.swift */,
 				989DD4F5AEB550CF91711CC0 /* SandboxFileResolver.swift */,
 			);
-			name = SchemeHandler;
 			path = SchemeHandler;
 			sourceTree = "<group>";
 		};
@@ -426,7 +413,6 @@
 			children = (
 				98BC02E20F16DEA78659E6F4 /* Sources */,
 			);
-			name = NexusPlatform;
 			path = NexusPlatform;
 			sourceTree = "<group>";
 		};
@@ -434,8 +420,10 @@
 			isa = PBXGroup;
 			children = (
 				72E7E32EA217EBC848A84A63 /* Info.plist */,
+				0008C61016CC4E7A8FEA5B7E /* Assets.xcassets */,
+				0008C60E16CC4E7A8FEA5B7E /* Resources/BringBox.png */,
+				0008C61216CC4E7A8FEA5B7E /* LaunchScreen.storyboard */,
 			);
-			name = NexusPlatformApp;
 			path = NexusPlatformApp;
 			sourceTree = "<group>";
 		};
@@ -446,7 +434,6 @@
 				777E991F5BA7631E90C74826 /* LibraryView.swift */,
 				56BD02421AEA81FC7F77E5EF /* LibraryViewModel.swift */,
 			);
-			name = Library;
 			path = Library;
 			sourceTree = "<group>";
 		};
@@ -455,7 +442,6 @@
 			children = (
 				F12204C1A6F4505F0B6D62EF /* GameManager.swift */,
 			);
-			name = Utils;
 			path = Utils;
 			sourceTree = "<group>";
 		};
@@ -468,7 +454,6 @@
 				A3D6F0275CD3F204C9D89901 /* RecommendView.swift */,
 				172EF2E8E51AB88F44F2975B /* RecommendViewModel.swift */,
 			);
-			name = Recommend;
 			path = Recommend;
 			sourceTree = "<group>";
 		};
@@ -477,7 +462,6 @@
 			children = (
 				5F6816FC64E927F3EB63EE5B /* LaunchExperienceView.swift */,
 			);
-			name = Launch;
 			path = Launch;
 			sourceTree = "<group>";
 		};
@@ -486,7 +470,6 @@
 			children = (
 				B50428D6D337F4CB36234218 /* AppTheme.swift */,
 			);
-			name = Theme;
 			path = Theme;
 			sourceTree = "<group>";
 		};
@@ -500,7 +483,6 @@
 				AE8C33D1BC891491F63EAEBB /* ReceiptPageView.swift */,
 				220654909B790E9DE95756BC /* ReferralView.swift */,
 			);
-			name = Profile;
 			path = Profile;
 			sourceTree = "<group>";
 		};
@@ -510,7 +492,6 @@
 				00F7A6FB8740C2358AAC8835 /* AuthFlowView.swift */,
 				56F84F5185772E15C597A089 /* AuthGateLaunchLink.swift */,
 			);
-			name = Auth;
 			path = Auth;
 			sourceTree = "<group>";
 		};
@@ -520,7 +501,6 @@
 				CAC4D71F77A448F32B723174 /* GameListView.swift */,
 				742EF6179058049D03FC27EE /* GameView.swift */,
 			);
-			name = Views;
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -537,7 +517,6 @@
 				D2A6ABF4210A5CBAF6D99F89 /* Utils */,
 				F7FEF73E973546794170C99F /* Views */,
 			);
-			name = NexusPlatform;
 			path = NexusPlatform;
 			sourceTree = "<group>";
 		};
@@ -593,13 +572,11 @@
 				Base,
 			);
 			mainGroup = B13BEE06C7CD1E946B2A0FF0;
-			minimizedProjectReferenceProxies = 0;
 			packageReferences = (
-				ABB14A4093CAEF78C5D52249 /* XCLocalSwiftPackageReference "Alamofire" */,
-				6CC52952B2D436E7F8CFDABA /* XCLocalSwiftPackageReference "SwiftyJSON" */,
-				B27103F9A068C69044E33F3D /* XCLocalSwiftPackageReference "ZIPFoundation" */,
+				ABB14A4093CAEF78C5D52249 /* XCLocalSwiftPackageReference ".build/checkouts/Alamofire" */,
+				6CC52952B2D436E7F8CFDABA /* XCLocalSwiftPackageReference ".build/checkouts/SwiftyJSON" */,
+				B27103F9A068C69044E33F3D /* XCLocalSwiftPackageReference ".build/checkouts/ZIPFoundation" */,
 			);
-			preferredProjectObjectVersion = 77;
 			productRefGroup = A03930C09538B0C9B9E1B8CA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -614,6 +591,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0008C61116CC4E7A8FEA5B7E /* Assets.xcassets in Resources */,
+				0008C60F16CC4E7A8FEA5B7E /* Resources/BringBox.png in Resources */,
+				0008C61316CC4E7A8FEA5B7E /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -716,18 +696,22 @@
 		14D2C5919E53558B13A27650 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				BACKEND_BASE_URL = "http://127.0.0.1:8080/api/v1";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5GW78CW66U;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = NexusPlatformApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
+				PLATFORM_API_BASE_URL = "http://47.99.34.148:81/api/v1";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nexusplatform.apple.host;
 				PRODUCT_NAME = NexusPlatformApp;
 				SDKROOT = iphoneos;
@@ -801,18 +785,22 @@
 		9E381CFC04C31ECA88C22514 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				BACKEND_BASE_URL = "http://127.0.0.1:8080/api/v1";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5GW78CW66U;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = NexusPlatformApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
+				PLATFORM_API_BASE_URL = "http://47.99.34.148:81/api/v1";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nexusplatform.apple.host;
 				PRODUCT_NAME = NexusPlatformApp;
 				SDKROOT = iphoneos;
@@ -901,19 +889,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		6CC52952B2D436E7F8CFDABA /* XCLocalSwiftPackageReference "SwiftyJSON" */ = {
+		6CC52952B2D436E7F8CFDABA /* XCLocalSwiftPackageReference ".build/checkouts/SwiftyJSON" */ = {
 			isa = XCLocalSwiftPackageReference;
-			path = "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/checkouts/SwiftyJSON";
 			relativePath = .build/checkouts/SwiftyJSON;
 		};
-		ABB14A4093CAEF78C5D52249 /* XCLocalSwiftPackageReference "Alamofire" */ = {
+		ABB14A4093CAEF78C5D52249 /* XCLocalSwiftPackageReference ".build/checkouts/Alamofire" */ = {
 			isa = XCLocalSwiftPackageReference;
-			path = "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/checkouts/Alamofire";
 			relativePath = .build/checkouts/Alamofire;
 		};
-		B27103F9A068C69044E33F3D /* XCLocalSwiftPackageReference "ZIPFoundation" */ = {
+		B27103F9A068C69044E33F3D /* XCLocalSwiftPackageReference ".build/checkouts/ZIPFoundation" */ = {
 			isa = XCLocalSwiftPackageReference;
-			path = "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/checkouts/ZIPFoundation";
 			relativePath = .build/checkouts/ZIPFoundation;
 		};
 /* End XCLocalSwiftPackageReference section */
@@ -921,17 +906,17 @@
 /* Begin XCSwiftPackageProductDependency section */
 		1712C0C508B017AAAA8D19CA /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = ABB14A4093CAEF78C5D52249 /* XCLocalSwiftPackageReference "Alamofire" */;
+			package = ABB14A4093CAEF78C5D52249 /* XCLocalSwiftPackageReference ".build/checkouts/Alamofire" */;
 			productName = Alamofire;
 		};
 		9D5570B463BC222846546745 /* SwiftyJSON */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6CC52952B2D436E7F8CFDABA /* XCLocalSwiftPackageReference "SwiftyJSON" */;
+			package = 6CC52952B2D436E7F8CFDABA /* XCLocalSwiftPackageReference ".build/checkouts/SwiftyJSON" */;
 			productName = SwiftyJSON;
 		};
 		A7D98CFA6BB3B684AAE556A8 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B27103F9A068C69044E33F3D /* XCLocalSwiftPackageReference "ZIPFoundation" */;
+			package = B27103F9A068C69044E33F3D /* XCLocalSwiftPackageReference ".build/checkouts/ZIPFoundation" */;
 			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */

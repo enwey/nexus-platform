@@ -7,6 +7,7 @@ struct GameWebView: UIViewRepresentable {
     let schemeHandler: WKURLSchemeHandler
     let sdkScript: String
     let layoutMetrics: GameLayoutMetrics
+    let language: AppLanguage
     @Binding var isLoading: Bool
     @Binding var isContentVisible: Bool
     @Binding var errorMessage: String?
@@ -16,7 +17,8 @@ struct GameWebView: UIViewRepresentable {
         let builder = WebViewConfigBuilder(
             schemeHandler: schemeHandler,
             injectedSDKScript: sdkScript,
-            layoutMetrics: layoutMetrics
+            layoutMetrics: layoutMetrics,
+            language: language
         )
         let configuration = builder.build()
 
@@ -43,14 +45,22 @@ struct GameWebView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        guard context.coordinator.lastLayoutMetrics != layoutMetrics else { return }
-        context.coordinator.lastLayoutMetrics = layoutMetrics
-        let script = WebViewConfigBuilder(
+        let builder = WebViewConfigBuilder(
             schemeHandler: schemeHandler,
             injectedSDKScript: sdkScript,
-            layoutMetrics: layoutMetrics
-        ).layoutUpdateScript()
-        uiView.evaluateJavaScript(script, completionHandler: nil)
+            layoutMetrics: layoutMetrics,
+            language: language
+        )
+
+        if context.coordinator.lastLayoutMetrics != layoutMetrics {
+            context.coordinator.lastLayoutMetrics = layoutMetrics
+            uiView.evaluateJavaScript(builder.layoutUpdateScript(), completionHandler: nil)
+        }
+
+        if context.coordinator.lastLanguage != language {
+            context.coordinator.lastLanguage = language
+            uiView.evaluateJavaScript(builder.languageUpdateScript(), completionHandler: nil)
+        }
     }
 
     static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
@@ -66,10 +76,12 @@ struct GameWebView: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate {
         fileprivate let parent: GameWebView
         fileprivate var lastLayoutMetrics: GameLayoutMetrics
+        fileprivate var lastLanguage: AppLanguage
 
         init(_ parent: GameWebView) {
             self.parent = parent
             self.lastLayoutMetrics = parent.layoutMetrics
+            self.lastLanguage = parent.language
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -105,8 +117,8 @@ private extension GameWebView {
     func userVisibleMessage(for error: Error) -> String {
         let message = error.localizedDescription.lowercased()
         if message.contains("offline") || message.contains("internet connection") {
-            return "游戏页面载入失败，请重试"
+            return AppText.gamePageLoadFailed()
         }
-        return "游戏页面载入失败，请重试"
+        return AppText.gamePageLoadFailed()
     }
 }

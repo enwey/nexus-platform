@@ -17,11 +17,11 @@ enum DeviceSessionServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "设备数据响应无效"
+            return AppText.invalidDeviceResponse()
         case .failed(let message):
-            return message.isEmpty ? "设备操作失败" : message
+            return message.isEmpty ? AppText.deviceActionFailed() : message
         }
     }
 }

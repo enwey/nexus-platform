@@ -17,11 +17,11 @@ enum BackendAPIClientError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "服务响应无效"
+            return AppText.invalidServiceResponse()
         case .backend(let message):
-            return message.isEmpty ? "请求失败" : message
+            return message.isEmpty ? AppText.requestFailed() : message
         case let .network(url, message):
             return "\(message)\n\(url)"
         }

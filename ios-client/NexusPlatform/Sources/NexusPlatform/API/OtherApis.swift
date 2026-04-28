@@ -42,12 +42,13 @@ class ClipboardApi: ApiHandler {
 
 class UserInfoApi: ApiHandler {
     func handle(api: String, params: [String: Any]) async throws -> Any {
+        let language = AppLanguageStore.currentSync()
         return [
             "userInfo": [
                 "nickName": "测试用户",
                 "avatarUrl": "",
                 "gender": 0,
-                "language": "zh_CN",
+                "language": language.sdkUserLanguageCode,
                 "city": "",
                 "province": "",
                 "country": "中国"

@@ -7,11 +7,13 @@
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/App.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Bridge/NexusBridge.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/AuthService.swift
+/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/BackendAPIClient.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/BillingService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/DeviceSessionService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/DiscoverHomeService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/GameCatalogService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/GameRuntimeProfileService.swift
+/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/LegalConfigService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/LibraryHomeService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/ReferralService.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/UserProfileService.swift
@@ -22,6 +24,7 @@
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Persistence/CloudSyncStore.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Persistence/GameEngagementStore.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/GameStorageManagerProtocol.swift
+/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/LocalGameMetadataResolver.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/VersionedGameStorageManager.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Theme/AppTheme.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Features/Auth/AuthFlowView.swift
@@ -59,6 +62,7 @@
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/WebView/GameWebView.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Runtime/WebView/WebViewConfigBuilder.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Shared/Models/Game.swift
+/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Shared/PasswordVisibilityField.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Utils/GameManager.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Views/GameListView.swift
 /Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Views/GameView.swift

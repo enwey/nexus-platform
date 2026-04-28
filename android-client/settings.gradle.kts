@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Nexus Platform"
+rootProject.name = "BringBox"
 include(":app")

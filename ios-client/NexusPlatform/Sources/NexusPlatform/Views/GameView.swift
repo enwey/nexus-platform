@@ -25,6 +25,8 @@ struct GameView: View {
     @State private var showRuntimeMenu = false
     @State private var runtimeMenuPresented = false
     @State private var runtimeMenuDragOffset: CGFloat = 0
+    @State private var runtimeProfile: RuntimeProfile?
+    @State private var language: AppLanguage = AppLanguageStore.currentSync()
 
     private let runtimeMenuOpenAnimation = Animation.interpolatingSpring(duration: 0.46, bounce: 0.08)
     private let runtimeMenuCloseAnimation = Animation.easeInOut(duration: 0.34)
@@ -33,6 +35,7 @@ struct GameView: View {
     private let bridge = JSBridge()
     private let schemeHandler = NexusSchemeHandler()
     private let libraryService: LibraryHomeServiceProtocol = LibraryHomeService()
+    private let runtimeProfileService: GameRuntimeProfileServiceProtocol = GameRuntimeProfileService()
     private var copy: GameRuntimeCopy {
         .forLanguage(AppLanguageStore.currentSync())
     }
@@ -50,6 +53,7 @@ struct GameView: View {
                         schemeHandler: schemeHandler,
                         sdkScript: GameManager.shared.getSDKContent(),
                         layoutMetrics: layoutMetrics(in: proxy),
+                        language: language,
                         isLoading: $isLoading,
                         isContentVisible: $isContentVisible,
                         errorMessage: $errorMessage,
@@ -90,6 +94,7 @@ struct GameView: View {
             .task {
                 isFavorite = await GameEngagementStore.shared.isFavorite(gameID: game.id)
                 await ensureAuthenticatedAndBoot()
+                runtimeProfile = try? await runtimeProfileService.fetchRuntimeProfile(appID: game.id)
                 await MainActor.run {
                     bridge.updateMenuRectProvider {
                         menuButtonRect(in: proxy)
@@ -111,6 +116,13 @@ struct GameView: View {
             }
             .onChange(of: errorMessage) {
                 updateLoadingOverlayState()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
+                if let language = notification.object as? AppLanguage {
+                    self.language = language
+                } else {
+                    language = AppLanguageStore.currentSync()
+                }
             }
         }
         .navigationBarHidden(true)
@@ -159,22 +171,21 @@ struct GameView: View {
                             .fill(Color.white.opacity(0.08))
                             .frame(width: 64, height: 64)
                             .overlay(
-                                Text(String(game.name.prefix(1)))
+                                Text(String(game.localizedName(for: language).prefix(1)))
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundStyle(.white)
                             )
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(game.name)
+                            Text(game.localizedName(for: language))
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
-                            Text(copy.menuPlayers)
+                            Text(runtimeMetaText)
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.white.opacity(0.72))
-                            Text(copy.menuStudio)
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color.white.opacity(0.72))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
                         }
 
                         Spacer()
@@ -184,7 +195,7 @@ struct GameView: View {
                         } label: {
                             Image(systemName: isFavorite ? "star.fill" : "star")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(isFavorite ? Color(hex: 0xF5C451) : .white)
                                 .frame(width: 40, height: 40)
                                 .background(Color.white.opacity(0.08), in: Circle())
                         }
@@ -419,15 +430,14 @@ struct GameView: View {
     }
 
     private func copyShareLink() {
-        UIPasteboard.general.string = "nexus://\(game.id)/index.html"
+        UIPasteboard.general.string = shareURLString
         showTip(copy.linkCopied)
         Task { try? await libraryService.markShared(appID: game.id) }
     }
 
     private func shareToChannel(_ channel: String) {
-        UIPasteboard.general.string = "nexus://\(game.id)/index.html"
-        let channelName = copy.channelName(channel)
-        showTip(String(format: copy.shareCopiedFormat, channelName))
+        presentActivitySheet(items: shareItems)
+        showTip(String(format: copy.shareOpenedFormat, copy.channelName(channel)))
         Task { try? await libraryService.markShared(appID: game.id) }
     }
 
@@ -443,8 +453,18 @@ struct GameView: View {
     }
 
     private func sendFeedback() {
-        UIPasteboard.general.string = "Game feedback: \(game.name) - \(game.id)"
-        showTip(copy.feedbackCopied)
+        let subject = "\(copy.feedbackEmailSubject) \(game.localizedName(for: language))"
+        let body = feedbackBody
+
+        if let mailURL = mailComposeURL(subject: subject, body: body),
+           UIApplication.shared.canOpenURL(mailURL) {
+            UIApplication.shared.open(mailURL)
+            showTip(copy.feedbackOpened)
+            return
+        }
+
+        presentActivitySheet(items: [body])
+        showTip(copy.feedbackFallbackShared)
     }
 
     private func retryLaunch() {
@@ -493,6 +513,7 @@ struct GameView: View {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .semibold))
                     .frame(width: 18, height: 18)
+                    .foregroundStyle(icon.contains("star") && isFavorite ? Color(hex: 0xF5C451) : .white)
                 Text(title)
                     .font(.system(size: 15, weight: .bold))
                 Spacer()
@@ -562,6 +583,65 @@ struct GameView: View {
             return copy.errorWebView
         }
         return copy.errorStartup
+    }
+
+    private var runtimeMetaText: String {
+        let playerText = runtimeProfile?.playerCountText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let studioText = runtimeProfile?.studioName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if playerText.isEmpty == false && studioText.isEmpty == false {
+            return "\(playerText) | \(studioText)"
+        }
+        if playerText.isEmpty == false {
+            return playerText
+        }
+        if studioText.isEmpty == false {
+            return studioText
+        }
+        return copy.menuMetaFallback
+    }
+
+    private var shareURLString: String {
+        if game.downloadUrl.isEmpty == false {
+            return game.downloadUrl
+        }
+        return "nexus://\(game.id)/index.html"
+    }
+
+    private var shareItems: [Any] {
+        let subtitle = runtimeProfile?.shareSubtitle.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let items = [game.localizedName(for: language), subtitle, shareURLString].filter { $0.isEmpty == false }
+        return [items.joined(separator: "\n")]
+    }
+
+    private var feedbackBody: String {
+        return """
+        \(copy.feedbackTemplateTitle)
+        \(copy.feedbackGameLabel): \(game.localizedName(for: language))
+        \(copy.feedbackAppIDLabel): \(game.id)
+        \(copy.feedbackVersionLabel): \(game.version)
+        \(copy.feedbackDescribeHint)
+        """
+    }
+
+    private func presentActivitySheet(items: [Any]) {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }?
+            .rootViewController?
+            .present(controller, animated: true)
+    }
+
+    private func mailComposeURL(subject: String, body: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: subject),
+            URLQueryItem(name: "body", value: body)
+        ]
+        return components.url
     }
 
     @MainActor
@@ -694,22 +774,28 @@ private struct GameRuntimeCopy {
     let errorStartup: String
     let requiresOnline: String
     let linkCopied: String
-    let shareCopiedFormat: String
+    let shareOpenedFormat: String
     let addedFavorite: String
     let removedFavorite: String
-    let feedbackCopied: String
+    let feedbackOpened: String
+    let feedbackFallbackShared: String
     let whatsapp: String
     let facebook: String
     let more: String
     let cancel: String
-    let menuPlayers: String
-    let menuStudio: String
+    let menuMetaFallback: String
     let menuShareTitle: String
     let menuShareLink: String
     let menuAddFavorite: String
     let menuRemoveFavorite: String
     let menuRestart: String
     let menuFeedback: String
+    let feedbackEmailSubject: String
+    let feedbackTemplateTitle: String
+    let feedbackGameLabel: String
+    let feedbackAppIDLabel: String
+    let feedbackVersionLabel: String
+    let feedbackDescribeHint: String
 
     func channelName(_ raw: String) -> String {
         switch raw.lowercased() {
@@ -744,22 +830,28 @@ private struct GameRuntimeCopy {
                 errorStartup: "游戏启动失败，请重试",
                 requiresOnline: "该游戏需要连接在线服务，离线时暂不可用",
                 linkCopied: "分享链接已复制",
-                shareCopiedFormat: "%@ 分享文案已复制",
+                shareOpenedFormat: "已打开 %@ 分享",
                 addedFavorite: "已加入收藏",
                 removedFavorite: "已移出收藏",
-                feedbackCopied: "反馈信息已复制",
+                feedbackOpened: "已打开反馈邮件",
+                feedbackFallbackShared: "已打开系统分享，请提交反馈内容",
                 whatsapp: "WhatsApp",
                 facebook: "Facebook",
                 more: "更多",
                 cancel: "取消",
-                menuPlayers: "👥 240万+ 玩过",
-                menuStudio: "🛠️ Nexus Studio",
+                menuMetaFallback: "暂无开发者信息",
                 menuShareTitle: "分享至",
                 menuShareLink: "复制链接",
                 menuAddFavorite: "加入我的游戏",
                 menuRemoveFavorite: "从我的游戏移除",
                 menuRestart: "重新进入游戏",
-                menuFeedback: "反馈与投诉"
+                menuFeedback: "反馈与投诉",
+                feedbackEmailSubject: "游戏反馈与投诉",
+                feedbackTemplateTitle: "请填写你的问题描述：",
+                feedbackGameLabel: "游戏名称",
+                feedbackAppIDLabel: "游戏 ID",
+                feedbackVersionLabel: "游戏版本",
+                feedbackDescribeHint: "问题描述："
             )
         case .traditionalChinese:
             return .init(
@@ -781,22 +873,28 @@ private struct GameRuntimeCopy {
                 errorStartup: "遊戲啟動失敗，請重試",
                 requiresOnline: "該遊戲需要連接在線服務，離線時暫不可用",
                 linkCopied: "分享連結已複製",
-                shareCopiedFormat: "%@ 分享文案已複製",
+                shareOpenedFormat: "已打開 %@ 分享",
                 addedFavorite: "已加入收藏",
                 removedFavorite: "已移出收藏",
-                feedbackCopied: "回饋資訊已複製",
+                feedbackOpened: "已打開回饋郵件",
+                feedbackFallbackShared: "已打開系統分享，請提交回饋內容",
                 whatsapp: "WhatsApp",
                 facebook: "Facebook",
                 more: "更多",
                 cancel: "取消",
-                menuPlayers: "👥 240萬+ 玩過",
-                menuStudio: "🛠️ Nexus Studio",
+                menuMetaFallback: "暫無開發者資訊",
                 menuShareTitle: "分享至",
                 menuShareLink: "複製鏈接",
                 menuAddFavorite: "加入我的遊戲",
                 menuRemoveFavorite: "從我的遊戲移除",
                 menuRestart: "重新進入遊戲",
-                menuFeedback: "反饋與投訴"
+                menuFeedback: "反饋與投訴",
+                feedbackEmailSubject: "遊戲反饋與投訴",
+                feedbackTemplateTitle: "請填寫你的問題描述：",
+                feedbackGameLabel: "遊戲名稱",
+                feedbackAppIDLabel: "遊戲 ID",
+                feedbackVersionLabel: "遊戲版本",
+                feedbackDescribeHint: "問題描述："
             )
         case .english:
             return .init(
@@ -818,22 +916,28 @@ private struct GameRuntimeCopy {
                 errorStartup: "Game failed to start. Please try again.",
                 requiresOnline: "This game requires online services and is temporarily unavailable offline.",
                 linkCopied: "Share link copied",
-                shareCopiedFormat: "%@ share text copied",
+                shareOpenedFormat: "Opened %@ share",
                 addedFavorite: "Added to favorites",
                 removedFavorite: "Removed from favorites",
-                feedbackCopied: "Feedback info copied",
+                feedbackOpened: "Feedback email opened",
+                feedbackFallbackShared: "System share opened for feedback",
                 whatsapp: "WhatsApp",
                 facebook: "Facebook",
                 more: "More",
                 cancel: "Cancel",
-                menuPlayers: "👥 2.4M+ played",
-                menuStudio: "🛠️ Nexus Studio",
+                menuMetaFallback: "Developer info unavailable",
                 menuShareTitle: "Share to",
                 menuShareLink: "Copy link",
                 menuAddFavorite: "Add to My Games",
                 menuRemoveFavorite: "Remove from My Games",
                 menuRestart: "Restart Game",
-                menuFeedback: "Feedback & Report"
+                menuFeedback: "Feedback & Report",
+                feedbackEmailSubject: "Game Feedback & Report",
+                feedbackTemplateTitle: "Please describe the issue:",
+                feedbackGameLabel: "Game",
+                feedbackAppIDLabel: "Game ID",
+                feedbackVersionLabel: "Version",
+                feedbackDescribeHint: "Issue details:"
             )
         }
     }

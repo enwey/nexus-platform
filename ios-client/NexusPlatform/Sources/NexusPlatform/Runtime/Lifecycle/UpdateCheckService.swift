@@ -21,13 +21,13 @@ enum GameUpdateCheckError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "更新检查地址无效"
+            return AppText.updateCheckInvalidURL()
         case .badResponse:
-            return "更新检查服务不可用"
+            return AppText.updateCheckUnavailable()
         case .cannotParse:
-            return "更新检查返回格式错误"
+            return AppText.updateCheckParseFailed()
         case .backend(let message):
-            return message.isEmpty ? "更新检查失败" : message
+            return message.isEmpty ? AppText.updateCheckFailed() : message
         }
     }
 }
@@ -36,7 +36,15 @@ struct BackendEnvironment {
     let apiBaseURL: URL
 
     static func current() -> BackendEnvironment {
+        if let raw = ProcessInfo.processInfo.environment["PLATFORM_API_BASE_URL"],
+           let url = URL(string: raw) {
+            return BackendEnvironment(apiBaseURL: url)
+        }
         if let raw = ProcessInfo.processInfo.environment["BACKEND_BASE_URL"],
+           let url = URL(string: raw) {
+            return BackendEnvironment(apiBaseURL: url)
+        }
+        if let raw = Bundle.main.object(forInfoDictionaryKey: "PLATFORM_API_BASE_URL") as? String,
            let url = URL(string: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
@@ -79,7 +87,7 @@ struct BackendGameUpdateService: GameUpdateCheckServiceProtocol {
 
         let code = object["code"] as? Int ?? -1
         if code != 0 {
-            let message = object["message"] as? String ?? "更新检查失败"
+            let message = object["message"] as? String ?? AppText.updateCheckFailed()
             throw GameUpdateCheckError.backend(message: message)
         }
 

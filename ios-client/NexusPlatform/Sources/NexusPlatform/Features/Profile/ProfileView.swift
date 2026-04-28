@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @State private var hasLoaded = false
     @State private var showAuthFlow = false
     @State private var showLanguageDialog = false
     @State private var cacheSizeText = "0 B"
@@ -9,7 +10,9 @@ struct ProfileView: View {
     @State private var toastMessage: String?
     @State private var showBilling = false
     @State private var showReferral = false
+    @State private var showHowToEarn = false
     @State private var showSecurity = false
+    private let storage = VersionedGameStorageManager()
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -36,6 +39,8 @@ struct ProfileView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
+            guard hasLoaded == false else { return }
+            hasLoaded = true
             language = viewModel.selectedLanguage
             viewModel.loadSession()
             refreshCacheSize()
@@ -55,22 +60,26 @@ struct ProfileView: View {
                 }
             }
         }
-        .confirmationDialog(copy.languageDialogTitle, isPresented: $showLanguageDialog, titleVisibility: .visible) {
-            ForEach(AppLanguage.allCases) { item in
-                Button(item.title) {
-                    viewModel.setLanguage(item)
-                }
-            }
-            Button(copy.cancel, role: .cancel) {}
-        }
         .overlay(alignment: .bottom) {
             NativeToastOverlay(message: $toastMessage)
+        }
+        .overlay {
+            NativeCenteredModal(isPresented: $showLanguageDialog) {
+                languageDialogContent
+            }
         }
         .navigationDestination(isPresented: $showBilling) {
             BillingListView()
         }
         .navigationDestination(isPresented: $showReferral) {
             ReferralView()
+        }
+        .navigationDestination(isPresented: $showHowToEarn) {
+            HowToEarnView(
+                language: viewModel.selectedLanguage,
+                isLoggedIn: viewModel.isLoggedIn,
+                onRequestLogin: { showAuthFlow = true }
+            )
         }
         .navigationDestination(isPresented: $showSecurity) {
             AccountSecurityView(
@@ -88,15 +97,15 @@ struct ProfileView: View {
     }
 
     private var profileSkeleton: some View {
-        Group {
+        VStack(spacing: 24) {
             HStack(alignment: .center, spacing: 20) {
-                NativeSkeletonBlock(width: 80, height: 80, cornerRadius: 40)
+                NativeSkeletonBlock(width: 84, height: 84, cornerRadius: 42)
                 VStack(alignment: .leading, spacing: 10) {
-                    NativeSkeletonBlock(width: 136, height: 26, cornerRadius: 10)
-                    NativeSkeletonBlock(width: 88, height: 18, cornerRadius: 9)
+                    NativeSkeletonBlock(width: 164, height: 32, cornerRadius: 10)
+                    NativeSkeletonBlock(width: 92, height: 19, cornerRadius: 8)
                 }
                 Spacer()
-                NativeSkeletonBlock(width: 82, height: 34, cornerRadius: 17)
+                NativeSkeletonBlock(width: 78, height: 32, cornerRadius: 16)
             }
 
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -110,8 +119,8 @@ struct ProfileView: View {
                 .frame(height: 164)
                 .overlay {
                     VStack(alignment: .leading, spacing: 0) {
-                        NativeSkeletonBlock(width: 68, height: 12, cornerRadius: 6)
-                        Spacer().frame(height: 10)
+                        NativeSkeletonBlock(width: 72, height: 12, cornerRadius: 6)
+                        Spacer().frame(height: 8)
                         NativeSkeletonBlock(width: 142, height: 34, cornerRadius: 10)
                         Spacer()
                         HStack(spacing: 12) {
@@ -127,13 +136,13 @@ struct ProfileView: View {
                 .frame(height: 96)
                 .overlay {
                     HStack(spacing: 16) {
-                        NativeSkeletonBlock(width: 42, height: 42, cornerRadius: 21)
+                        NativeSkeletonBlock(width: 34, height: 34, cornerRadius: 17)
                         VStack(alignment: .leading, spacing: 10) {
-                            NativeSkeletonBlock(width: 108, height: 14, cornerRadius: 7)
-                            NativeSkeletonBlock(width: 186, height: 12, cornerRadius: 6)
+                            NativeSkeletonBlock(width: 116, height: 16, cornerRadius: 7)
+                            NativeSkeletonBlock(width: 174, height: 13, cornerRadius: 6)
                         }
                         Spacer()
-                        NativeSkeletonBlock(width: 64, height: 28, cornerRadius: 14)
+                        NativeSkeletonBlock(width: 70, height: 30, cornerRadius: 15)
                     }
                     .padding(20)
                 }
@@ -145,9 +154,9 @@ struct ProfileView: View {
             VStack(spacing: 0) {
                 ForEach(0..<4, id: \.self) { index in
                     HStack {
-                        NativeSkeletonBlock(width: 96, height: 14, cornerRadius: 7)
+                        NativeSkeletonBlock(width: index == 0 ? 72 : 96, height: 16, cornerRadius: 7)
                         Spacer()
-                        NativeSkeletonBlock(width: index == 0 ? 14 : 62, height: 12, cornerRadius: 6)
+                        NativeSkeletonBlock(width: index == 0 ? 14 : 58, height: 13, cornerRadius: 6)
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 18)
@@ -173,22 +182,15 @@ struct ProfileView: View {
         HStack(alignment: .center, spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(Color.white.opacity(0.08))
+                    .frame(width: 84, height: 84)
+
+                BrandLogoImage(size: 76, cornerRadius: 38)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
-                    .frame(width: 80, height: 80)
-
-                Circle()
-                    .fill(Color(hex: 0x1C1C1F))
-                    .frame(width: 76, height: 76)
-
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(Color(hex: 0xD4D4DC))
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -251,7 +253,7 @@ struct ProfileView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    showReferral = true
+                    showHowToEarn = true
                 } label: {
                     walletAction(title: copy.howToEarnButton, filled: false)
                 }
@@ -340,9 +342,7 @@ struct ProfileView: View {
     private var menuGroup: some View {
         VStack(spacing: 0) {
             menuRow(title: copy.security, trailing: nil, showsChevron: true) {
-                requireLogin {
-                    showSecurity = true
-                }
+                showSecurity = true
             }
 
             divider
@@ -361,12 +361,14 @@ struct ProfileView: View {
 
             menuRow(title: copy.clearCache, trailing: cacheSizeText, showsChevron: false) {
                 Task {
-                    let storage = VersionedGameStorageManager()
+                    let clearedBytes = await storage.cacheSizeInBytes()
                     try? await storage.clearAllLocalCaches()
                     await MainActor.run {
-                        refreshCacheSize()
-                        toastMessage = "\(copy.cacheCleared) (\(cacheSizeText))"
+                        cacheSizeText = ByteCountFormatter.string(fromByteCount: 0, countStyle: .file)
+                        let clearedText = ByteCountFormatter.string(fromByteCount: clearedBytes, countStyle: .file)
+                        toastMessage = "\(copy.cacheCleared) (\(clearedText))"
                     }
+                    refreshCacheSize()
                 }
             }
 
@@ -402,10 +404,61 @@ struct ProfileView: View {
                         .foregroundStyle(Color(hex: 0xA0A0A0))
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
             .padding(.vertical, 18)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    private var languageDialogContent: some View {
+        VStack(spacing: 18) {
+            Text(copy.languageDialogTitle)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            VStack(spacing: 10) {
+                ForEach(AppLanguage.allCases) { item in
+                    Button {
+                        viewModel.setLanguage(item)
+                        showLanguageDialog = false
+                    } label: {
+                        HStack {
+                            Text(item.title)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(.white)
+
+                            Spacer()
+
+                            if item == viewModel.selectedLanguage {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(Color(hex: 0x6B4EFF))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(Color(hex: 0x232326))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(item == viewModel.selectedLanguage ? Color(hex: 0x6B4EFF) : Color.clear, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Button(copy.cancel) {
+                showLanguageDialog = false
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Color(hex: 0xA0A0A0))
+        }
     }
 
     private var divider: some View {
@@ -445,33 +498,115 @@ struct ProfileView: View {
     }
 
     private func refreshCacheSize() {
-        cacheSizeText = ByteCountFormatter.string(fromByteCount: cacheBytes(), countStyle: .file)
-    }
-
-    private func cacheBytes() -> Int64 {
-        let fileManager = FileManager.default
-        let directories = [
-            fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first,
-            fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-        ].compactMap { $0 }
-
-        var total: Int64 = 0
-        for directory in directories {
-            guard let enumerator = fileManager.enumerator(
-                at: directory,
-                includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
-                options: [.skipsHiddenFiles]
-            ) else { continue }
-
-            for case let fileURL as URL in enumerator {
-                guard
-                    let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                    values.isRegularFile == true
-                else { continue }
-                total += Int64(values.fileSize ?? 0)
+        Task {
+            let bytes = await storage.cacheSizeInBytes()
+            await MainActor.run {
+                cacheSizeText = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
             }
         }
-        return total
+    }
+}
+
+private struct HowToEarnView: View {
+    let language: AppLanguage
+    let isLoggedIn: Bool
+    let onRequestLogin: () -> Void
+
+    @State private var showReferral = false
+
+    private var copy: HowToEarnCopy {
+        .forLanguage(language)
+    }
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(copy.heroTitle)
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundStyle(.white)
+
+                    Text(copy.heroSubtitle)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    LinearGradient(
+                        colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+                )
+
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(copy.stepsTitle)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+
+                    howToEarnStep(number: "1", title: copy.stepOneTitle, detail: copy.stepOneDetail)
+                    howToEarnStep(number: "2", title: copy.stepTwoTitle, detail: copy.stepTwoDetail)
+                    howToEarnStep(number: "3", title: copy.stepThreeTitle, detail: copy.stepThreeDetail)
+                }
+                .padding(20)
+                .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                )
+
+                Button {
+                    if isLoggedIn {
+                        showReferral = true
+                    } else {
+                        onRequestLogin()
+                    }
+                } label: {
+                    Text(isLoggedIn ? copy.ctaLoggedIn : copy.ctaLoggedOut)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(24)
+        }
+        .background(Color(hex: 0x121212).ignoresSafeArea())
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .nexusTabBarHidden()
+        .navigationDestination(isPresented: $showReferral) {
+            ReferralView()
+        }
+    }
+
+    private func howToEarnStep(number: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Text(number)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(Color(hex: 0x6B4EFF), in: Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text(detail)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
     }
 }
 
@@ -562,12 +697,12 @@ private struct BillingListView: View {
             ForEach(0..<5, id: \.self) { index in
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 6) {
-                        NativeSkeletonBlock(width: 136, height: 14, cornerRadius: 7)
+                        NativeSkeletonBlock(width: 142, height: 15, cornerRadius: 7)
                         NativeSkeletonBlock(width: 182, height: 12, cornerRadius: 6)
                         NativeSkeletonBlock(width: 96, height: 11, cornerRadius: 5)
                     }
                     Spacer()
-                    NativeSkeletonBlock(width: 54, height: 14, cornerRadius: 7)
+                    NativeSkeletonBlock(width: 58, height: 15, cornerRadius: 7)
                 }
                 .padding(.vertical, 16)
 
@@ -638,7 +773,7 @@ private struct ProfileCopy {
         case .simplifiedChinese:
             return ProfileCopy(
                 title: "我的",
-                headerTitle: "Nexus 玩家",
+                headerTitle: "BringBox 玩家",
                 guestMode: "游客模式",
                 accountIDFormat: "账号ID：%@",
                 accountPlaceholder: "账号ID",
@@ -664,7 +799,7 @@ private struct ProfileCopy {
         case .traditionalChinese:
             return ProfileCopy(
                 title: "我的",
-                headerTitle: "Nexus 玩家",
+                headerTitle: "BringBox 玩家",
                 guestMode: "訪客模式",
                 accountIDFormat: "帳號ID：%@",
                 accountPlaceholder: "帳號ID",
@@ -690,7 +825,7 @@ private struct ProfileCopy {
         case .english:
             return ProfileCopy(
                 title: "Profile",
-                headerTitle: "Nexus Player",
+                headerTitle: "BringBox Player",
                 guestMode: "Guest Mode",
                 accountIDFormat: "Account ID: %@",
                 accountPlaceholder: "Account ID",
@@ -731,6 +866,71 @@ private struct BillingListCopy {
             return .init(title: "帳單", loading: "載入中...", empty: "暫無帳單記錄", refreshing: "正在刷新")
         case .english:
             return .init(title: "Billing", loading: "Loading...", empty: "No billing records", refreshing: "Refreshing")
+        }
+    }
+}
+
+private struct HowToEarnCopy {
+    let title: String
+    let heroTitle: String
+    let heroSubtitle: String
+    let stepsTitle: String
+    let stepOneTitle: String
+    let stepOneDetail: String
+    let stepTwoTitle: String
+    let stepTwoDetail: String
+    let stepThreeTitle: String
+    let stepThreeDetail: String
+    let ctaLoggedIn: String
+    let ctaLoggedOut: String
+
+    static func forLanguage(_ language: AppLanguage) -> HowToEarnCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(
+                title: "如何赚取",
+                heroTitle: "通过邀请好友赚取奖励",
+                heroSubtitle: "把邀请链接分享给好友，好友完成注册或达到活动条件后，奖励会自动发到你的钱包。",
+                stepsTitle: "赚取方式",
+                stepOneTitle: "获取邀请链接",
+                stepOneDetail: "进入邀请奖励页面，复制或分享你的专属邀请链接。",
+                stepTwoTitle: "好友完成邀请",
+                stepTwoDetail: "好友通过你的链接进入并完成平台要求的注册或活动。",
+                stepThreeTitle: "奖励自动到账",
+                stepThreeDetail: "奖励会自动累计到钱包余额里，你可以随时在邀请奖励页面查看明细。",
+                ctaLoggedIn: "查看邀请奖励",
+                ctaLoggedOut: "登录后查看邀请奖励"
+            )
+        case .traditionalChinese:
+            return .init(
+                title: "如何賺取",
+                heroTitle: "透過邀請好友賺取獎勵",
+                heroSubtitle: "將邀請連結分享給好友，好友完成註冊或達成活動條件後，獎勵會自動發到你的錢包。",
+                stepsTitle: "賺取方式",
+                stepOneTitle: "取得邀請連結",
+                stepOneDetail: "進入邀請獎勵頁面，複製或分享你的專屬邀請連結。",
+                stepTwoTitle: "好友完成邀請",
+                stepTwoDetail: "好友透過你的連結進入並完成平台要求的註冊或活動。",
+                stepThreeTitle: "獎勵自動到帳",
+                stepThreeDetail: "獎勵會自動累計到錢包餘額中，你可以隨時在邀請獎勵頁面查看明細。",
+                ctaLoggedIn: "查看邀請獎勵",
+                ctaLoggedOut: "登入後查看邀請獎勵"
+            )
+        case .english:
+            return .init(
+                title: "How to Earn",
+                heroTitle: "Earn rewards by inviting friends",
+                heroSubtitle: "Share your referral link with friends. Once they complete the required signup or campaign action, the reward is added to your wallet automatically.",
+                stepsTitle: "How it works",
+                stepOneTitle: "Get your referral link",
+                stepOneDetail: "Open the referral rewards page and copy or share your personal link.",
+                stepTwoTitle: "Friends complete the referral",
+                stepTwoDetail: "Friends join through your link and complete the required signup or activity.",
+                stepThreeTitle: "Rewards arrive automatically",
+                stepThreeDetail: "Rewards accumulate in your wallet balance, and you can review them anytime on the referral rewards page.",
+                ctaLoggedIn: "View Referral Rewards",
+                ctaLoggedOut: "Sign In to View Referral Rewards"
+            )
         }
     }
 }

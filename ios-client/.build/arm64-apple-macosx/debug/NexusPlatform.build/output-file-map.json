@@ -65,6 +65,13 @@
     "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AuthService.swiftdeps",
     "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/AuthService.dia"
   },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/BackendAPIClient.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BackendAPIClient.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BackendAPIClient.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BackendAPIClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BackendAPIClient.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BackendAPIClient.dia"
+  },
   "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/BillingService.swift": {
     "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BillingService.d",
     "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/BillingService.swift.o",
@@ -99,6 +106,13 @@
     "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameRuntimeProfileService~partial.swiftmodule",
     "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameRuntimeProfileService.swiftdeps",
     "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameRuntimeProfileService.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/LegalConfigService.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LegalConfigService.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LegalConfigService.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LegalConfigService~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LegalConfigService.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LegalConfigService.dia"
   },
   "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Network/LibraryHomeService.swift": {
     "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LibraryHomeService.d",
@@ -169,6 +183,13 @@
     "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol~partial.swiftmodule",
     "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol.swiftdeps",
     "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameStorageManagerProtocol.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/LocalGameMetadataResolver.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LocalGameMetadataResolver.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LocalGameMetadataResolver.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LocalGameMetadataResolver~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LocalGameMetadataResolver.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/LocalGameMetadataResolver.dia"
   },
   "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Core/Storage/VersionedGameStorageManager.swift": {
     "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/VersionedGameStorageManager.d",
@@ -428,6 +449,13 @@
     "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/Game~partial.swiftmodule",
     "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/Game.swiftdeps",
     "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/Game.dia"
+  },
+  "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Shared/PasswordVisibilityField.swift": {
+    "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/PasswordVisibilityField.d",
+    "object": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/PasswordVisibilityField.swift.o",
+    "swiftmodule": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/PasswordVisibilityField~partial.swiftmodule",
+    "swift-dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/PasswordVisibilityField.swiftdeps",
+    "diagnostics": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/PasswordVisibilityField.dia"
   },
   "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/NexusPlatform/Sources/NexusPlatform/Utils/GameManager.swift": {
     "dependencies": "/Users/apple/Documents/WordSpace/nexus-platform/ios-client/.build/arm64-apple-macosx/debug/NexusPlatform.build/GameManager.d",

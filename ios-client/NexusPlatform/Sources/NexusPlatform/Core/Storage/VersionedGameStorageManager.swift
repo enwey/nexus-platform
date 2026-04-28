@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import WebKit
 import ZIPFoundation
 
 actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
@@ -167,10 +168,23 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     }
 
     func clearAllLocalCaches() async throws {
+        URLCache.shared.removeAllCachedResponses()
+
         if fileManager.fileExists(atPath: gamesRoot.path) {
             try fileManager.removeItem(at: gamesRoot)
         }
+
+        try clearDirectoryContents(at: fileManager.temporaryDirectory)
+        try await clearWebKitCache()
         try bootstrapStorageIfNeeded()
+    }
+
+    func cacheSizeInBytes() async -> Int64 {
+        let urls = cacheDirectories()
+        let fileBytes = urls.reduce(into: Int64.zero) { total, url in
+            total += directorySize(at: url)
+        }
+        return fileBytes
     }
 
     private func sanitizeVersion(_ version: String) -> String {
@@ -350,6 +364,66 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
         }
         return keyData
     }
+
+    private func directorySize(at root: URL) -> Int64 {
+        guard fileManager.fileExists(atPath: root.path) else {
+            return 0
+        }
+        guard let enumerator = fileManager.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return 0
+        }
+
+        var total: Int64 = 0
+        for case let fileURL as URL in enumerator {
+            guard
+                let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
+                values.isRegularFile == true
+            else {
+                continue
+            }
+            total += Int64(values.fileSize ?? 0)
+        }
+        return total
+    }
+
+    private func clearDirectoryContents(at root: URL) throws {
+        guard fileManager.fileExists(atPath: root.path) else {
+            return
+        }
+        let entries = try fileManager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
+        for entry in entries {
+            try? fileManager.removeItem(at: entry)
+        }
+    }
+
+    private func cacheDirectories() -> [URL] {
+        let libraryRoot = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first
+        let cachesRoot = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+
+        return [
+            gamesRoot,
+            fileManager.temporaryDirectory,
+            libraryRoot?.appendingPathComponent("WebKit", isDirectory: true),
+            cachesRoot?.appendingPathComponent("WebKit", isDirectory: true),
+            cachesRoot?.appendingPathComponent("com.apple.WebKit.Networking", isDirectory: true)
+        ].compactMap { $0 }
+    }
+
+    private func clearWebKitCache() async {
+        let store = WKWebsiteDataStore.default()
+        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
+        await withCheckedContinuation { continuation in
+            store.fetchDataRecords(ofTypes: dataTypes) { records in
+                store.removeData(ofTypes: dataTypes, for: records) {
+                    continuation.resume()
+                }
+            }
+        }
+    }
 }
 
 private func runtimeDeviceID() -> String {
@@ -376,19 +450,19 @@ enum StorageError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .checksumMismatch:
-            return "Game package checksum mismatch"
+            return AppText.checksumMismatch()
         case .entryNotFound:
-            return "Game entry file not found"
+            return AppText.entryFileMissing()
         case .versionNotFound:
-            return "Game version does not exist"
+            return AppText.versionMissing()
         case .runtimeKeyUnavailable:
-            return "Game runtime key is unavailable"
+            return AppText.runtimeKeyUnavailable()
         case .invalidSecurePackage:
-            return "Game secure package is invalid"
+            return AppText.invalidSecurePackage()
         case .securePayloadMissing:
-            return "Game secure payload is missing"
+            return AppText.securePayloadMissing()
         case .unsupportedSecurePackage:
-            return "Game secure package format is unsupported"
+            return AppText.unsupportedSecurePackage()
         }
     }
 }

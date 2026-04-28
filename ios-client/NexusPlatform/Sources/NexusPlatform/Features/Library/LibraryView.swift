@@ -2,6 +2,8 @@ import SwiftUI
 
 struct LibraryView: View {
     @StateObject private var viewModel = LibraryViewModel()
+    @State private var hasLoaded = false
+    @State private var language: AppLanguage = AppLanguageStore.currentSync()
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 16), count: 4)
 
@@ -14,19 +16,19 @@ struct LibraryView: View {
                     if hasLibraryContent {
                         resumeCard
                         recentSection
-
-                        if viewModel.myGames.isEmpty {
-                            trendingSection
-                        } else {
+                        if viewModel.myGames.isEmpty == false {
                             myGamesSection
+                        }
+                        if displayedTrendingGames.isEmpty == false {
+                            trendingSection
                         }
                     } else {
                         coldStartHero
                         myGamesEmptyCard
-                        trendingSection
+                        if displayedTrendingGames.isEmpty == false {
+                            trendingSection
+                        }
                     }
-
-                    footer
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
@@ -37,42 +39,27 @@ struct LibraryView: View {
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .onAppear { viewModel.load() }
-        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading && (hasLibraryContent || viewModel.allGames.isEmpty == false))
-        .overlay(alignment: .top) {
-            if viewModel.isLoading && (hasLibraryContent || viewModel.allGames.isEmpty == false) {
-                NativeRefreshPill(text: copy.refreshing)
-                    .padding(.top, 10)
+        .onAppear {
+            guard hasLoaded == false else { return }
+            hasLoaded = true
+            viewModel.load()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
+            if let language = notification.object as? AppLanguage {
+                self.language = language
+            } else {
+                language = AppLanguageStore.currentSync()
             }
         }
+        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading && (hasLibraryContent || viewModel.allGames.isEmpty == false))
     }
 
     private var librarySkeleton: some View {
         VStack(alignment: .leading, spacing: 24) {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x24253A), Color(hex: 0x1C1C1F)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(height: 260)
-                .overlay(alignment: .bottomLeading) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        NativeSkeletonBlock(width: 78, height: 22, cornerRadius: 12)
-                        NativeSkeletonText(widths: [186, 232], lineHeight: 14)
-                        NativeSkeletonBlock(width: 116, height: 42, cornerRadius: 21)
-                    }
-                    .padding(24)
-                }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
-                )
-
-            skeletonSection(titleWidth: 118)
-            skeletonSection(titleWidth: 132)
+            resumeHeroSkeleton
+            skeletonSection(titleWidth: 132, usesRowLayout: true)
+            skeletonSection(titleWidth: 108, showsAction: false, usesRowLayout: true)
+            skeletonSection(titleWidth: 126, showsAction: false, usesRowLayout: true)
 
             Text(copy.loading)
                 .font(.system(size: 12))
@@ -84,19 +71,81 @@ struct LibraryView: View {
         .padding(.bottom, 96)
     }
 
-    private func skeletonSection(titleWidth: CGFloat) -> some View {
+    private var resumeHeroSkeleton: some View {
+        ZStack(alignment: .bottomLeading) {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x5C8CFF), Color(hex: 0x9258FF)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+
+            VStack(alignment: .leading, spacing: 0) {
+                NativeSkeletonBlock(width: 84, height: 23, cornerRadius: 20)
+                Spacer().frame(height: 10)
+                NativeSkeletonBlock(width: 196, height: 32, cornerRadius: 10)
+                Spacer().frame(height: 4)
+                NativeSkeletonText(widths: [228, 172], lineHeight: 13, spacing: 6, cornerRadius: 7)
+                Spacer().frame(height: 16)
+                NativeSkeletonBlock(width: 112, height: 40, cornerRadius: 24)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        }
+        .frame(height: 260)
+        .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+        )
+    }
+
+    private func skeletonSection(titleWidth: CGFloat, showsAction: Bool = true, usesRowLayout: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            NativeSkeletonBlock(width: titleWidth, height: 26, cornerRadius: 8)
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
-                ForEach(0..<8, id: \.self) { _ in
-                    VStack(spacing: 8) {
-                        NativeSkeletonBlock(height: 76, cornerRadius: 18)
-                            .frame(maxWidth: .infinity)
-                            .aspectRatio(1, contentMode: .fit)
-                        NativeSkeletonBlock(width: 56, height: 10, cornerRadius: 5)
-                        NativeSkeletonBlock(width: 42, height: 24, cornerRadius: 12)
+            skeletonSectionHeader(titleWidth: titleWidth, showsAction: showsAction)
+            if usesRowLayout {
+                VStack(spacing: 12) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        HStack(spacing: 12) {
+                            NativeSkeletonBlock(width: 56, height: 56, cornerRadius: 12)
+                            VStack(alignment: .leading, spacing: 6) {
+                                NativeSkeletonBlock(width: 136, height: 16, cornerRadius: 7)
+                                NativeSkeletonBlock(width: 168, height: 12, cornerRadius: 6)
+                                NativeSkeletonBlock(width: 52, height: 20, cornerRadius: 6)
+                            }
+                            Spacer()
+                        }
+                        .padding(12)
+                        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                        )
                     }
                 }
+            } else {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
+                    ForEach(0..<8, id: \.self) { _ in
+                        VStack(spacing: 8) {
+                            NativeSkeletonBlock(height: 76, cornerRadius: 18)
+                                .frame(maxWidth: .infinity)
+                                .aspectRatio(1, contentMode: .fit)
+                            NativeSkeletonBlock(width: 60, height: 12, cornerRadius: 5)
+                            NativeSkeletonBlock(width: 40, height: 23, cornerRadius: 12)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func skeletonSectionHeader(titleWidth: CGFloat, showsAction: Bool) -> some View {
+        HStack {
+            NativeSkeletonBlock(width: titleWidth, height: 28, cornerRadius: 8)
+            Spacer()
+            if showsAction {
+                NativeSkeletonBlock(width: 54, height: 16, cornerRadius: 6)
             }
         }
     }
@@ -108,7 +157,7 @@ struct LibraryView: View {
     private var resumeCard: some View {
         AuthGateLaunchLink(game: viewModel.currentPlaying ?? fallbackGame) {
             ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [Color(hex: 0x5C8CFF), Color(hex: 0x9258FF)],
@@ -117,17 +166,12 @@ struct LibraryView: View {
                         )
                     )
 
-                Circle()
-                    .fill(Color.white.opacity(0.14))
-                    .frame(width: 130, height: 130)
-                    .offset(x: -18, y: -60)
-
                 LinearGradient(
                     colors: [.clear, Color.black.opacity(0.30)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 0) {
                     Text(copy.runningTag)
@@ -139,11 +183,11 @@ struct LibraryView: View {
 
                     Spacer().frame(height: 8)
 
-                    Text((viewModel.currentPlaying ?? fallbackGame).name)
+                    Text((viewModel.currentPlaying ?? fallbackGame).localizedName(for: language))
                         .font(.system(size: 28, weight: .black))
                         .foregroundStyle(.white)
 
-                    Text((viewModel.currentPlaying ?? fallbackGame).description.isEmpty ? copy.resumeSubtitle : (viewModel.currentPlaying ?? fallbackGame).description)
+                    Text(resumeGameDescription)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.white.opacity(0.82))
 
@@ -168,7 +212,7 @@ struct LibraryView: View {
             }
             .frame(height: 260)
             .overlay(
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
             )
         }
@@ -193,7 +237,7 @@ struct LibraryView: View {
     private var trendingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             sectionHeader(title: hasLibraryContent ? copy.trendingTitle : copy.trendingTitle, action: nil, destination: EmptyView())
-            gameGrid(games: Array((viewModel.everyonePlaying.isEmpty ? viewModel.newbieGames : viewModel.everyonePlaying).prefix(8)), canToggle: true)
+            gameGrid(games: displayedTrendingGames)
         }
     }
 
@@ -206,7 +250,7 @@ struct LibraryView: View {
 
     private var coldStartHero: some View {
         ZStack(alignment: .bottomLeading) {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [Color(hex: 0x5C8CFF), Color(hex: 0x9258FF)],
@@ -225,13 +269,13 @@ struct LibraryView: View {
 
                 Spacer().frame(height: 10)
 
-                Text((viewModel.newbieGames.first ?? fallbackGame).name)
+                Text((viewModel.newbieGames.first ?? fallbackGame).localizedName(for: language))
                     .font(.system(size: 28, weight: .black))
                     .foregroundStyle(.white)
 
                 Spacer().frame(height: 4)
 
-                Text((viewModel.newbieGames.first ?? fallbackGame).description.isEmpty ? copy.coldStartSubtitle : (viewModel.newbieGames.first ?? fallbackGame).description)
+                Text(coldStartGameDescription)
                     .font(.system(size: 13))
                     .foregroundStyle(Color.white.opacity(0.82))
 
@@ -252,7 +296,7 @@ struct LibraryView: View {
         }
         .frame(height: 260)
         .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
     }
@@ -319,6 +363,34 @@ struct LibraryView: View {
                 Text(copy.emptySection)
                     .font(.system(size: 13))
                     .foregroundStyle(Color(hex: 0xA0A0A0))
+            } else if games.count < 4 {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(games) { game in
+                        AuthGateLaunchLink(game: game) {
+                            GameRow(
+                                game: game,
+                                subtitle: localizedGameDescription(for: game)
+                            )
+                        }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            viewModel.markPlayed(game)
+                        })
+                        .buttonStyle(.plain)
+                        .overlay(alignment: .trailing) {
+                            if canToggle {
+                                Button(viewModel.myGames.contains(where: { $0.id == game.id }) ? copy.remove : copy.add) {
+                                    viewModel.toggleMyGame(game)
+                                }
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .padding(.trailing, 12)
+                            }
+                        }
+                    }
+                }
             } else {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
                     ForEach(games) { game in
@@ -343,7 +415,7 @@ struct LibraryView: View {
                             })
                             .buttonStyle(.plain)
 
-                            Text(game.name)
+                            Text(game.localizedName(for: language))
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color(hex: 0xA0A0A0))
                                 .lineLimit(1)
@@ -366,13 +438,6 @@ struct LibraryView: View {
         }
     }
 
-    private var footer: some View {
-        Text(copy.loadEnd)
-            .font(.system(size: 12))
-            .foregroundStyle(Color(hex: 0xA0A0A0))
-            .frame(maxWidth: .infinity, alignment: .center)
-    }
-
     private var fallbackGame: Game {
         viewModel.allGames.first ?? Game(
             id: UUID().uuidString,
@@ -388,6 +453,27 @@ struct LibraryView: View {
 
     private var copy: LibraryCopy {
         .forLanguage(AppLanguageStore.currentSync())
+    }
+
+    private var displayedTrendingGames: [Game] {
+        Array((viewModel.everyonePlaying.isEmpty ? viewModel.newbieGames : viewModel.everyonePlaying).prefix(8))
+    }
+
+    private var resumeGameDescription: String {
+        let game = viewModel.currentPlaying ?? fallbackGame
+        let localizedDescription = game.localizedDescription(for: language)
+        return localizedDescription.isEmpty ? copy.resumeSubtitle : localizedDescription
+    }
+
+    private var coldStartGameDescription: String {
+        let game = viewModel.newbieGames.first ?? fallbackGame
+        let localizedDescription = game.localizedDescription(for: language)
+        return localizedDescription.isEmpty ? copy.coldStartSubtitle : localizedDescription
+    }
+
+    private func localizedGameDescription(for game: Game) -> String {
+        let localizedDescription = game.localizedDescription(for: language)
+        return localizedDescription.isEmpty ? "v\(game.version)" : localizedDescription
     }
 }
 
@@ -418,7 +504,7 @@ private struct LibraryCopy {
         switch language {
         case .simplifiedChinese:
             return .init(
-                title: "我的库",
+                title: "游戏",
                 loading: "正在准备你的游戏库...",
                 refreshing: "正在刷新",
                 runningTag: "进行中",
@@ -435,14 +521,14 @@ private struct LibraryCopy {
                 emptyTitle: "还没有收藏的游戏",
                 emptyDescription: "先去发现页挑几款喜欢的，之后这里会更热闹。",
                 emptySection: "暂无内容",
-                loadEnd: "已经到底啦",
+                loadEnd: "",
                 add: "加入",
                 remove: "移除",
                 fallbackName: "推荐游戏"
             )
         case .traditionalChinese:
             return .init(
-                title: "我的庫",
+                title: "遊戲",
                 loading: "正在準備你的遊戲庫...",
                 refreshing: "正在刷新",
                 runningTag: "進行中",
@@ -459,14 +545,14 @@ private struct LibraryCopy {
                 emptyTitle: "還沒有收藏的遊戲",
                 emptyDescription: "先去發現頁挑幾款喜歡的，之後這裡會更熱鬧。",
                 emptySection: "暫無內容",
-                loadEnd: "已經到底了",
+                loadEnd: "",
                 add: "加入",
                 remove: "移除",
                 fallbackName: "推薦遊戲"
             )
         case .english:
             return .init(
-                title: "Library",
+                title: "Games",
                 loading: "Preparing your library...",
                 refreshing: "Refreshing",
                 runningTag: "Running",
@@ -483,7 +569,7 @@ private struct LibraryCopy {
                 emptyTitle: "No games collected yet",
                 emptyDescription: "Pick a few favorites from Discover and this space will fill up fast.",
                 emptySection: "No content yet",
-                loadEnd: "You've reached the end",
+                loadEnd: "",
                 add: "Add",
                 remove: "Remove",
                 fallbackName: "Featured Game"

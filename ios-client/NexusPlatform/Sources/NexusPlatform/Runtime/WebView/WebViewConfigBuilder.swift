@@ -28,6 +28,7 @@ struct WebViewConfigBuilder {
     let schemeHandler: WKURLSchemeHandler
     let injectedSDKScript: String
     let layoutMetrics: GameLayoutMetrics
+    let language: AppLanguage
 
     func build() -> WKWebViewConfiguration {
         let configuration = WKWebViewConfiguration()
@@ -78,13 +79,49 @@ struct WebViewConfigBuilder {
         """
     }
 
+    func languageUpdateScript() -> String {
+        let localeTag = language.runtimeLocaleTag
+        return """
+        ;(function () {
+          var nextLocale = \(quoted(localeTag));
+          if (typeof window.__NEXUS_APPLY_RUNTIME_LOCALE__ === 'function') {
+            window.__NEXUS_APPLY_RUNTIME_LOCALE__(nextLocale);
+          }
+        })();
+        """
+    }
+
     private func layoutBootstrapScript(metrics: GameLayoutMetrics) -> String {
         let payload = serializedMetricsPayload(metrics)
+        let localeTag = language.runtimeLocaleTag
         return """
         ;(function () {
           var metrics = \(payload);
+          var localeTag = \(quoted(localeTag));
           function clone(value) {
             return JSON.parse(JSON.stringify(value));
+          }
+          function applyRuntimeLocale(nextLocale) {
+            localeTag = nextLocale || localeTag;
+            window.__NEXUS_RUNTIME_LOCALE__ = localeTag;
+            try {
+              Object.defineProperty(window.navigator, 'language', {
+                configurable: true,
+                get: function () { return localeTag; }
+              });
+            } catch (e) {}
+            try {
+              Object.defineProperty(window.navigator, 'languages', {
+                configurable: true,
+                get: function () { return [localeTag]; }
+              });
+            } catch (e) {}
+            if (document && document.documentElement) {
+              document.documentElement.lang = localeTag;
+            }
+            if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+              window.dispatchEvent(new CustomEvent('nexuslanguagechange', { detail: { language: localeTag } }));
+            }
           }
           function systemInfo() {
             return {
@@ -97,11 +134,13 @@ struct WebViewConfigBuilder {
               windowHeight: metrics.windowHeight,
               safeArea: clone(metrics.safeArea),
               statusBarHeight: metrics.safeArea.top,
+              language: localeTag,
               platform: 'ios',
               SDKVersion: '1.0.0'
             };
           }
           window.__NEXUS_LAYOUT_METRICS__ = metrics;
+          window.__NEXUS_APPLY_RUNTIME_LOCALE__ = applyRuntimeLocale;
           window.__NEXUS_APPLY_LAYOUT_METRICS__ = function (nextMetrics) {
             metrics = nextMetrics;
             window.__NEXUS_LAYOUT_METRICS__ = nextMetrics;
@@ -144,6 +183,7 @@ struct WebViewConfigBuilder {
             canvas.style.height = metrics.viewport.height + 'px';
             return clone(metrics.viewport);
           };
+          applyRuntimeLocale(localeTag);
         })();
         """
     }
@@ -186,5 +226,14 @@ struct WebViewConfigBuilder {
             return "{}"
         }
         return json
+    }
+
+    private func quoted(_ value: String) -> String {
+        guard let data = try? JSONSerialization.data(withJSONObject: [value]),
+              let json = String(data: data, encoding: .utf8),
+              json.count >= 2 else {
+            return "\"\(value)\""
+        }
+        return String(json.dropFirst().dropLast())
     }
 }

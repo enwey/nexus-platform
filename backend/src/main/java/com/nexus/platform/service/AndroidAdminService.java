@@ -14,17 +14,21 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class AndroidAdminService {
     private final GameRepository gameRepository;
+    private final AtomicReference<AndroidRuntimeConfig> runtimeConfigRef;
 
-    private final AtomicReference<AndroidRuntimeConfig> runtimeConfigRef =
-            new AtomicReference<>(new AndroidRuntimeConfig(
-                    "http://10.0.2.2:8080/api/v1",
+    public AndroidAdminService(
+            GameRepository gameRepository,
+            @Value("${platform.public-base-url}") String platformApiBaseUrl
+    ) {
+        this.gameRepository = gameRepository;
+        this.runtimeConfigRef = new AtomicReference<>(new AndroidRuntimeConfig(
+                    platformApiBaseUrl,
                     "https://appassets.androidplatform.net/assets/",
                     "zh-TW",
                     true,
@@ -37,6 +41,7 @@ public class AndroidAdminService {
                     "system",
                     LocalDateTime.now()
             ));
+    }
 
     public AndroidConsolePayload getConsolePayload() {
         return new AndroidConsolePayload(

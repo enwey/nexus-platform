@@ -15,9 +15,9 @@ enum UserProfileServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "用户资料响应无效"
+            return AppText.invalidUserProfileResponse()
         }
     }
 }

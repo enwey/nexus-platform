@@ -6,7 +6,8 @@ class SystemInfoApi: ApiHandler {
         let device = UIDevice.current
         let screen = UIScreen.main
         let scale = screen.scale
-        
+        let language = AppLanguageStore.currentSync()
+
         return [
             "brand": "Apple",
             "model": device.model,
@@ -15,7 +16,7 @@ class SystemInfoApi: ApiHandler {
             "screenHeight": Int(screen.bounds.height * scale),
             "windowWidth": Int(screen.bounds.width * scale),
             "windowHeight": Int(screen.bounds.height * scale),
-            "language": Locale.current.languageCode ?? "en",
+            "language": language.runtimeLocaleTag,
             "version": "1.0.0",
             "system": "iOS \(device.systemVersion)",
             "platform": "ios",

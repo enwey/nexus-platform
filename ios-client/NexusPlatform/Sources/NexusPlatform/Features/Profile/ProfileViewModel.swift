@@ -91,7 +91,7 @@ final class ProfileViewModel: ObservableObject {
             walletSummary = nil
             billingRecords = []
             devices = []
-            message = "已退出登录"
+            message = AppText.loggedOut(selectedLanguage)
         }
     }
 
@@ -99,7 +99,7 @@ final class ProfileViewModel: ObservableObject {
         Task {
             await authStore.save(session)
             currentEmail = session.email
-            message = "登录成功"
+            message = AppText.loginSucceeded(selectedLanguage)
             if let profile = try? await profileService.fetchProfile() {
                 userID = profile.id
                 displayName = profile.displayName.isEmpty ? nil : profile.displayName
@@ -121,7 +121,7 @@ final class ProfileViewModel: ObservableObject {
     func terminateAccount() {
         Task {
             guard let session = await authStore.current() else {
-                message = "请先登录"
+                message = AppText.pleaseLogin(selectedLanguage)
                 return
             }
             isTerminating = true
@@ -136,7 +136,7 @@ final class ProfileViewModel: ObservableObject {
                 walletSummary = nil
                 billingRecords = []
                 devices = []
-                message = "账号已注销"
+                message = AppText.accountTerminated(selectedLanguage)
             } catch {
                 message = error.localizedDescription
             }
@@ -151,7 +151,7 @@ final class ProfileViewModel: ObservableObject {
         Task {
             do {
                 try await deviceService.kick(deviceID: deviceID)
-                message = "设备已下线"
+                message = AppText.deviceKicked(selectedLanguage)
                 await loadDevices()
             } catch {
                 message = error.localizedDescription
@@ -163,7 +163,7 @@ final class ProfileViewModel: ObservableObject {
         Task {
             do {
                 try await deviceService.logoutAll()
-                message = "其他设备已退出"
+                message = AppText.otherDevicesLoggedOut(selectedLanguage)
                 await loadDevices()
             } catch {
                 message = error.localizedDescription
@@ -176,7 +176,7 @@ final class ProfileViewModel: ObservableObject {
             await languageStore.set(language)
             await MainActor.run {
                 selectedLanguage = language
-                message = "语言已更新"
+                message = AppText.languageUpdated(language)
             }
         }
     }
@@ -193,7 +193,7 @@ final class ProfileViewModel: ObservableObject {
             }
             await MainActor.run {
                 cloudSyncEnabled = enabled
-                message = enabled ? "云同步已开启" : "云同步已关闭"
+                message = enabled ? AppText.cloudSyncEnabled(selectedLanguage) : AppText.cloudSyncDisabled(selectedLanguage)
             }
         }
     }

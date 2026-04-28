@@ -72,7 +72,7 @@ FileUtils.rm_rf(PROJECT_PATH) if PROJECT_PATH.exist?
 
 bundle_suffix = sanitize_bundle_suffix(ENV.fetch('USER', 'local'))
 default_bundle_id = "com.nexusplatform.#{bundle_suffix}.host"
-default_backend_url = ENV.fetch('BACKEND_BASE_URL', 'http://47.99.34.148:81/api/v1')
+default_backend_url = ENV.fetch('PLATFORM_API_BASE_URL', ENV.fetch('BACKEND_BASE_URL', 'http://47.99.34.148:81/api/v1'))
 product_bundle_identifier = ENV.fetch('PRODUCT_BUNDLE_IDENTIFIER', default_bundle_id)
 development_team = ENV['DEVELOPMENT_TEAM']
 
@@ -109,7 +109,7 @@ target.build_configurations.each do |config|
   settings['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks']
   settings['ASSETCATALOG_COMPILER_APPICON_NAME'] = ''
   settings['ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS'] = 'NO'
-  settings['BACKEND_BASE_URL'] = default_backend_url
+  settings['PLATFORM_API_BASE_URL'] = default_backend_url
   settings['DEVELOPMENT_TEAM'] = development_team if development_team && !development_team.empty?
 end
 
@@ -146,7 +146,7 @@ add_package_dependency(
 scheme = Xcodeproj::XCScheme.new
 scheme.configure_with_targets(target, nil, launch_target: true)
 env_vars = scheme.launch_action.environment_variables
-env_vars['BACKEND_BASE_URL'] = default_backend_url
+env_vars['PLATFORM_API_BASE_URL'] = default_backend_url
 scheme.launch_action.environment_variables = env_vars
 scheme.save_as(PROJECT_PATH.to_s, PROJECT_NAME, true)
 

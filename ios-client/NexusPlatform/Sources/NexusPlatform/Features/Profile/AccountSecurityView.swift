@@ -157,7 +157,9 @@ struct AccountSecurityView: View {
                         .foregroundStyle(Color(hex: 0xA0A0A0))
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 14)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -185,7 +187,6 @@ private struct ChangePasswordView: View {
     let email: String
     let language: AppLanguage
 
-    @Environment(\.dismiss) private var dismiss
     @State private var code = ""
     @State private var password = ""
     @State private var passwordVisible = false
@@ -201,71 +202,69 @@ private struct ChangePasswordView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            simpleHeader(title: copy.title)
+        VStack(alignment: .leading, spacing: 16) {
+            Text(email)
+                .font(.system(size: 13))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
 
-            VStack(alignment: .leading, spacing: 16) {
-                Text(email)
+            HStack(spacing: 12) {
+                SecurityInputField(
+                    title: copy.code,
+                    text: $code,
+                    keyboardType: .numberPad
+                )
+
+                Button(codeCooldown > 0 ? "\(codeCooldown)s" : copy.sendCode) {
+                    sendCode()
+                }
+                .frame(width: 110, height: 56)
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
+                )
+                .foregroundStyle(Color(hex: 0x6B4EFF))
+                .font(.system(size: 15, weight: .semibold))
+                .disabled(codeCooldown > 0 || email.isEmpty)
+            }
+
+            SecurityInputField(
+                title: copy.newPassword,
+                text: $password,
+                isSecure: true,
+                isSecureVisible: $passwordVisible
+            )
+
+            SecurityInputField(
+                title: copy.confirmPassword,
+                text: $confirmPassword,
+                isSecure: true,
+                isSecureVisible: $confirmPasswordVisible
+            )
+
+            Button(copy.update) {
+                submit()
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .foregroundStyle(.white)
+            .font(.system(size: 17, weight: .bold))
+
+            if let message {
+                Text(message)
                     .font(.system(size: 13))
                     .foregroundStyle(Color(hex: 0xA0A0A0))
-
-                HStack(spacing: 12) {
-                    SecurityInputField(
-                        title: copy.code,
-                        text: $code,
-                        keyboardType: .numberPad
-                    )
-
-                    Button(codeCooldown > 0 ? "\(codeCooldown)s" : copy.sendCode) {
-                        sendCode()
-                    }
-                    .frame(width: 110, height: 56)
-                    .background(Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
-                    )
-                    .foregroundStyle(Color(hex: 0x6B4EFF))
-                    .font(.system(size: 15, weight: .semibold))
-                    .disabled(codeCooldown > 0 || email.isEmpty)
-                }
-
-                SecurityInputField(
-                    title: copy.newPassword,
-                    text: $password,
-                    isSecure: true,
-                    isSecureVisible: $passwordVisible
-                )
-
-                SecurityInputField(
-                    title: copy.confirmPassword,
-                    text: $confirmPassword,
-                    isSecure: true,
-                    isSecureVisible: $confirmPasswordVisible
-                )
-
-                Button(copy.update) {
-                    submit()
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .foregroundStyle(.white)
-                .font(.system(size: 17, weight: .bold))
-
-                if let message {
-                    Text(message)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                }
             }
-            .padding(24)
 
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(24)
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .nexusTabBarHidden()
     }
@@ -338,104 +337,121 @@ private struct ChangePasswordView: View {
             }
         }
     }
-
-    private func simpleHeader(title: String) -> some View {
-        HStack(spacing: 0) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 48, height: 48)
-            }
-            .buttonStyle(NativeNavigationButtonStyle())
-
-            Text(title)
-                .font(.system(size: 28, weight: .heavy))
-                .foregroundStyle(.white)
-
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-    }
 }
 
 private struct DeviceManagementView: View {
     let language: AppLanguage
 
-    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = DeviceManagementViewModel()
+    @State private var pendingKickDeviceID: String?
+    @State private var toastMessage: String?
 
     private var copy: DeviceManagementCopy {
         .forLanguage(language)
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                if viewModel.currentDevice == nil && viewModel.otherDevices.isEmpty {
+                    Text(copy.empty)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                } else {
+                    if let currentDevice = viewModel.currentDevice {
+                        sectionTitle(copy.currentSection)
+                        DeviceRow(device: currentDevice, copy: copy, actionTitle: nil, actionColor: nil, action: nil)
+                    }
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 0) {
-                    if viewModel.devices.isEmpty {
-                        Text(copy.empty)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color(hex: 0xA0A0A0))
-                    } else {
-                        ForEach(viewModel.devices.indices, id: \.self) { index in
-                            let device = viewModel.devices[index]
-                            DeviceRow(device: device, copy: copy)
-                            if index != viewModel.devices.indices.last {
-                                Spacer()
-                                    .frame(height: 8)
+                    if viewModel.otherDevices.isEmpty == false {
+                        sectionTitle(copy.otherSection)
+                        VStack(spacing: 8) {
+                            ForEach(viewModel.otherDevices) { device in
+                                DeviceRow(
+                                    device: device,
+                                    copy: copy,
+                                    actionTitle: copy.kick,
+                                    actionColor: Color(hex: 0xE5484D),
+                                    action: {
+                                        pendingKickDeviceID = device.id
+                                    }
+                                )
                             }
                         }
                     }
                 }
-                .padding(20)
-                .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
-                )
-                .padding(.horizontal, 24)
+
+                Text(copy.hint)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(hex: 0xFF7875))
+                    .multilineTextAlignment(.center)
+                    .padding(20)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(hex: 0xFF4D4F, alpha: 0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color(hex: 0xFF4D4F, alpha: 0.35), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                    )
+
+                if viewModel.otherDevices.isEmpty == false {
+                    Button(copy.logoutAll) {
+                        viewModel.logoutAll()
+                    }
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(Color(hex: 0xE5484D), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .buttonStyle(.plain)
+                }
             }
+            .padding(24)
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .nexusTabBarHidden()
         .onAppear { viewModel.load() }
+        .onChange(of: viewModel.message) { _, newValue in
+            if let newValue, newValue.isEmpty == false {
+                toastMessage = newValue
+            }
+        }
+        .confirmationDialog(copy.kickConfirmTitle, isPresented: Binding(
+            get: { pendingKickDeviceID != nil },
+            set: { if $0 == false { pendingKickDeviceID = nil } }
+        )) {
+            Button(copy.kick, role: .destructive) {
+                if let pendingKickDeviceID {
+                    viewModel.kick(deviceID: pendingKickDeviceID)
+                }
+                pendingKickDeviceID = nil
+            }
+            Button(copy.cancel, role: .cancel) {
+                pendingKickDeviceID = nil
+            }
+        } message: {
+            Text(copy.kickConfirmMessage)
+        }
+        .overlay(alignment: .bottom) {
+            NativeToastOverlay(message: $toastMessage)
+        }
     }
 
-    private var header: some View {
-        HStack(spacing: 0) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 48, height: 48)
-            }
-            .buttonStyle(NativeNavigationButtonStyle())
-
-            Text(copy.title)
-                .font(.system(size: 28, weight: .heavy))
-                .foregroundStyle(.white)
-
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
+    private func sectionTitle(_ value: String) -> some View {
+        Text(value)
+            .font(.system(size: 13))
+            .foregroundStyle(Color(hex: 0xA0A0A0))
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 @MainActor
 private final class DeviceManagementViewModel: ObservableObject {
     @Published var devices: [DeviceSession] = []
+    @Published var message: String?
     private let service: DeviceSessionServiceProtocol = DeviceSessionService()
 
     func load() {
@@ -443,12 +459,43 @@ private final class DeviceManagementViewModel: ObservableObject {
             devices = (try? await service.fetchDevices()) ?? []
         }
     }
+
+    var currentDevice: DeviceSession? {
+        devices.first(where: \.current)
+    }
+
+    var otherDevices: [DeviceSession] {
+        devices.filter { $0.current == false }
+    }
+
+    func kick(deviceID: String) {
+        Task {
+            do {
+                try await service.kick(deviceID: deviceID)
+                devices.removeAll { $0.id == deviceID }
+                message = AppText.deviceKicked()
+            } catch {
+                message = error.localizedDescription
+            }
+        }
+    }
+
+    func logoutAll() {
+        Task {
+            do {
+                try await service.logoutAll()
+                devices = devices.filter(\.current)
+                message = AppText.otherDevicesLoggedOut()
+            } catch {
+                message = error.localizedDescription
+            }
+        }
+    }
 }
 
 private struct AccountTerminationView: View {
     let language: AppLanguage
 
-    @Environment(\.dismiss) private var dismiss
     @State private var confirmText = ""
     @State private var message: String?
     @State private var isSubmitting = false
@@ -464,70 +511,50 @@ private struct AccountTerminationView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
-                }
-                .buttonStyle(NativeNavigationButtonStyle())
+        VStack(alignment: .leading, spacing: 0) {
+            warningCard
 
-                Text(copy.title)
-                    .font(.system(size: 28, weight: .heavy))
-                    .foregroundStyle(.white)
+            Spacer()
+                .frame(height: 20)
 
-                Spacer()
+            riskCard
+
+            Spacer()
+                .frame(height: 24)
+
+            Button(countdown > 0 ? "\(copy.submit) (\(countdown)s)" : (isSubmitting ? copy.processing : copy.submit)) {
+                submit()
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(enabled ? LinearGradient(colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color(hex: 0xD1D5DB), Color(hex: 0xD1D5DB)], startPoint: .leading, endPoint: .trailing))
+            )
+            .foregroundStyle(enabled ? Color(hex: 0x121212) : Color(hex: 0x666666))
+            .font(.system(size: 15, weight: .semibold))
 
-            VStack(alignment: .leading, spacing: 0) {
-                warningCard
-
-                Spacer()
-                    .frame(height: 20)
-
-                riskCard
-
-                Spacer()
-                    .frame(height: 24)
-
-                Button(countdown > 0 ? "\(copy.submit) (\(countdown)s)" : (isSubmitting ? copy.processing : copy.submit)) {
-                    submit()
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(enabled ? LinearGradient(colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color(hex: 0xD1D5DB), Color(hex: 0xD1D5DB)], startPoint: .leading, endPoint: .trailing))
-                )
-                .foregroundStyle(enabled ? Color(hex: 0x121212) : Color(hex: 0x666666))
-                .font(.system(size: 15, weight: .semibold))
-
-                if let message {
-                    Text(message)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                        .padding(.top, 12)
-                }
-
-                Text(copy.footer)
-                    .font(.system(size: 12))
+            if let message {
+                Text(message)
+                    .font(.system(size: 13))
                     .foregroundStyle(Color(hex: 0xA0A0A0))
-                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 12)
             }
-            .padding(.horizontal, 24)
+
+            Text(copy.footer)
+                .font(.system(size: 12))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 12)
 
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(24)
         .background(Color(hex: 0x121212).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(copy.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .nexusTabBarHidden()
         .task {
@@ -723,15 +750,23 @@ private struct DeviceManagementCopy {
     let unknown: String
     let current: String
     let offline: String
+    let currentSection: String
+    let otherSection: String
+    let kick: String
+    let logoutAll: String
+    let hint: String
+    let kickConfirmTitle: String
+    let kickConfirmMessage: String
+    let cancel: String
 
     static func forLanguage(_ language: AppLanguage) -> DeviceManagementCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "设备管理", empty: "暂无设备记录", unknown: "未知设备", current: "当前", offline: "离线")
+            return .init(title: "登录设备管理", empty: "暂无设备记录", unknown: "未知设备", current: "当前在线", offline: "已过期", currentSection: "当前使用的设备", otherSection: "最近登录的其他设备", kick: "退出登录", logoutAll: "强制下线其他设备", hint: "如果发现非本人操作的异常记录，请立即修改密码并强制下线所有可疑设备。", kickConfirmTitle: "退出该设备登录", kickConfirmMessage: "确认让该设备下线吗？", cancel: "取消")
         case .traditionalChinese:
-            return .init(title: "裝置管理", empty: "暫無裝置記錄", unknown: "未知裝置", current: "目前", offline: "離線")
+            return .init(title: "登入裝置管理", empty: "暫無裝置記錄", unknown: "未知裝置", current: "目前在線", offline: "已過期", currentSection: "目前使用的裝置", otherSection: "最近登入的其他裝置", kick: "登出裝置", logoutAll: "強制下線其他裝置", hint: "如果發現非本人操作的異常記錄，請立即修改密碼並強制下線所有可疑裝置。", kickConfirmTitle: "登出此裝置", kickConfirmMessage: "確認讓此裝置下線嗎？", cancel: "取消")
         case .english:
-            return .init(title: "Device Management", empty: "No device records", unknown: "Unknown Device", current: "Current", offline: "Offline")
+            return .init(title: "Device Management", empty: "No device records", unknown: "Unknown Device", current: "Current Online", offline: "Expired", currentSection: "Current device", otherSection: "Other recent devices", kick: "Log Out", logoutAll: "Log Out All Other Devices", hint: "If you see suspicious activity, change your password and force all untrusted devices offline immediately.", kickConfirmTitle: "Log out this device", kickConfirmMessage: "Do you want to log out this device?", cancel: "Cancel")
         }
     }
 }
@@ -832,6 +867,9 @@ private struct AccountTerminationCopy {
 private struct DeviceRow: View {
     let device: DeviceSession
     let copy: DeviceManagementCopy
+    let actionTitle: String?
+    let actionColor: Color?
+    let action: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -854,11 +892,23 @@ private struct DeviceRow: View {
                     .foregroundStyle(Color(hex: 0xA0A0A0))
             }
             Spacer()
-            Text(device.current ? copy.current : copy.offline)
-                .font(.system(size: 12))
-                .foregroundStyle(device.current ? Color(hex: 0x6B4EFF) : Color(hex: 0xA0A0A0))
+            if let actionTitle, let actionColor, let action {
+                Button(actionTitle, action: action)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(actionColor)
+                    .buttonStyle(.plain)
+            } else {
+                Text(device.current ? copy.current : copy.offline)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(device.current ? Color(hex: 0x36C282) : Color(hex: 0xA0A0A0))
+            }
         }
-        .padding(.vertical, 12)
+        .padding(16)
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+        )
     }
 }
 

@@ -527,7 +527,7 @@ class GameManager(private val context: Context) {
         deleteDirectory(targetDir)
         targetDir.mkdirs()
 
-        val safeName = escapeHtml(game.name.ifBlank { "Nexus Demo Game" })
+        val safeName = escapeHtml(game.name.ifBlank { "BringBox Demo Game" })
         val safeDesc = escapeHtml(
             game.description.ifBlank { "Offline demo game package. No remote API required." }
         )

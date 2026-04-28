@@ -42,12 +42,30 @@ final class DiscoverViewModel: ObservableObject {
                     topRanked = home.rankedGames
                 }
 
-                let baseCategories = home.categories.isEmpty ? ["全部"] : home.categories
-                let dynamic = loaded.compactMap { $0.category }.filter { !$0.isEmpty }
-                let deduped = Array(Set(baseCategories + dynamic))
-                    .filter { $0.isEmpty == false && $0 != "all" }
+                let availableCategories = Set(
+                    loaded.compactMap { game -> String? in
+                        guard let category = game.category?.trimmingCharacters(in: .whitespacesAndNewlines),
+                              category.isEmpty == false else {
+                            return nil
+                        }
+                        return category
+                    }
+                )
+                let orderedCategories = home.categories
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { label in
+                        label.isEmpty == false &&
+                        label.caseInsensitiveCompare("all") != .orderedSame &&
+                        label != "全部" &&
+                        availableCategories.contains(label)
+                    }
+                let remainingCategories = availableCategories
+                    .filter { orderedCategories.contains($0) == false }
                     .sorted()
-                categories = ["全部"] + deduped.filter { $0 != "全部" }
+                categories = ["全部"] + orderedCategories + remainingCategories
+                if categories.contains(selectedCategory) == false {
+                    selectedCategory = "全部"
+                }
 
                 if let hero {
                     if let matched = loaded.first(where: { $0.id == hero.appID }) {

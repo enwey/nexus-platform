@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Nexus Platform</string>
+    <string name="app_name">BringBox</string>
 
     <string name="tab_library">遊戲</string>
     <string name="tab_discover">發現</string>
@@ -30,7 +30,7 @@
     <string name="onboarding_skip">跳過</string>
 
     <string name="login_welcome">歡迎回來</string>
-    <string name="login_subtitle">登入你的Nexus帳號，掃除一切無聊</string>
+    <string name="login_subtitle">登入你的BringBox帳號，掃除一切無聊</string>
     <string name="login_account_label">電子郵件</string>
     <string name="login_password_label">輸入密碼</string>
     <string name="login_forgot_password">忘記密碼？</string>
@@ -118,7 +118,7 @@
     <string name="library_coldstart_pick_2">熱門競技</string>
     <string name="library_coldstart_pick_3">休閒解壓</string>
     <string name="library_coldstart_pick_4">策略精選</string>
-    <string name="library_coldstart_hero_title">歡迎來到 Nexus 遊戲</string>
+    <string name="library_coldstart_hero_title">歡迎來到 BringBox 遊戲</string>
     <string name="library_coldstart_hero_subtitle">首次進入，先從熱門精選開始</string>
     <string name="library_coldstart_cta">開始探索</string>
     <string name="library_coldstart_empty_icon">🎮</string>
@@ -127,8 +127,8 @@
     <string name="library_coldstart_discover_action">去發現頁看看</string>
 
     <string name="profile_header_title">超級玩家 007</string>
-    <string name="profile_account_id">Nexus ID: 88293041</string>
-    <string name="profile_account_id_format">Nexus ID: %1$s</string>
+    <string name="profile_account_id">BringBox ID: 88293041</string>
+    <string name="profile_account_id_format">BringBox ID: %1$s</string>
     <string name="profile_security">帳戶與安全</string>
     <string name="profile_cloud_sync">雲存檔同步</string>
     <string name="profile_clear_cache">清除本地遊戲快取</string>
@@ -155,7 +155,7 @@
     <string name="profile_referral_button">去邀請</string>
 
     <string name="game_back">返回</string>
-    <string name="game_editor_pick">Nexus 官方精選</string>
+    <string name="game_editor_pick">BringBox 官方精選</string>
     <string name="game_intro_title">遊戲介紹</string>
     <string name="game_intro_fallback">極速啟動、穩定幀率、雲原生資源分發，為你帶來高品質輕遊戲體驗。</string>
     <string name="game_play_now">立即秒開</string>
@@ -211,7 +211,7 @@
     
     <string name="runtime_menu_game_title">賽博之刃：源起</string>
     <string name="runtime_menu_game_players">👥 240萬+ 玩過</string>
-    <string name="runtime_menu_game_studio">🛠️ Nexus Studio</string>
+    <string name="runtime_menu_game_studio">🛠️ BringBox Studio</string>
     <string name="runtime_menu_share_title">分享至</string>
     <string name="runtime_menu_share_whatsapp">WhatsApp</string>
     <string name="runtime_menu_share_facebook">Facebook</string>
@@ -293,7 +293,7 @@
     <string name="referral_share_more">更多分享</string>
     <string name="referral_rules_title">獎勵規則與指南</string>
     <string name="referral_rule_1_title">發送鏈接</string>
-    <string name="referral_rule_1_desc">點擊上方分享按鈕，將你的專屬鏈接發送給未註冊過 Nexus 的好友。</string>
+    <string name="referral_rule_1_desc">點擊上方分享按鈕，將你的專屬鏈接發送給未註冊過 BringBox 的好友。</string>
     <string name="referral_rule_2_title">好友註冊</string>
     <string name="referral_rule_2_desc">好友通過你的鏈接成功註冊並完成首次登錄，你將獲得邀請獎勵。</string>
     <string name="referral_rule_3_title">獎勵發放</string>

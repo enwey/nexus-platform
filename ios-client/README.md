@@ -47,14 +47,14 @@ open NexusPlatformApp.xcodeproj
 默认后端地址会写入宿主 App 配置，当前默认值为：
 
 ```text
-http://192.168.1.5:8080/api/v1
+http://47.99.34.148:81/api/v1
 ```
 
-如果局域网 IP 变化，可在生成前临时覆盖：
+如果需要临时切换环境，可在生成前覆盖统一变量：
 
 ```bash
 cd ios-client
-BACKEND_BASE_URL=http://你的Mac局域网IP:8080/api/v1 ruby scripts/generate_host_project.rb
+PLATFORM_API_BASE_URL=http://你的Mac局域网IP:8080/api/v1 ruby scripts/generate_host_project.rb
 ```
 
 ## 命令行真机安装
@@ -70,7 +70,7 @@ BACKEND_BASE_URL=http://你的Mac局域网IP:8080/api/v1 ruby scripts/generate_h
 
 ```bash
 cd ios-client
-BACKEND_BASE_URL=http://你的Mac局域网IP:8080/api/v1 \
+PLATFORM_API_BASE_URL=http://你的Mac局域网IP:8080/api/v1 \
 DEVELOPMENT_TEAM=你的TeamID \
 ./scripts/run-ios-device.sh 你的设备UDID
 ```

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Nexus Platform</string>
+    <string name="app_name">BringBox</string>
     <string name="tab_library">游戏</string>
     <string name="tab_discover">发现</string>
     <string name="tab_recommend">推荐</string>
@@ -26,7 +26,7 @@
     <string name="onboarding_start">开启体验</string>
     <string name="onboarding_skip">跳过</string>
     <string name="login_welcome">欢迎回来</string>
-    <string name="login_subtitle">登录你的Nexus账号，扫除一切无聊</string>
+    <string name="login_subtitle">登录你的BringBox账号，扫除一切无聊</string>
     <string name="login_account_label">邮箱</string>
     <string name="login_password_label">输入密码</string>
     <string name="login_forgot_password">忘记密码？</string>
@@ -100,8 +100,8 @@
     <string name="load_games_failed">加载游戏列表失败</string>
     <string name="no_games_available">当前没有可体验的游戏</string>
     <string name="profile_header_title">超级玩家 007</string>
-    <string name="profile_account_id">Nexus ID: 88293041</string>
-    <string name="profile_account_id_format">Nexus ID: %1$s</string>
+    <string name="profile_account_id">BringBox ID: 88293041</string>
+    <string name="profile_account_id_format">BringBox ID: %1$s</string>
     <string name="profile_security">账户与安全</string>
     <string name="profile_cloud_sync">云存档同步</string>
     <string name="profile_clear_cache">清除本地游戏缓存</string>
@@ -120,7 +120,7 @@
     <string name="profile_referral_subtitle">平台币可用于游戏内购买商品、服务以及兑换周边礼品</string>
     <string name="profile_referral_button">去邀请</string>
     <string name="game_back">返回</string>
-    <string name="game_editor_pick">Nexus 官方精选</string>
+    <string name="game_editor_pick">BringBox 官方精选</string>
     <string name="game_intro_title">游戏介绍</string>
     <string name="game_intro_fallback">极速启动、稳定帧率、云原生资源分发，为你带来高品质轻游戏体验。</string>
     <string name="game_play_now">立即秒开</string>
@@ -150,7 +150,7 @@
     <string name="library_coldstart_pick_2">热门竞技</string>
     <string name="library_coldstart_pick_3">休闲解压</string>
     <string name="library_coldstart_pick_4">策略精选</string>
-    <string name="library_coldstart_hero_title">欢迎来到 Nexus 游戏</string>
+    <string name="library_coldstart_hero_title">欢迎来到 BringBox 游戏</string>
     <string name="library_coldstart_hero_subtitle">首次进入，先从热门精选开始</string>
     <string name="library_coldstart_cta">开始探索</string>
     <string name="library_coldstart_empty_icon">🎮</string>
@@ -175,7 +175,7 @@
     <string name="runtime_capsule_more_todo">更多功能即将上线</string>
     <string name="runtime_menu_game_title">赛博之刃：源起</string>
     <string name="runtime_menu_game_players">👥 240万 玩家</string>
-    <string name="runtime_menu_game_studio">🛠 Nexus Studio</string>
+    <string name="runtime_menu_game_studio">🛠 BringBox Studio</string>
     <string name="runtime_menu_share_title">分享到</string>
     <string name="runtime_menu_share_whatsapp">WhatsApp</string>
     <string name="runtime_menu_share_facebook">Facebook</string>
@@ -250,7 +250,7 @@
     <string name="referral_share_more">更多分享</string>
     <string name="referral_rules_title">奖励规则与说明</string>
     <string name="referral_rule_1_title">发送邀请链接</string>
-    <string name="referral_rule_1_desc">点击上方分享按钮，将你的专属链接发送给未注册过 Nexus 的好友。</string>
+    <string name="referral_rule_1_desc">点击上方分享按钮，将你的专属链接发送给未注册过 BringBox 的好友。</string>
     <string name="referral_rule_2_title">好友完成注册</string>
     <string name="referral_rule_2_desc">好友通过你的链接成功注册并完成首次登录后，你将获得邀请奖励。</string>
     <string name="referral_rule_3_title">奖励发放</string>

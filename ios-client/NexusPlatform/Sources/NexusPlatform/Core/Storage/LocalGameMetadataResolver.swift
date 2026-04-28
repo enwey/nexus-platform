@@ -36,6 +36,8 @@ actor LocalGameMetadataResolver {
         }
 
         let manifest = ParsedManifest(payload: json)
+        let mergedLocalizedNames = localizedRemote.localizedNames.merging(manifest.localizedNames) { _, new in new }
+        let mergedLocalizedDescriptions = localizedRemote.localizedDescriptions.merging(manifest.localizedDescriptions) { _, new in new }
         let iconURL: String? = {
             guard let iconPath = manifest.iconPath?.trimmingCharacters(in: .whitespacesAndNewlines),
                   iconPath.isEmpty == false else {
@@ -48,7 +50,9 @@ actor LocalGameMetadataResolver {
         return localizedRemote.applyingPresentation(
             name: manifest.localizedName(for: language).ifEmpty(localizedRemote.name),
             description: manifest.localizedDescription(for: language).ifEmpty(localizedRemote.description),
-            iconUrl: iconURL
+            iconUrl: iconURL,
+            localizedNames: mergedLocalizedNames,
+            localizedDescriptions: mergedLocalizedDescriptions
         )
     }
 }

@@ -28,5 +28,5 @@
 
 ## 5. 真机联调要求
 
-1. 真机构建必须注入局域网 `BACKEND_BASE_URL`
+1. 真机构建必须注入局域网 `PLATFORM_API_BASE_URL`
 2. 提交说明需标记本次 APK 对应后端地址

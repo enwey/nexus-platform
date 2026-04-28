@@ -21,9 +21,9 @@ enum ReferralServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "邀请数据响应无效"
+            return AppText.invalidReferralResponse()
         }
     }
 }

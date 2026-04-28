@@ -136,17 +136,19 @@ struct BillingDetailView: View {
 
     private var billingDetailSkeleton: some View {
         VStack(alignment: .leading, spacing: 0) {
-            NativeSkeletonBlock(width: 184, height: 28, cornerRadius: 10)
-            Spacer().frame(height: 10)
-            NativeSkeletonBlock(width: 236, height: 14, cornerRadius: 7)
-            Spacer().frame(height: 18)
-            NativeSkeletonBlock(width: 124, height: 15, cornerRadius: 7)
+            NativeSkeletonBlock(width: 196, height: 30, cornerRadius: 10)
             Spacer().frame(height: 8)
-            NativeSkeletonBlock(width: 108, height: 15, cornerRadius: 7)
+            NativeSkeletonBlock(width: 228, height: 14, cornerRadius: 7)
             Spacer().frame(height: 8)
-            NativeSkeletonBlock(width: 168, height: 15, cornerRadius: 7)
+            NativeSkeletonBlock(width: 172, height: 14, cornerRadius: 7)
             Spacer().frame(height: 8)
-            NativeSkeletonBlock(height: 14, cornerRadius: 7)
+            NativeSkeletonBlock(width: 116, height: 16, cornerRadius: 7)
+            Spacer().frame(height: 4)
+            NativeSkeletonBlock(width: 104, height: 16, cornerRadius: 7)
+            Spacer().frame(height: 4)
+            NativeSkeletonBlock(width: 160, height: 16, cornerRadius: 7)
+            Spacer().frame(height: 4)
+            NativeSkeletonBlock(width: 236, height: 15, cornerRadius: 7)
         }
     }
 }

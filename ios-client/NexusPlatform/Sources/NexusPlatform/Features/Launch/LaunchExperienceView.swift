@@ -3,12 +3,11 @@ import UIKit
 
 struct LaunchExperienceView: View {
     private enum Stage {
-        case splash
         case onboarding
         case app
     }
 
-    @State private var stage: Stage = .splash
+    @State private var stage: Stage?
     @State private var hasBootstrapped = false
     @State private var language: AppLanguage = .simplifiedChinese
     private let launchStore = AppLaunchStore.shared
@@ -16,8 +15,6 @@ struct LaunchExperienceView: View {
     var body: some View {
         Group {
             switch stage {
-            case .splash:
-                SplashView(copy: .forLanguage(language))
             case .onboarding:
                 OnboardingView(copy: .forLanguage(language)) {
                     Task {
@@ -29,6 +26,8 @@ struct LaunchExperienceView: View {
                 }
             case .app:
                 RootTabView()
+            case nil:
+                LaunchBootstrapView()
             }
         }
         .task {
@@ -38,7 +37,6 @@ struct LaunchExperienceView: View {
             await MainActor.run {
                 language = currentLanguage
             }
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
             let completed = await launchStore.hasCompletedOnboarding()
             await MainActor.run {
                 stage = completed ? .app : .onboarding
@@ -47,50 +45,14 @@ struct LaunchExperienceView: View {
     }
 }
 
-private struct SplashView: View {
-    let copy: LaunchCopy
-
+private struct LaunchBootstrapView: View {
     var body: some View {
         ZStack {
             Color(hex: 0x121212)
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(hex: 0x6B4EFF))
-                    .frame(width: 100, height: 100)
-                    .overlay(
-                        Text("N")
-                            .font(.system(size: 50, weight: .black))
-                            .foregroundColor(.white)
-                    )
-
-                Text("NEXUS")
-                    .font(.system(size: 42, weight: .black))
-                    .tracking(6)
-                    .foregroundColor(.white)
-                    .padding(.top, 30)
-
-                Text(copy.splashRuntime)
-                    .font(.system(size: 14, weight: .semibold))
-                    .tracking(4)
-                    .foregroundColor(Color(hex: 0xA0A0A0))
-                    .padding(.top, 8)
-            }
-
-            VStack {
-                Spacer()
-                Text(appVersionLabel)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Color(hex: 0x555555))
-                    .padding(.bottom, 50)
-            }
+            BrandLogoImage(size: 126, cornerRadius: 28)
         }
-    }
-
-    private var appVersionLabel: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-        return String(format: copy.splashVersionFormat, version ?? "2.4.0")
     }
 }
 
@@ -183,7 +145,12 @@ private struct OnboardingView: View {
     }
 
     private func title(for page: LaunchPageCopy) -> Text {
-        Text(page.titlePrefix + "\n")
+        if page.titleHighlight.isEmpty {
+            return Text(page.titlePrefix)
+                .foregroundColor(.white)
+        }
+
+        return Text(page.titlePrefix + "\n")
             .foregroundColor(.white)
         + Text(page.titleHighlight)
             .foregroundColor(page.highlightColor)
@@ -201,8 +168,6 @@ private struct OnboardingView: View {
 }
 
 private struct LaunchCopy {
-    let splashRuntime: String
-    let splashVersionFormat: String
     let skip: String
     let next: String
     let start: String
@@ -212,8 +177,6 @@ private struct LaunchCopy {
         switch language {
         case .simplifiedChinese:
             return LaunchCopy(
-                splashRuntime: "GAMING ENGINE",
-                splashVersionFormat: "v%@ Studio Edition",
                 skip: "跳过",
                 next: "下一步",
                 start: "开启体验",
@@ -221,8 +184,8 @@ private struct LaunchCopy {
                     LaunchPageCopy(
                         imageURL: URL(string: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80"),
                         imageAlignment: .center,
-                        titlePrefix: "打败所有，",
-                        titleHighlight: "无聊。",
+                        titlePrefix: "打败你的所有无聊",
+                        titleHighlight: "",
                         description: "为你量身定制的次世代游戏宇宙，海量精品大作，随时随地拯救不开心。",
                         highlightColor: Color(hex: 0x6B4EFF),
                         buttonColor: Color(hex: 0x6B4EFF),
@@ -252,8 +215,6 @@ private struct LaunchCopy {
             )
         case .traditionalChinese:
             return LaunchCopy(
-                splashRuntime: "GAMING ENGINE",
-                splashVersionFormat: "v%@ Studio Edition",
                 skip: "跳過",
                 next: "下一步",
                 start: "開啟體驗",
@@ -261,8 +222,8 @@ private struct LaunchCopy {
                     LaunchPageCopy(
                         imageURL: URL(string: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80"),
                         imageAlignment: .center,
-                        titlePrefix: "打敗所有，",
-                        titleHighlight: "無聊。",
+                        titlePrefix: "打敗你的所有無聊",
+                        titleHighlight: "",
                         description: "為你量身定製的次世代遊戲宇宙，海量精品大作，隨時隨地拯救不開心。",
                         highlightColor: Color(hex: 0x6B4EFF),
                         buttonColor: Color(hex: 0x6B4EFF),
@@ -292,8 +253,6 @@ private struct LaunchCopy {
             )
         case .english:
             return LaunchCopy(
-                splashRuntime: "GAMING ENGINE",
-                splashVersionFormat: "v%@ Studio Edition",
                 skip: "Skip",
                 next: "Next",
                 start: "Start Exploring",
@@ -301,8 +260,8 @@ private struct LaunchCopy {
                     LaunchPageCopy(
                         imageURL: URL(string: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80"),
                         imageAlignment: .center,
-                        titlePrefix: "Beat Every",
-                        titleHighlight: "Boring Moment.",
+                        titlePrefix: "Beat All Your Boredom",
+                        titleHighlight: "",
                         description: "A next-gen game universe tailored for you, packed with premium titles ready to lift every dull moment.",
                         highlightColor: Color(hex: 0x6B4EFF),
                         buttonColor: Color(hex: 0x6B4EFF),

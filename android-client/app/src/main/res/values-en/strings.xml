@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Nexus Platform</string>
+    <string name="app_name">BringBox</string>
 
     <string name="tab_library">Games</string>
     <string name="tab_discover">Discover</string>
@@ -11,7 +11,7 @@
     <string name="splash_version">v%1$s Studio Edition</string>
 
     <string name="onboarding_title">Skip Downloads, Play Instantly</string>
-    <string name="onboarding_subtitle">Get a stable and smooth mini-game experience through Nexus Runtime.</string>
+    <string name="onboarding_subtitle">Get a stable and smooth mini-game experience through BringBox Runtime.</string>
     <string name="onboarding_title_1">Beat Every\nBoring Moment.</string>
     <string name="onboarding_title_prefix_1">Beat Every</string>
     <string name="onboarding_title_highlight_1">Boring Moment.</string>
@@ -30,7 +30,7 @@
     <string name="onboarding_skip">Skip</string>
 
     <string name="login_welcome">Welcome Back</string>
-    <string name="login_subtitle">Sign in to your Nexus account and sweep boredom away.</string>
+    <string name="login_subtitle">Sign in to your BringBox account and sweep boredom away.</string>
     <string name="login_account_label">Email</string>
     <string name="login_password_label">Password</string>
     <string name="login_forgot_password">Forgot password?</string>
@@ -87,7 +87,7 @@
     <string name="library_coldstart_pick_2">Popular Competitive</string>
     <string name="library_coldstart_pick_3">Casual Chill</string>
     <string name="library_coldstart_pick_4">Strategy Picks</string>
-    <string name="library_coldstart_hero_title">Welcome to Nexus Games</string>
+    <string name="library_coldstart_hero_title">Welcome to BringBox Games</string>
     <string name="library_coldstart_hero_subtitle">Start with hand-picked trending games</string>
     <string name="library_coldstart_cta">Start Exploring</string>
     <string name="library_coldstart_empty_icon">🎮</string>
@@ -113,8 +113,8 @@
     <string name="runtime_capsule_more_todo">More actions coming soon</string>
 
     <string name="profile_header_title">Pro Player 007</string>
-    <string name="profile_account_id">Nexus ID: 88293041</string>
-    <string name="profile_account_id_format">Nexus ID: %1$s</string>
+    <string name="profile_account_id">BringBox ID: 88293041</string>
+    <string name="profile_account_id_format">BringBox ID: %1$s</string>
     <string name="profile_security">Account &amp; Security</string>
     <string name="profile_cloud_sync">Cloud Save Sync</string>
     <string name="profile_clear_cache">Clear Local Game Cache</string>
@@ -255,7 +255,7 @@
     <string name="runtime_share_copied">Share text copied</string>
     <string name="runtime_menu_game_title">賽博之刃：源起</string>
     <string name="runtime_menu_game_players">👥 240萬+ 玩過</string>
-    <string name="runtime_menu_game_studio">🛠️ Nexus Studio</string>
+    <string name="runtime_menu_game_studio">🛠️ BringBox Studio</string>
     <string name="runtime_menu_share_title">分享至</string>
     <string name="runtime_menu_share_whatsapp">WhatsApp</string>
     <string name="runtime_menu_share_facebook">Facebook</string>
@@ -330,7 +330,7 @@
     <string name="referral_share_more">更多分享</string>
     <string name="referral_rules_title">獎勵規則與指南</string>
     <string name="referral_rule_1_title">發送鏈接</string>
-    <string name="referral_rule_1_desc">點擊上方分享按鈕，將你的專屬鏈接發送給未註冊過 Nexus 的好友。</string>
+    <string name="referral_rule_1_desc">Tap the share button above and send your personal link to friends who have not registered for BringBox yet.</string>
     <string name="referral_rule_2_title">好友註冊</string>
     <string name="referral_rule_2_desc">好友通過你的鏈接成功註冊並完成首次登錄，你將獲得邀請獎勵。</string>
     <string name="referral_rule_3_title">獎勵發放</string>

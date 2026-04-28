@@ -27,11 +27,11 @@ enum BillingServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "请先登录"
+            return AppText.pleaseLogin()
         case .invalidResponse:
-            return "账单数据响应无效"
+            return AppText.invalidBillingResponse()
         case .failed(let message):
-            return message.isEmpty ? "获取账单失败" : message
+            return message.isEmpty ? AppText.fetchBillingFailed() : message
         }
     }
 }

@@ -31,6 +31,8 @@ function safeRemove(key) {
 }
 
 function resolveApiBaseUrl() {
+  const platformBaseUrl = import.meta.env.VITE_PLATFORM_API_BASE_URL
+  if (platformBaseUrl) return platformBaseUrl
   const envBaseUrl = import.meta.env.VITE_API_BASE_URL
   if (envBaseUrl) return envBaseUrl
   return 'http://47.99.34.148:81/api/v1'

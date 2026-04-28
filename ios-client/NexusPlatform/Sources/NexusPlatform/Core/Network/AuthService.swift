@@ -7,9 +7,9 @@ enum AuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidResponse(let path):
-            return "服务响应无效\n\(path)"
+            return AppText.invalidResponse(path: path)
         case .loginFailed(let message):
-            return message.isEmpty ? "登录失败" : message
+            return message.isEmpty ? AppText.loginFailed() : message
         }
     }
 }

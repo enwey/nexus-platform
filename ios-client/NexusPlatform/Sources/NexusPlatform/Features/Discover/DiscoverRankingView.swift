@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DiscoverRankingView: View {
     let games: [Game]
+    @State private var language: AppLanguage = AppLanguageStore.currentSync()
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -32,10 +33,10 @@ struct DiscoverRankingView: View {
                                 )
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(game.name)
+                                    Text(game.localizedName(for: language))
                                         .font(.system(size: 16, weight: .bold))
                                         .foregroundStyle(.white)
-                                    Text(game.description.isEmpty ? "v\(game.version)" : game.description)
+                                    Text(localizedGameDescription(for: game))
                                         .font(.system(size: 12))
                                         .foregroundStyle(Color(hex: 0xA0A0A0))
                                         .lineLimit(1)
@@ -62,6 +63,13 @@ struct DiscoverRankingView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .nexusTabBarHidden()
+        .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
+            if let language = notification.object as? AppLanguage {
+                self.language = language
+            } else {
+                language = AppLanguageStore.currentSync()
+            }
+        }
         .animation(NativeMotion.overlayTransition, value: games.isEmpty)
     }
 
@@ -90,6 +98,11 @@ struct DiscoverRankingView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
+    }
+
+    private func localizedGameDescription(for game: Game) -> String {
+        let localizedDescription = game.localizedDescription(for: language)
+        return localizedDescription.isEmpty ? "v\(game.version)" : localizedDescription
     }
 }
 

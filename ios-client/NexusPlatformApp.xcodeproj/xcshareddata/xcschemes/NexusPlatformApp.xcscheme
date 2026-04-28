@@ -61,8 +61,8 @@
       </BuildableProductRunnable>
       <EnvironmentVariables>
          <EnvironmentVariable
-            key = "BACKEND_BASE_URL"
-            value = "http://127.0.0.1:8080/api/v1"
+            key = "PLATFORM_API_BASE_URL"
+            value = "http://47.99.34.148:81/api/v1"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
