@@ -9,6 +9,14 @@
 
     <string name="splash_runtime">GAMING ENGINE</string>
     <string name="splash_version">v%1$s Studio Edition</string>
+    <string name="launch_ad_badge">廣告</string>
+    <string name="launch_ad_sponsor">BringBox 官方活動</string>
+    <string name="launch_ad_title">新用戶限時福利</string>
+    <string name="launch_ad_description">登入 BringBox，領取限時試玩權益與精選禮包，熱門遊戲開局更輕鬆。</string>
+    <string name="launch_ad_cta">立即查看</string>
+    <string name="launch_ad_footer">點擊查看活動詳情</string>
+    <string name="launch_ad_skip_countdown">跳過 %1$d</string>
+    <string name="launch_ad_landing_title">BringBox 活動</string>
 
     <string name="onboarding_title">告別下載，秒開即玩</string>
     <string name="onboarding_subtitle">透過 Nexus 運行時，獲得穩定流暢的小程序遊戲體驗。</string>

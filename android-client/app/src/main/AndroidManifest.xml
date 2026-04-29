@@ -26,6 +26,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".feature.splash.ui.LaunchAdWebViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NexusPlatform.Fullscreen" />
         
         <activity
             android:name=".feature.onboarding.ui.OnboardingActivity"

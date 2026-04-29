@@ -42,36 +42,45 @@ struct ReferralView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                if let message = viewModel.message {
-                    NativeStateCard {
-                        Text(message)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color(hex: 0xA0A0A0))
-                    }
-                }
+            VStack(spacing: 0) {
+                headerHero
 
-                if viewModel.isLoading {
-                    referralSkeleton
-                        .transition(NativeMotion.stateSwapTransition)
-                } else {
-                    VStack(alignment: .leading, spacing: 20) {
-                        summaryCard
-                        linkCard
-                        shareCard
-                        recordsCard
+                VStack(alignment: .leading, spacing: 20) {
+                    if let message = viewModel.message {
+                        NativeStateCard {
+                            Text(message)
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color(hex: 0xA0A0A0))
+                        }
                     }
-                    .transition(NativeMotion.contentRevealTransition)
+
+                    if viewModel.isLoading {
+                        referralSkeleton
+                            .transition(NativeMotion.stateSwapTransition)
+                    } else {
+                        VStack(alignment: .leading, spacing: 20) {
+                            summaryCard
+                            linkCard
+                            shareCard
+                            rulesCard
+                            recordsCard
+                        }
+                        .transition(NativeMotion.contentRevealTransition)
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 30)
+                .padding(.bottom, 96)
+                .background(Color(hex: 0x121212))
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                .offset(y: -30)
+                .padding(.bottom, -30)
             }
-            .padding(24)
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .onAppear {
             guard hasLoaded == false else { return }
             hasLoaded = true
@@ -86,65 +95,10 @@ struct ReferralView: View {
 
     private var referralSkeleton: some View {
         VStack(alignment: .leading, spacing: 20) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x6B4EFF, alpha: 0.28), Color(hex: 0xA04CFF, alpha: 0.2)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(height: 156)
-                .overlay(alignment: .leading) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        NativeSkeletonBlock(width: 124, height: 14, cornerRadius: 7)
-                        NativeSkeletonBlock(width: 156, height: 28, cornerRadius: 10)
-                        Spacer()
-                        NativeSkeletonBlock(width: 132, height: 14, cornerRadius: 7)
-                        NativeSkeletonBlock(width: 164, height: 28, cornerRadius: 10)
-                    }
-                    .padding(24)
-                }
-
-            skeletonCard {
-                NativeSkeletonBlock(width: 96, height: 13, cornerRadius: 6)
-                NativeSkeletonBlock(height: 20, cornerRadius: 10)
-                HStack(spacing: 12) {
-                    NativeSkeletonBlock(height: 18, cornerRadius: 9)
-                    NativeSkeletonBlock(width: 72, height: 44, cornerRadius: 14)
-                }
-            }
-
-            skeletonCard {
-                NativeSkeletonBlock(width: 110, height: 13, cornerRadius: 6)
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    ForEach(0..<3, id: \.self) { _ in
-                        NativeSkeletonBlock(height: 50, cornerRadius: 16)
-                    }
-                }
-            }
-
-            skeletonCard {
-                NativeSkeletonBlock(width: 118, height: 13, cornerRadius: 6)
-                ForEach(0..<4, id: \.self) { index in
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            NativeSkeletonBlock(width: 148, height: 16, cornerRadius: 7)
-                            NativeSkeletonBlock(width: 182, height: 12, cornerRadius: 6)
-                            NativeSkeletonBlock(width: 92, height: 12, cornerRadius: 6)
-                        }
-                        Spacer()
-                        NativeSkeletonBlock(width: 52, height: 16, cornerRadius: 7)
-                    }
-                    .padding(.vertical, 8)
-
-                    if index != 3 {
-                        Rectangle()
-                            .fill(Color(hex: 0x2D2D31))
-                            .frame(height: 1)
-                    }
-                }
-            }
+            summaryCard.redacted(reason: .placeholder)
+            linkCard.redacted(reason: .placeholder)
+            shareCard.redacted(reason: .placeholder)
+            rulesCard.redacted(reason: .placeholder)
         }
     }
 
@@ -158,40 +112,53 @@ struct ReferralView: View {
         return raw.isEmpty ? copy.linkPlaceholder : raw
     }
 
-    private var summaryCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(copy.summaryTitle)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color.white.opacity(0.8))
-
-            Text(String(format: copy.invitesSummary, viewModel.summary?.inviteCount ?? 0))
+    private var headerHero: some View {
+        VStack(spacing: 10) {
+            Text("🎁")
+                .font(.system(size: 64))
+            Text(copy.heroTitle)
                 .font(.system(size: 28, weight: .black))
                 .foregroundStyle(.white)
-
-            Text(copy.summaryHint)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.white.opacity(0.72))
-
-            Spacer(minLength: 0)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(copy.rewardLabel)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.8))
-                Text(String(format: copy.rewardSummary, viewModel.summary?.totalReward ?? "0"))
-                    .font(.system(size: 24, weight: .heavy, design: .monospaced))
-                    .foregroundStyle(.white)
-            }
+            Text(copy.heroSubtitle)
+                .font(.system(size: 15))
+                .foregroundStyle(Color.white.opacity(0.82))
+                .multilineTextAlignment(.center)
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, minHeight: 156, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.top, 40)
+        .padding(.bottom, 60)
+        .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
                 colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            )
+        )
+    }
+
+    private var summaryCard: some View {
+        HStack(spacing: 0) {
+            summaryMetric(
+                value: "\(viewModel.summary?.inviteCount ?? 0)",
+                label: copy.summaryInviteLabel,
+                valueColor: .white
+            )
+            Rectangle()
+                .fill(Color(hex: 0x2D2D31))
+                .frame(width: 1)
+                .padding(.vertical, 8)
+            summaryMetric(
+                value: viewModel.summary?.totalReward ?? "0",
+                label: copy.summaryRewardLabel,
+                valueColor: Color(hex: 0x36C282)
+            )
+        }
+        .padding(24)
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
     }
 
@@ -204,11 +171,11 @@ struct ReferralView: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                HStack(spacing: 12) {
-                    Text(copy.linkHint)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                Text(copy.linkHint)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
 
+                HStack(spacing: 12) {
                     Spacer()
 
                     Button(copy.copy) {
@@ -218,9 +185,9 @@ struct ReferralView: View {
                     .buttonStyle(.plain)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
-                    .frame(height: 44)
-                    .padding(.horizontal, 18)
-                    .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(height: 40)
+                    .padding(.horizontal, 16)
+                    .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
             }
         }
@@ -228,10 +195,30 @@ struct ReferralView: View {
 
     private var shareCard: some View {
         referralCard(title: copy.shareTitle) {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                shareButton(title: copy.shareMore, icon: "square.and.arrow.up", channel: "system", text: linkText)
-                shareButton(title: copy.shareWhatsApp, icon: "message.fill", channel: "whatsapp", text: linkText)
-                shareButton(title: copy.shareFacebook, icon: "person.2.fill", channel: "facebook", text: linkText)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 15), count: 4), spacing: 15) {
+                shareButton(title: copy.shareWhatsApp, icon: "💬", fill: Color(hex: 0x25D366), channel: "whatsapp", text: linkText)
+                shareButton(title: copy.shareFacebook, icon: "f", fill: Color(hex: 0x1877F2), channel: "facebook", text: linkText)
+                shareButton(title: copy.shareXiaohongshu, icon: "📕", fill: Color(hex: 0xFF2442), channel: "xiaohongshu", text: linkText)
+                shareButton(title: copy.shareMore, icon: "🔗", fill: Color(hex: 0x232326), channel: "system", text: linkText)
+            }
+        }
+    }
+
+    private var rulesCard: some View {
+        referralCard(title: copy.rulesTitle) {
+            VStack(alignment: .leading, spacing: 18) {
+                rulesRow(index: "1", text: copy.ruleOne)
+                rulesRow(index: "2", text: copy.ruleTwo)
+                rulesRow(index: "3", text: copy.ruleThree)
+
+                Rectangle()
+                    .fill(Color(hex: 0x2D2D31))
+                    .frame(height: 1)
+
+                Text(copy.disclaimer)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(hex: 0x66666C))
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -311,8 +298,8 @@ struct ReferralView: View {
         )
     }
 
-    private func shareButton(title: String, icon: String, channel: String, text: String) -> some View {
-        Button(title) {
+    private func shareButton(title: String, icon: String, fill: Color, channel: String, text: String) -> some View {
+        Button {
             viewModel.markShared(channel)
             let controller = UIActivityViewController(activityItems: [text], applicationActivities: nil)
             UIApplication.shared.connectedScenes
@@ -321,28 +308,63 @@ struct ReferralView: View {
                 .first { $0.isKeyWindow }?
                 .rootViewController?
                 .present(controller, animated: true)
-        }
-        .frame(maxWidth: .infinity, minHeight: 50)
-        .background(Color(hex: 0x232326), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(alignment: .leading) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x6B4EFF))
-                .padding(.leading, 14)
+        } label: {
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(fill)
+                    .frame(height: 50)
+                    .overlay(
+                        Text(icon)
+                            .font(.system(size: icon == "f" ? 24 : 22, weight: icon == "f" ? .black : .regular))
+                            .foregroundStyle(.white)
+                    )
+
+                Text(title)
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+            }
         }
         .buttonStyle(.plain)
-        .foregroundStyle(.white)
-        .font(.system(size: 14, weight: .medium))
+    }
+
+    private func summaryMetric(value: String, label: String, valueColor: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 24, weight: .black))
+                .foregroundStyle(valueColor)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func rulesRow(index: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(index)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Color(hex: 0x6B4EFF))
+                .frame(width: 22, height: 22)
+                .background(Color(hex: 0x232326), in: Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
+                )
+
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
 private struct ReferralCopy {
     let title: String
-    let summaryTitle: String
-    let summaryHint: String
-    let rewardLabel: String
-    let invitesSummary: String
-    let rewardSummary: String
+    let heroTitle: String
+    let heroSubtitle: String
+    let summaryInviteLabel: String
+    let summaryRewardLabel: String
     let linkTitle: String
     let linkHint: String
     let copy: String
@@ -350,6 +372,12 @@ private struct ReferralCopy {
     let shareMore: String
     let shareWhatsApp: String
     let shareFacebook: String
+    let shareXiaohongshu: String
+    let rulesTitle: String
+    let ruleOne: String
+    let ruleTwo: String
+    let ruleThree: String
+    let disclaimer: String
     let recordsTitle: String
     let noRecords: String
     let linkCopied: String
@@ -360,18 +388,23 @@ private struct ReferralCopy {
         case .simplifiedChinese:
             return .init(
                 title: "邀请奖励",
-                summaryTitle: "邀请概览",
-                summaryHint: "分享你的专属链接，让好友加入并获得奖励。",
-                rewardLabel: "累计奖励",
-                invitesSummary: "邀请人数：%d",
-                rewardSummary: "累计奖励：%@",
+                heroTitle: "邀请奖励",
+                heroSubtitle: "分享专属链接，与好友瓜分平台币",
+                summaryInviteLabel: "成功邀请 (人)",
+                summaryRewardLabel: "累计奖励 (🪙)",
                 linkTitle: "邀请链接",
-                linkHint: "复制后分享给好友",
+                linkHint: "你的专属邀请链接",
                 copy: "复制",
-                shareTitle: "快捷分享",
-                shareMore: "更多",
+                shareTitle: "社交分享",
+                shareMore: "更多分享",
                 shareWhatsApp: "WhatsApp",
                 shareFacebook: "Facebook",
+                shareXiaohongshu: "小红书",
+                rulesTitle: "奖励规则与指南",
+                ruleOne: "发送链接：点击上方分享按钮，将你的专属链接发送给未注册过 Nexus 的好友。",
+                ruleTwo: "好友注册：好友通过链接进入页面，完成注册或平台要求的活动。",
+                ruleThree: "获得奖励：好友完成首个有效目标后，奖励会自动累计到你的钱包余额。",
+                disclaimer: "* 严禁任何形式的刷号行为，一经发现将冻结账户及相关奖励。",
                 recordsTitle: "邀请记录",
                 noRecords: "暂无邀请记录",
                 linkCopied: "邀请链接已复制",
@@ -380,18 +413,23 @@ private struct ReferralCopy {
         case .traditionalChinese:
             return .init(
                 title: "邀請獎勵",
-                summaryTitle: "邀請概覽",
-                summaryHint: "分享你的專屬連結，讓好友加入並獲得獎勵。",
-                rewardLabel: "累計獎勵",
-                invitesSummary: "邀請人數：%d",
-                rewardSummary: "累計獎勵：%@",
+                heroTitle: "邀請獎勵",
+                heroSubtitle: "分享專屬連結，與好友一起獲得平台幣",
+                summaryInviteLabel: "成功邀請 (人)",
+                summaryRewardLabel: "累計獎勵 (🪙)",
                 linkTitle: "邀請連結",
-                linkHint: "複製後分享給好友",
+                linkHint: "你的專屬邀請連結",
                 copy: "複製",
-                shareTitle: "快速分享",
-                shareMore: "更多",
+                shareTitle: "社交分享",
+                shareMore: "更多分享",
                 shareWhatsApp: "WhatsApp",
                 shareFacebook: "Facebook",
+                shareXiaohongshu: "小紅書",
+                rulesTitle: "獎勵規則與指南",
+                ruleOne: "發送連結：點擊上方分享按鈕，將你的專屬連結發送給未註冊過 Nexus 的好友。",
+                ruleTwo: "好友註冊：好友透過連結進入頁面，完成註冊或平台要求的活動。",
+                ruleThree: "獲得獎勵：好友完成首個有效目標後，獎勵會自動累計到你的錢包餘額。",
+                disclaimer: "* 嚴禁任何形式的刷號行為，一經發現將凍結帳戶及相關獎勵。",
                 recordsTitle: "邀請記錄",
                 noRecords: "暫無邀請記錄",
                 linkCopied: "邀請連結已複製",
@@ -400,18 +438,23 @@ private struct ReferralCopy {
         case .english:
             return .init(
                 title: "Referral Rewards",
-                summaryTitle: "Overview",
-                summaryHint: "Share your personal link and earn rewards when friends join.",
-                rewardLabel: "Total Reward",
-                invitesSummary: "Invites: %d",
-                rewardSummary: "Total Reward: %@",
+                heroTitle: "Referral Rewards",
+                heroSubtitle: "Share your personal link and earn coins with friends",
+                summaryInviteLabel: "Successful Invites",
+                summaryRewardLabel: "Total Reward",
                 linkTitle: "Referral Link",
-                linkHint: "Copy and share it with friends",
+                linkHint: "Your personal referral link",
                 copy: "Copy",
                 shareTitle: "Quick Share",
                 shareMore: "More",
                 shareWhatsApp: "WhatsApp",
                 shareFacebook: "Facebook",
+                shareXiaohongshu: "Xiaohongshu",
+                rulesTitle: "Reward Rules",
+                ruleOne: "Send your personal link to friends who have not registered for Nexus before.",
+                ruleTwo: "Friends open the page through your link and complete registration or the required campaign action.",
+                ruleThree: "Once the first valid goal is completed, rewards are added to your wallet automatically.",
+                disclaimer: "* Fraudulent referrals are prohibited and may result in account and reward suspension.",
                 recordsTitle: "Referral Records",
                 noRecords: "No referral records",
                 linkCopied: "Referral link copied",

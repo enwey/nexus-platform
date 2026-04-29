@@ -126,9 +126,8 @@ struct GameView: View {
             }
         }
         .navigationBarHidden(true)
-        .statusBar(hidden: true)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
+        .statusBar(hidden: true)
         .sheet(isPresented: $showAuthFlow) {
             NavigationStack {
                 AuthFlowView { session in

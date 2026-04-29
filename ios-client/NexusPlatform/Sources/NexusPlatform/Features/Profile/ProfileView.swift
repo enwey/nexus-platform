@@ -15,25 +15,28 @@ struct ProfileView: View {
     private let storage = VersionedGameStorageManager()
 
     var body: some View {
-        ZStack(alignment: .top) {
-            if viewModel.isLoading {
-                profileSkeleton
-                    .transition(NativeMotion.stateSwapTransition)
-            } else {
-                VStack(spacing: 24) {
-                    userCard
-                    walletCard
-                    referralCard
-                    menuGroup
+        ScrollView(showsIndicators: false) {
+            ZStack(alignment: .top) {
+                if viewModel.isLoading {
+                    profileSkeleton
+                        .transition(NativeMotion.stateSwapTransition)
+                } else {
+                    VStack(spacing: 24) {
+                        userCard
+                        walletCard
+                        referralCard
+                        menuGroup
+                    }
+                    .transition(NativeMotion.contentRevealTransition)
                 }
-                .transition(NativeMotion.contentRevealTransition)
             }
+            .frame(maxWidth: .infinity, alignment: .top)
+            .padding(.leading, 24)
+            .padding(.top, 24)
+            .padding(.trailing, 24)
+            .padding(.bottom, 24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.leading, 24)
-        .padding(.top, 24)
-        .padding(.trailing, 24)
-        .padding(.bottom, 96)
+        .scrollBounceBehavior(.always)
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
@@ -520,92 +523,158 @@ private struct HowToEarnView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 10) {
+            VStack(spacing: 0) {
+                VStack(spacing: 16) {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 64, height: 64)
+                        .overlay(
+                            Text(copy.inviterBadge)
+                                .font(.system(size: 28))
+                        )
+
+                    Text(copy.landingInviteLine)
+                        .font(.system(size: 16))
+                        .foregroundStyle(.white)
+
                     Text(copy.heroTitle)
-                        .font(.system(size: 24, weight: .black))
+                        .font(.system(size: 28, weight: .black))
                         .foregroundStyle(.white)
-
-                    Text(copy.heroSubtitle)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: 0xA0A0A0))
-                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.center)
                 }
-                .padding(24)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    LinearGradient(
-                        colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    in: RoundedRectangle(cornerRadius: 24, style: .continuous)
-                )
+                .padding(.horizontal, 24)
+                .padding(.top, 36)
+                .padding(.bottom, 24)
 
-                VStack(alignment: .leading, spacing: 14) {
-                    Text(copy.stepsTitle)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
+                landingGiftCard
 
-                    howToEarnStep(number: "1", title: copy.stepOneTitle, detail: copy.stepOneDetail)
-                    howToEarnStep(number: "2", title: copy.stepTwoTitle, detail: copy.stepTwoDetail)
-                    howToEarnStep(number: "3", title: copy.stepThreeTitle, detail: copy.stepThreeDetail)
-                }
-                .padding(20)
-                .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
-                )
+                VStack(alignment: .leading, spacing: 18) {
+                    Text(copy.previewTitle)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color(hex: 0xD2D4DB))
+                        .frame(maxWidth: .infinity, alignment: .center)
 
-                Button {
-                    if isLoggedIn {
-                        showReferral = true
-                    } else {
-                        onRequestLogin()
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
+                        ForEach(0..<6, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: 0x2A2F4F), Color(hex: 0x181A24)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .aspectRatio(1, contentMode: .fit)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                                )
+                        }
                     }
-                } label: {
-                    Text(isLoggedIn ? copy.ctaLoggedIn : copy.ctaLoggedOut)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                    Button {
+                        if isLoggedIn {
+                            showReferral = true
+                        } else {
+                            onRequestLogin()
+                        }
+                    } label: {
+                        Text(isLoggedIn ? copy.ctaLoggedIn : copy.ctaLoggedOut)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+                .padding(.top, 28)
+                .padding(.bottom, 96)
             }
-            .padding(24)
         }
-        .background(Color(hex: 0x121212).ignoresSafeArea())
+        .background(
+            LinearGradient(
+                colors: [Color(hex: 0x2B1C46), Color.black],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        )
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .navigationDestination(isPresented: $showReferral) {
             ReferralView()
         }
     }
 
-    private func howToEarnStep(number: String, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Text(number)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 28, height: 28)
-                .background(Color(hex: 0x6B4EFF), in: Circle())
+    private var landingGiftCard: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                Text(copy.giftBadge)
+                    .font(.system(size: 44))
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                Text(copy.giftAmount)
+                    .font(.system(size: 46, weight: .black))
                     .foregroundStyle(.white)
-                Text(detail)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
 
-            Spacer(minLength: 0)
+                Text(copy.giftSubtitle)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 30)
+
+            Spacer().frame(height: 24)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text(copy.stepsTitle)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+
+                howToEarnStep(number: "1", title: copy.stepOneTitle, detail: copy.stepOneDetail)
+                howToEarnStep(number: "2", title: copy.stepTwoTitle, detail: copy.stepTwoDetail)
+                howToEarnStep(number: "3", title: copy.stepThreeTitle, detail: copy.stepThreeDetail)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
+        }
+        .frame(maxWidth: .infinity)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: 0x222433), Color(hex: 0x15161D)],
+                startPoint: .top,
+                endPoint: .bottom
+            ),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color(hex: 0x6B4EFF, alpha: 0.24), lineWidth: 1)
+        )
+        .padding(.horizontal, 24)
+    }
+
+    private func howToEarnStep(number: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(number)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(Color(hex: 0x6B4EFF))
+                .frame(width: 22, height: 22)
+                .background(Color.white.opacity(0.05), in: Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
+                )
+
+            Text("\(title)：\(detail)")
+                .font(.system(size: 13))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -628,38 +697,44 @@ private struct BillingListView: View {
                     .padding(.vertical, 20)
                     .transition(NativeMotion.stateSwapTransition)
                 } else {
-                    VStack(alignment: .leading, spacing: 0) {
-                        ForEach(viewModel.records) { record in
-                            NavigationLink(destination: BillingDetailView(record: record)) {
-                                HStack(alignment: .top) {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(record.title)
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundStyle(.white)
-                                        Text(record.subtitle.isEmpty ? record.type : record.subtitle)
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(Color(hex: 0xA0A0A0))
-                                        if record.createdAtText.isEmpty == false {
-                                            Text(record.createdAtText)
-                                                .font(.system(size: 11))
-                                                .foregroundStyle(Color(hex: 0xA0A0A0))
-                                        }
-                                    }
-                                    Spacer()
-                                    Text(amountText(record.amount))
-                                        .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                        .foregroundStyle(amountText(record.amount).hasPrefix("-") ? Color(hex: 0xEF5A5A) : Color(hex: 0x36C282))
+                    VStack(alignment: .leading, spacing: 24) {
+                        HStack(spacing: 12) {
+                            summaryMetricCard(
+                                title: copy.incomeTitle,
+                                value: amountText(monthlyIncome),
+                                valueColor: Color(hex: 0x36C282)
+                            )
+                            summaryMetricCard(
+                                title: copy.expenseTitle,
+                                value: amountText(monthlyExpense),
+                                valueColor: .white
+                            )
+                        }
+
+                        Text(copy.recentTitle)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(hex: 0xA0A0A0))
+
+                        VStack(spacing: 0) {
+                            ForEach(viewModel.records) { record in
+                                NavigationLink(destination: BillingDetailView(record: record)) {
+                                    billingRow(record)
+                                }
+                                .padding(.vertical, 16)
+                                .buttonStyle(.plain)
+
+                                if record.id != viewModel.records.last?.id {
+                                    Rectangle()
+                                        .fill(Color(hex: 0x2D2D31))
+                                        .frame(height: 1)
                                 }
                             }
-                            .padding(.vertical, 16)
-                            .buttonStyle(.plain)
-
-                            if record.id != viewModel.records.last?.id {
-                                Rectangle()
-                                    .fill(Color(hex: 0x2D2D31))
-                                    .frame(height: 1)
-                            }
                         }
+
+                        Text(copy.recentFooter)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(hex: 0x4B4B50))
+                            .frame(maxWidth: .infinity, alignment: .center)
                     }
                     .transition(NativeMotion.contentRevealTransition)
                 }
@@ -676,7 +751,6 @@ private struct BillingListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .onAppear { viewModel.load() }
         .animation(NativeMotion.overlayTransition, value: viewModel.isLoading)
         .animation(NativeMotion.overlayTransition, value: viewModel.records.isEmpty)
@@ -684,8 +758,8 @@ private struct BillingListView: View {
 
     private func amountText(_ value: Decimal) -> String {
         let number = NSDecimalNumber(decimal: value).doubleValue
-        let text = String(format: "%.2f", number)
-        return number >= 0 ? "+\(text)" : text
+        let text = String(format: "%.0f", abs(number))
+        return number >= 0 ? "+\(text)" : "-\(text)"
     }
 
     private var copy: BillingListCopy {
@@ -693,13 +767,20 @@ private struct BillingListView: View {
     }
 
     private var billingListSkeleton: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(spacing: 12) {
+                NativeSkeletonBlock(height: 84, cornerRadius: 16)
+                NativeSkeletonBlock(height: 84, cornerRadius: 16)
+            }
+
+            NativeSkeletonBlock(width: 72, height: 13, cornerRadius: 6)
+
             ForEach(0..<5, id: \.self) { index in
                 HStack(alignment: .top) {
+                    NativeSkeletonBlock(width: 44, height: 44, cornerRadius: 12)
                     VStack(alignment: .leading, spacing: 6) {
                         NativeSkeletonBlock(width: 142, height: 15, cornerRadius: 7)
                         NativeSkeletonBlock(width: 182, height: 12, cornerRadius: 6)
-                        NativeSkeletonBlock(width: 96, height: 11, cornerRadius: 5)
                     }
                     Spacer()
                     NativeSkeletonBlock(width: 58, height: 15, cornerRadius: 7)
@@ -713,6 +794,90 @@ private struct BillingListView: View {
                 }
             }
         }
+    }
+
+    private var monthlyIncome: Decimal {
+        viewModel.records.reduce(Decimal.zero) { partial, record in
+            record.amount > 0 ? partial + record.amount : partial
+        }
+    }
+
+    private var monthlyExpense: Decimal {
+        viewModel.records.reduce(Decimal.zero) { partial, record in
+            record.amount < 0 ? partial + abs(record.amount) : partial
+        }
+    }
+
+    private func summaryMetricCard(title: String, value: String, valueColor: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 12))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+            Text(value)
+                .font(.system(size: 18, weight: .bold, design: .monospaced))
+                .foregroundStyle(valueColor)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+        )
+    }
+
+    private func billingRow(_ record: BillingRecord) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(billingAccentColor(record).opacity(0.14))
+                    .frame(width: 44, height: 44)
+                Text(billingIcon(record))
+                    .font(.system(size: 20))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(record.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text(record.subtitle.isEmpty ? record.type : record.subtitle)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(amountText(record.amount))
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .foregroundStyle(record.amount < 0 ? .white : Color(hex: 0x36C282))
+                Text(record.createdAtText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+            }
+        }
+    }
+
+    private func billingIcon(_ record: BillingRecord) -> String {
+        let value = "\(record.title) \(record.subtitle) \(record.type)".lowercased()
+        if value.contains("邀请") || value.contains("invite") {
+            return "🤝"
+        }
+        if value.contains("购买") || value.contains("buy") {
+            return "🎮"
+        }
+        if value.contains("试玩") || value.contains("reward") {
+            return "🕹️"
+        }
+        if value.contains("兑换") || value.contains("prop") {
+            return "💎"
+        }
+        return record.amount >= 0 ? "🪙" : "🧾"
+    }
+
+    private func billingAccentColor(_ record: BillingRecord) -> Color {
+        record.amount >= 0 ? Color(hex: 0x36C282) : Color(hex: 0x6B4EFF)
     }
 }
 
@@ -857,15 +1022,19 @@ private struct BillingListCopy {
     let loading: String
     let empty: String
     let refreshing: String
+    let incomeTitle: String
+    let expenseTitle: String
+    let recentTitle: String
+    let recentFooter: String
 
     static func forLanguage(_ language: AppLanguage) -> BillingListCopy {
         switch language {
         case .simplifiedChinese:
-            return .init(title: "账单", loading: "加载中...", empty: "暂无账单记录", refreshing: "正在刷新")
+            return .init(title: "账单明细", loading: "加载中...", empty: "暂无账单记录", refreshing: "正在刷新", incomeTitle: "本月累计收入", expenseTitle: "本月累计支出", recentTitle: "最近记录", recentFooter: "仅显示最近 30 天记录")
         case .traditionalChinese:
-            return .init(title: "帳單", loading: "載入中...", empty: "暫無帳單記錄", refreshing: "正在刷新")
+            return .init(title: "帳單明細", loading: "載入中...", empty: "暫無帳單記錄", refreshing: "正在刷新", incomeTitle: "本月累計收入", expenseTitle: "本月累計支出", recentTitle: "最近記錄", recentFooter: "僅顯示最近 30 天記錄")
         case .english:
-            return .init(title: "Billing", loading: "Loading...", empty: "No billing records", refreshing: "Refreshing")
+            return .init(title: "Billing", loading: "Loading...", empty: "No billing records", refreshing: "Refreshing", incomeTitle: "Monthly Income", expenseTitle: "Monthly Expense", recentTitle: "Recent Records", recentFooter: "Only the latest 30 days are shown")
         }
     }
 }
@@ -874,6 +1043,12 @@ private struct HowToEarnCopy {
     let title: String
     let heroTitle: String
     let heroSubtitle: String
+    let landingInviteLine: String
+    let inviterBadge: String
+    let giftBadge: String
+    let giftAmount: String
+    let giftSubtitle: String
+    let previewTitle: String
     let stepsTitle: String
     let stepOneTitle: String
     let stepOneDetail: String
@@ -889,8 +1064,14 @@ private struct HowToEarnCopy {
         case .simplifiedChinese:
             return .init(
                 title: "如何赚取",
-                heroTitle: "通过邀请好友赚取奖励",
+                heroTitle: "送你一个新人专属礼包",
                 heroSubtitle: "把邀请链接分享给好友，好友完成注册或达到活动条件后，奖励会自动发到你的钱包。",
+                landingInviteLine: "你的好友送你一个礼包",
+                inviterBadge: "🎁",
+                giftBadge: "🪙",
+                giftAmount: "500",
+                giftSubtitle: "平台币已就绪，完成登录后即可查看邀请奖励",
+                previewTitle: "在 Nexus 玩这些热门游戏",
                 stepsTitle: "赚取方式",
                 stepOneTitle: "获取邀请链接",
                 stepOneDetail: "进入邀请奖励页面，复制或分享你的专属邀请链接。",
@@ -904,8 +1085,14 @@ private struct HowToEarnCopy {
         case .traditionalChinese:
             return .init(
                 title: "如何賺取",
-                heroTitle: "透過邀請好友賺取獎勵",
+                heroTitle: "送你一個新人專屬禮包",
                 heroSubtitle: "將邀請連結分享給好友，好友完成註冊或達成活動條件後，獎勵會自動發到你的錢包。",
+                landingInviteLine: "你的好友送你一個禮包",
+                inviterBadge: "🎁",
+                giftBadge: "🪙",
+                giftAmount: "500",
+                giftSubtitle: "平台幣已就緒，完成登入後即可查看邀請獎勵",
+                previewTitle: "在 Nexus 玩這些熱門遊戲",
                 stepsTitle: "賺取方式",
                 stepOneTitle: "取得邀請連結",
                 stepOneDetail: "進入邀請獎勵頁面，複製或分享你的專屬邀請連結。",
@@ -919,8 +1106,14 @@ private struct HowToEarnCopy {
         case .english:
             return .init(
                 title: "How to Earn",
-                heroTitle: "Earn rewards by inviting friends",
+                heroTitle: "A welcome gift is waiting for you",
                 heroSubtitle: "Share your referral link with friends. Once they complete the required signup or campaign action, the reward is added to your wallet automatically.",
+                landingInviteLine: "A friend sent you a gift",
+                inviterBadge: "🎁",
+                giftBadge: "🪙",
+                giftAmount: "500",
+                giftSubtitle: "Coins are ready. Sign in to view referral rewards.",
+                previewTitle: "Popular games on Nexus",
                 stepsTitle: "How it works",
                 stepOneTitle: "Get your referral link",
                 stepOneDetail: "Open the referral rewards page and copy or share your personal link.",

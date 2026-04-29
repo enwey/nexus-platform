@@ -32,7 +32,7 @@ struct LibraryView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
-                .padding(.bottom, 96)
+                .padding(.bottom, 24)
             }
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
@@ -68,7 +68,7 @@ struct LibraryView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 24)
-        .padding(.bottom, 96)
+        .padding(.bottom, 24)
     }
 
     private var resumeHeroSkeleton: some View {

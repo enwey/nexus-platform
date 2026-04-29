@@ -116,20 +116,6 @@ private struct RootTabCopy {
     }
 }
 
-private struct NexusTabBarHiddenPreferenceKey: PreferenceKey {
-    static var defaultValue = false
-
-    static func reduce(value: inout Bool, nextValue: () -> Bool) {
-        value = value || nextValue()
-    }
-}
-
-extension View {
-    func nexusTabBarHidden(_ hidden: Bool = true) -> some View {
-        self
-    }
-}
-
 enum AppText {
     static func pleaseLogin(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
         switch language {

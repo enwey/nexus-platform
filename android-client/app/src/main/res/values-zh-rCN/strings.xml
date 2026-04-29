@@ -7,6 +7,14 @@
     <string name="tab_profile">账号</string>
     <string name="splash_runtime">GAMING ENGINE</string>
     <string name="splash_version">v%1$s Studio Edition</string>
+    <string name="launch_ad_badge">广告</string>
+    <string name="launch_ad_sponsor">BringBox 官方活动</string>
+    <string name="launch_ad_title">新用户限时福利</string>
+    <string name="launch_ad_description">登录 BringBox，领取限时试玩权益与精选礼包，热门游戏开局更轻松。</string>
+    <string name="launch_ad_cta">立即查看</string>
+    <string name="launch_ad_footer">点击查看活动详情</string>
+    <string name="launch_ad_skip_countdown">跳过 %1$d</string>
+    <string name="launch_ad_landing_title">BringBox 活动</string>
     <string name="onboarding_title">告别下载，秒开即玩</string>
     <string name="onboarding_subtitle">通过 Nexus 运行时，获得稳定流畅的小程序游戏体验。</string>
     <string name="onboarding_title_1">打败所有，\n无聊。</string>

@@ -40,8 +40,6 @@ struct GameDetailView: View {
                     .padding(20)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .background(Color(hex: 0x121212))
-                    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-                    .offset(y: -18)
                 }
             }
 
@@ -51,10 +49,9 @@ struct GameDetailView: View {
             Color(hex: 0x121212)
                 .ignoresSafeArea()
         )
+        .toolbar(.hidden, for: .tabBar)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .onAppear { viewModel.load(appID: game.id) }
         .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
             if let language = notification.object as? AppLanguage {
@@ -66,7 +63,7 @@ struct GameDetailView: View {
     }
 
     private var hero: some View {
-        ZStack(alignment: .bottom) {
+        Group {
             if
                 let banner = viewModel.runtimeProfile?.runtimeBannerURL,
                 let url = URL(string: banner),
@@ -81,15 +78,9 @@ struct GameDetailView: View {
                 Rectangle()
                     .fill(Color(hex: 0x232326))
             }
-
-            LinearGradient(
-                colors: [Color.clear, Color(hex: 0x121212).opacity(0.78)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 300)
+        .frame(height: 280)
         .clipped()
         .ignoresSafeArea(edges: .top)
     }

@@ -9,6 +9,14 @@
 
     <string name="splash_runtime">GAMING ENGINE</string>
     <string name="splash_version">v%1$s Studio Edition</string>
+    <string name="launch_ad_badge">Ad</string>
+    <string name="launch_ad_sponsor">BringBox Official Campaign</string>
+    <string name="launch_ad_title">New Player Rewards</string>
+    <string name="launch_ad_description">Sign in to BringBox for limited-time trial perks and curated bundles for trending games.</string>
+    <string name="launch_ad_cta">View Now</string>
+    <string name="launch_ad_footer">Tap to view campaign details</string>
+    <string name="launch_ad_skip_countdown">Skip %1$d</string>
+    <string name="launch_ad_landing_title">BringBox Campaign</string>
 
     <string name="onboarding_title">Skip Downloads, Play Instantly</string>
     <string name="onboarding_subtitle">Get a stable and smooth mini-game experience through BringBox Runtime.</string>

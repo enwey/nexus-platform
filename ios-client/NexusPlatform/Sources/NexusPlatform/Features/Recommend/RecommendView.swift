@@ -24,27 +24,49 @@ struct RecommendView: View {
                     }
                 } else {
                     ForEach(viewModel.items) { item in
-                        NavigationLink(
-                            destination: RecommendDetailView(
-                                item: item,
-                                game: resolvedGame(for: item)
-                            )
-                        ) {
-                            RecommendCard(
-                                item: item,
-                                game: resolvedGame(for: item),
-                                copy: copy,
-                                language: language,
-                                isRefreshing: viewModel.isLoading
-                            )
+                        let game = resolvedGame(for: item)
+                        ZStack(alignment: .bottomTrailing) {
+                            NavigationLink(
+                                destination: RecommendDetailView(
+                                    item: item,
+                                    game: game
+                                )
+                            ) {
+                                RecommendCard(
+                                    item: item,
+                                    game: game,
+                                    copy: copy,
+                                    language: language,
+                                    isRefreshing: viewModel.isLoading
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            AuthGateLaunchLink(game: game) {
+                                Text(copy.play)
+                                    .font(.system(size: 12, weight: .black))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        LinearGradient(
+                                            colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        ),
+                                        in: Capsule()
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, 32)
+                            .padding(.bottom, 32)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
             .padding(.horizontal, 24)
             .padding(.top, 24)
-            .padding(.bottom, 96)
+            .padding(.bottom, 24)
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationTitle(copy.title)
@@ -209,20 +231,6 @@ private struct RecommendCard: View {
                         }
 
                         Spacer()
-
-                        Text(item.actionText.isEmpty ? copy.play : item.actionText)
-                            .font(.system(size: 12, weight: .black))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ),
-                                in: Capsule()
-                            )
                     }
                     .padding(10)
                     .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 16, style: .continuous))

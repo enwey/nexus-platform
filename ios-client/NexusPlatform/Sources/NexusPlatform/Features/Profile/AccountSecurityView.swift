@@ -49,7 +49,6 @@ struct AccountSecurityView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .confirmationDialog(copy.logoutButton, isPresented: $showLogoutConfirm, titleVisibility: .visible) {
             Button(copy.confirm, role: .destructive) {
                 onLogoutCurrent?()
@@ -266,7 +265,6 @@ private struct ChangePasswordView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
     }
 
     private func sendCode() {
@@ -360,23 +358,39 @@ private struct DeviceManagementView: View {
                 } else {
                     if let currentDevice = viewModel.currentDevice {
                         sectionTitle(copy.currentSection)
-                        DeviceRow(device: currentDevice, copy: copy, actionTitle: nil, actionColor: nil, action: nil)
+                        VStack(spacing: 0) {
+                            DeviceRow(device: currentDevice, copy: copy, actionTitle: nil, actionColor: nil, action: nil)
+                        }
+                        .padding(.horizontal, 16)
+                        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                        )
                     }
 
                     if viewModel.otherDevices.isEmpty == false {
                         sectionTitle(copy.otherSection)
                         VStack(spacing: 8) {
-                            ForEach(viewModel.otherDevices) { device in
-                                DeviceRow(
-                                    device: device,
-                                    copy: copy,
-                                    actionTitle: copy.kick,
-                                    actionColor: Color(hex: 0xE5484D),
-                                    action: {
-                                        pendingKickDeviceID = device.id
-                                    }
-                                )
+                            VStack(spacing: 0) {
+                                ForEach(viewModel.otherDevices) { device in
+                                    DeviceRow(
+                                        device: device,
+                                        copy: copy,
+                                        actionTitle: copy.kick,
+                                        actionColor: Color(hex: 0xE5484D),
+                                        action: {
+                                            pendingKickDeviceID = device.id
+                                        }
+                                    )
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+                            )
                         }
                     }
                 }
@@ -412,7 +426,6 @@ private struct DeviceManagementView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .onAppear { viewModel.load() }
         .onChange(of: viewModel.message) { _, newValue in
             if let newValue, newValue.isEmpty == false {
@@ -496,10 +509,10 @@ private final class DeviceManagementViewModel: ObservableObject {
 private struct AccountTerminationView: View {
     let language: AppLanguage
 
-    @State private var confirmText = ""
+    @Environment(\.dismiss) private var dismiss
+    @State private var acknowledged = false
     @State private var message: String?
     @State private var isSubmitting = false
-    @State private var countdown = 10
 
     private let authService: AuthServiceProtocol = AuthService()
     private var copy: AccountTerminationCopy {
@@ -507,7 +520,7 @@ private struct AccountTerminationView: View {
     }
 
     private var enabled: Bool {
-        confirmText == copy.confirmTarget && countdown == 0
+        acknowledged && isSubmitting == false
     }
 
     var body: some View {
@@ -517,21 +530,38 @@ private struct AccountTerminationView: View {
             Spacer()
                 .frame(height: 20)
 
-            riskCard
+            assetCard
 
             Spacer()
                 .frame(height: 24)
 
-            Button(countdown > 0 ? "\(copy.submit) (\(countdown)s)" : (isSubmitting ? copy.processing : copy.submit)) {
+            Button(isSubmitting ? copy.processing : copy.submit) {
                 submit()
             }
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(enabled ? LinearGradient(colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color(hex: 0xD1D5DB), Color(hex: 0xD1D5DB)], startPoint: .leading, endPoint: .trailing))
+                    .fill(enabled ? LinearGradient(colors: [Color(hex: 0xFF6B6B), Color(hex: 0xE5484D)], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color(hex: 0xD1D5DB), Color(hex: 0xD1D5DB)], startPoint: .leading, endPoint: .trailing))
             )
-            .foregroundStyle(enabled ? Color(hex: 0x121212) : Color(hex: 0x666666))
+            .foregroundStyle(.white)
+            .font(.system(size: 15, weight: .semibold))
+            .disabled(enabled == false)
+
+            Spacer()
+                .frame(height: 12)
+
+            Button(copy.cancelAction) {
+                dismiss()
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(Color.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
+            )
+            .foregroundStyle(.white)
             .font(.system(size: 15, weight: .semibold))
 
             if let message {
@@ -556,20 +586,13 @@ private struct AccountTerminationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
-        .task {
-            while countdown > 0 {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                countdown -= 1
-            }
-        }
     }
 
     private func submit() {
         Task {
             guard enabled else {
                 await MainActor.run {
-                    message = countdown > 0 ? String(format: copy.waitingHint, countdown) : String(format: copy.inputHint, copy.confirmTarget)
+                    message = copy.acknowledgeHint
                 }
                 return
             }
@@ -580,7 +603,7 @@ private struct AccountTerminationView: View {
             isSubmitting = true
             defer { isSubmitting = false }
             do {
-                try await authService.terminateAccount(accessToken: session.accessToken, confirmText: confirmText)
+                try await authService.terminateAccount(accessToken: session.accessToken, confirmText: copy.confirmTarget)
                 await AuthSessionStore.shared.clear()
                 await MainActor.run {
                     message = copy.success
@@ -594,45 +617,65 @@ private struct AccountTerminationView: View {
     }
 
     private var warningCard: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text("⚠")
-                .font(.system(size: 28))
-            VStack(alignment: .leading, spacing: 4) {
-                Text(copy.warningTitle)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Color(hex: 0xFF7875))
-                Text(copy.warning)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
-                    .lineSpacing(4)
-            }
+        VStack(spacing: 12) {
+            Circle()
+                .fill(Color(hex: 0xFF4D4F, alpha: 0.12))
+                .frame(width: 80, height: 80)
+                .overlay(
+                    Text("⚠️")
+                        .font(.system(size: 40))
+                )
+
+            Text(copy.warningTitle)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(.white)
+
+            Text(copy.warning)
+                .font(.system(size: 14))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
         }
         .padding(20)
-        .background(Color(hex: 0xFF4D4F, alpha: 0.08), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color(hex: 0xFF4D4F, alpha: 0.4), lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity)
     }
 
-    private var riskCard: some View {
+    private var assetCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            RiskItemView(icon: "🎮", title: copy.risk1Title, description: copy.risk1Description)
+            Text(copy.assetTitle)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+
+            Spacer()
+                .frame(height: 12)
+
             RiskItemView(icon: "💰", title: copy.risk2Title, description: copy.risk2Description)
-            RiskItemView(icon: "👥", title: copy.risk3Title, description: copy.risk3Description)
+            RiskItemView(icon: "🎮", title: copy.risk1Title, description: copy.risk1Description)
+            RiskItemView(icon: "☁️", title: copy.risk3Title, description: copy.risk3Description)
+
             Spacer()
-                .frame(height: 8)
-            Text(copy.confirmLabel)
-                .font(.system(size: 12))
-                .foregroundStyle(Color(hex: 0xA0A0A0))
-            Spacer()
-                .frame(height: 8)
-            SecurityInputField(title: copy.confirmPlaceholder, text: $confirmText)
+                .frame(height: 16)
+
+            Button {
+                acknowledged.toggle()
+            } label: {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: acknowledged ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(acknowledged ? Color(hex: 0xFF6B6B) : Color(hex: 0xA0A0A0))
+                    Text(copy.acknowledgeText)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
         }
         .padding(20)
-        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
     }
@@ -775,19 +818,19 @@ private struct AccountTerminationCopy {
     let title: String
     let warningTitle: String
     let warning: String
+    let assetTitle: String
     let risk1Title: String
     let risk1Description: String
     let risk2Title: String
     let risk2Description: String
     let risk3Title: String
     let risk3Description: String
-    let confirmLabel: String
-    let confirmPlaceholder: String
     let confirmTarget: String
+    let acknowledgeText: String
+    let acknowledgeHint: String
     let submit: String
+    let cancelAction: String
     let processing: String
-    let waitingHint: String
-    let inputHint: String
     let footer: String
     let success: String
     let notLoggedIn: String
@@ -797,21 +840,21 @@ private struct AccountTerminationCopy {
         case .simplifiedChinese:
             return .init(
                 title: "注销账号",
-                warningTitle: "高风险操作提醒",
-                warning: "注销账号后将永久清空账号数据，且无法恢复。",
+                warningTitle: "这是一项不可逆的操作",
+                warning: "注销后，你的游戏存档、平台币余额以及账号关联数据将被永久删除且无法找回。",
+                assetTitle: "账号资产确认",
                 risk1Title: "游戏进度将被清除",
                 risk1Description: "当前账号下的游戏存档、进度和成就将无法找回。",
                 risk2Title: "余额与权益将失效",
                 risk2Description: "钱包余额、奖励和相关权益将在注销后失效。",
-                risk3Title: "关联关系将解除",
-                risk3Description: "邀请记录、设备登录状态与账号绑定信息将一并移除。",
-                confirmLabel: "请输入确认文本",
-                confirmPlaceholder: "请输入确认文本",
+                risk3Title: "云端与绑定将解除",
+                risk3Description: "云端数据、邀请记录、设备登录状态与账号绑定信息将一并移除。",
                 confirmTarget: "确认注销",
+                acknowledgeText: "我已清楚知晓注销风险，并自愿承担因注销账号带来的所有后果。",
+                acknowledgeHint: "请先勾选风险确认",
                 submit: "确认注销",
+                cancelAction: "我再想想",
                 processing: "处理中...",
-                waitingHint: "请等待 %d 秒后再试",
-                inputHint: "请输入「%@」后继续",
                 footer: "注销后无法恢复，请再次确认。",
                 success: "账号已注销",
                 notLoggedIn: "请先登录"
@@ -819,21 +862,21 @@ private struct AccountTerminationCopy {
         case .traditionalChinese:
             return .init(
                 title: "註銷帳號",
-                warningTitle: "高風險操作提醒",
-                warning: "註銷後將永久清空帳號資料，且無法恢復。",
+                warningTitle: "這是一項不可逆的操作",
+                warning: "註銷後，你的遊戲存檔、平台幣餘額以及帳號關聯資料將被永久刪除且無法找回。",
+                assetTitle: "帳號資產確認",
                 risk1Title: "遊戲進度將被清除",
                 risk1Description: "目前帳號下的遊戲存檔、進度與成就將無法找回。",
                 risk2Title: "餘額與權益將失效",
                 risk2Description: "錢包餘額、獎勵與相關權益將在註銷後失效。",
-                risk3Title: "關聯資料將解除",
-                risk3Description: "邀請記錄、裝置登入狀態與帳號綁定資訊將一併移除。",
-                confirmLabel: "請輸入確認文字",
-                confirmPlaceholder: "請輸入確認文字",
+                risk3Title: "雲端與綁定將解除",
+                risk3Description: "雲端資料、邀請記錄、裝置登入狀態與帳號綁定資訊將一併移除。",
                 confirmTarget: "確認註銷",
+                acknowledgeText: "我已清楚知曉註銷風險，並自願承擔因註銷帳號帶來的所有後果。",
+                acknowledgeHint: "請先勾選風險確認",
                 submit: "確認註銷",
+                cancelAction: "我再想想",
                 processing: "處理中...",
-                waitingHint: "請等待 %d 秒後再試",
-                inputHint: "請輸入「%@」後繼續",
                 footer: "註銷後無法恢復，請再次確認。",
                 success: "帳號已註銷",
                 notLoggedIn: "請先登入"
@@ -841,21 +884,21 @@ private struct AccountTerminationCopy {
         case .english:
             return .init(
                 title: "Delete Account",
-                warningTitle: "High-Risk Action",
-                warning: "Deleting your account will permanently remove account data and cannot be undone.",
+                warningTitle: "This action cannot be undone",
+                warning: "Deleting your account permanently removes saves, wallet balance, and linked account data.",
+                assetTitle: "Account Assets Review",
                 risk1Title: "Game progress will be removed",
                 risk1Description: "Saved games, progress, and achievements under this account will be lost.",
                 risk2Title: "Balance and benefits will expire",
                 risk2Description: "Wallet balance, rewards, and related benefits will no longer be available.",
-                risk3Title: "Linked data will be cleared",
-                risk3Description: "Invites, device sessions, and account bindings will be removed.",
-                confirmLabel: "Enter the confirmation text",
-                confirmPlaceholder: "Enter the confirmation text",
+                risk3Title: "Cloud and bindings will be cleared",
+                risk3Description: "Cloud data, invites, device sessions, and account bindings will be removed.",
                 confirmTarget: "DELETE ACCOUNT",
+                acknowledgeText: "I understand the risks and accept the consequences of deleting this account.",
+                acknowledgeHint: "Please confirm the risk acknowledgement first.",
                 submit: "Delete Account",
+                cancelAction: "I'll Keep It",
                 processing: "Processing...",
-                waitingHint: "Please wait %d seconds",
-                inputHint: "Enter \"%@\" to continue",
                 footer: "This action cannot be undone.",
                 success: "Account deleted",
                 notLoggedIn: "Please sign in first"
@@ -874,22 +917,16 @@ private struct DeviceRow: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(hex: 0x232326))
-                    .frame(width: 48, height: 48)
-                Text("💻")
+                Text(deviceIcon)
                     .font(.system(size: 22))
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(device.deviceName.isEmpty ? copy.unknown : device.deviceName)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("\(device.model)  \(device.ip)")
+                Text(device.current ? copy.current : "\(device.model) · \(device.lastActiveAt)")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
-                Text(device.lastActiveAt)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
+                    .foregroundStyle(device.current ? Color(hex: 0x36C282) : Color(hex: 0xA0A0A0))
             }
             Spacer()
             if let actionTitle, let actionColor, let action {
@@ -903,12 +940,22 @@ private struct DeviceRow: View {
                     .foregroundStyle(device.current ? Color(hex: 0x36C282) : Color(hex: 0xA0A0A0))
             }
         }
-        .padding(16)
-        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
-        )
+        .padding(.vertical, 16)
+        .padding(.horizontal, 4)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color(hex: 0x2D2D31))
+                .frame(height: 1)
+                .opacity(action == nil && device.current == false ? 0 : 1)
+        }
+    }
+
+    private var deviceIcon: String {
+        let value = "\(device.deviceName) \(device.model)".lowercased()
+        if value.contains("iphone") || value.contains("ipad") || value.contains("phone") {
+            return "📱"
+        }
+        return "💻"
     }
 }
 

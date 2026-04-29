@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -118,6 +119,7 @@ private fun OnboardingScreen(onStartClick: () -> Unit) {
             val current = pages[pageIndex]
             Column(modifier = Modifier.fillMaxSize()) {
                 HeroImage(
+                    imageRes = current.imageRes,
                     imageUrl = current.imageUrl,
                     height = heroHeight,
                     alignment = current.imageAlignment
@@ -126,7 +128,7 @@ private fun OnboardingScreen(onStartClick: () -> Unit) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(start = 32.dp, end = 32.dp, bottom = bottomPadding)
-                        .offset(y = (-52).dp)
+                        .offset(y = (-68).dp)
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -152,7 +154,8 @@ private fun OnboardingScreen(onStartClick: () -> Unit) {
                             fontSize = 16.sp,
                             lineHeight = 26.sp,
                             fontWeight = FontWeight.Normal
-                        )
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Row {
@@ -190,6 +193,7 @@ private fun OnboardingScreen(onStartClick: () -> Unit) {
 
 @Composable
 private fun HeroImage(
+    imageRes: Int?,
     imageUrl: String,
     height: Dp,
     alignment: Alignment
@@ -200,24 +204,45 @@ private fun HeroImage(
             .height(height)
             .background(BackgroundBase)
     ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = null,
-            contentScale = Crop,
-            alignment = alignment,
-            modifier = Modifier
-                .fillMaxSize()
-                .drawWithContent {
-                    drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, BackgroundBase),
-                            startY = size.height * 0.4f,
-                            endY = size.height
+        if (imageRes != null) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = null,
+                contentScale = Crop,
+                alignment = alignment,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, BackgroundBase),
+                                startY = size.height * 0.4f,
+                                endY = size.height
+                            )
                         )
-                    )
-                }
-        )
+                    }
+            )
+        } else {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = null,
+                contentScale = Crop,
+                alignment = alignment,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, BackgroundBase),
+                                startY = size.height * 0.4f,
+                                endY = size.height
+                            )
+                        )
+                    }
+            )
+        }
     }
 }
 
@@ -266,6 +291,7 @@ private fun Dot(active: Boolean, activeColor: Color) {
 
 @Immutable
 private data class OnboardingPageUi(
+    val imageRes: Int?,
     val imageUrl: String,
     val imageAlignment: Alignment,
     val titlePrefixRes: Int,
@@ -278,6 +304,7 @@ private data class OnboardingPageUi(
 
 private fun onboardingPages(): List<OnboardingPageUi> = listOf(
     OnboardingPageUi(
+        imageRes = R.drawable.onboarding_hero_step1,
         imageUrl = "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80",
         imageAlignment = Alignment.Center,
         titlePrefixRes = R.string.onboarding_title_prefix_1,
@@ -288,6 +315,7 @@ private fun onboardingPages(): List<OnboardingPageUi> = listOf(
         buttonTextColor = White
     ),
     OnboardingPageUi(
+        imageRes = R.drawable.onboarding_hero_step2,
         imageUrl = "https://images.unsplash.com/photo-1638803040283-7a5ffa48bf0d?auto=format&fit=crop&w=800&q=80",
         imageAlignment = Alignment.TopCenter,
         titlePrefixRes = R.string.onboarding_title_prefix_2,
@@ -298,6 +326,7 @@ private fun onboardingPages(): List<OnboardingPageUi> = listOf(
         buttonTextColor = Color.Black
     ),
     OnboardingPageUi(
+        imageRes = R.drawable.onboarding_hero_step3,
         imageUrl = "https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?auto=format&fit=crop&w=800&q=80",
         imageAlignment = Alignment.Center,
         titlePrefixRes = R.string.onboarding_title_prefix_3,

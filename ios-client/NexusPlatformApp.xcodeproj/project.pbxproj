@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0008C60F16CC4E7A8FEA5B7E /* Resources/BringBox.png in Resources */ = {isa = PBXBuildFile; fileRef = 0008C60E16CC4E7A8FEA5B7E /* Resources/BringBox.png */; };
 		0008C61116CC4E7A8FEA5B7E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0008C61016CC4E7A8FEA5B7E /* Assets.xcassets */; };
 		0008C61316CC4E7A8FEA5B7E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0008C61216CC4E7A8FEA5B7E /* LaunchScreen.storyboard */; };
 		0023DB01F0345E52EB249E5B /* LegalConfigService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B26C17A06E18029EF196BC /* LegalConfigService.swift */; };
@@ -85,7 +84,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0008C60E16CC4E7A8FEA5B7E /* Resources/BringBox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Resources/BringBox.png; sourceTree = "<group>"; };
 		0008C61016CC4E7A8FEA5B7E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0008C61216CC4E7A8FEA5B7E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		00F7A6FB8740C2358AAC8835 /* AuthFlowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthFlowView.swift; sourceTree = "<group>"; };
@@ -421,7 +419,6 @@
 			children = (
 				72E7E32EA217EBC848A84A63 /* Info.plist */,
 				0008C61016CC4E7A8FEA5B7E /* Assets.xcassets */,
-				0008C60E16CC4E7A8FEA5B7E /* Resources/BringBox.png */,
 				0008C61216CC4E7A8FEA5B7E /* LaunchScreen.storyboard */,
 			);
 			path = NexusPlatformApp;
@@ -592,7 +589,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				0008C61116CC4E7A8FEA5B7E /* Assets.xcassets in Resources */,
-				0008C60F16CC4E7A8FEA5B7E /* Resources/BringBox.png in Resources */,
 				0008C61316CC4E7A8FEA5B7E /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

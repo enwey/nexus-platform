@@ -47,7 +47,6 @@ struct ReceiptPageView: View {
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .animation(NativeMotion.overlayTransition, value: isLoading)
         .animation(NativeMotion.overlayTransition, value: errorMessage != nil)
     }

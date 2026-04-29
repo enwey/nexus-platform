@@ -4,6 +4,11 @@ struct DiscoverView: View {
     @StateObject private var viewModel = DiscoverViewModel()
     @State private var hasLoaded = false
     @State private var language: AppLanguage = AppLanguageStore.currentSync()
+    private let quickPlayGradient = LinearGradient(
+        colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -11,24 +16,19 @@ struct DiscoverView: View {
                 discoverSkeleton
             } else {
                 VStack(alignment: .leading, spacing: 20) {
-                    Spacer()
-                        .frame(height: 24)
-
                     bannerSection
-                        .padding(.horizontal, 24)
 
                     categorySection
-                        .padding(.horizontal, 24)
 
                     if let error = viewModel.errorMessage, error.isEmpty == false {
                         errorBanner(error)
-                            .padding(.horizontal, 24)
                     }
 
                     feedSection
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 96)
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 24)
             }
         }
         .background(Color(hex: 0x121212).ignoresSafeArea())
@@ -59,7 +59,6 @@ struct DiscoverView: View {
             Spacer().frame(height: 14)
 
             heroSkeleton
-                .padding(.horizontal, 24)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -67,13 +66,13 @@ struct DiscoverView: View {
                         NativeSkeletonBlock(width: index == 0 ? 56 : 72, height: 34, cornerRadius: 17)
                     }
                 }
-                .padding(.horizontal, 24)
             }
 
             skeletonFeedSection
-                .padding(.horizontal, 24)
-                .padding(.bottom, 96)
         }
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
+        .padding(.bottom, 24)
     }
 
     private var heroSkeleton: some View {
@@ -262,21 +261,14 @@ struct DiscoverView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        in: Capsule()
-                    )
+                    .background(quickPlayGradient, in: Capsule())
             }
             .buttonStyle(.plain)
         }
-        .padding(16)
-        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(12)
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
         )
     }

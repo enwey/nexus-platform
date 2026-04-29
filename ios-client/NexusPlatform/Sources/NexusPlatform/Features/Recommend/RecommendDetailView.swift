@@ -4,6 +4,11 @@ struct RecommendDetailView: View {
     let item: RecommendTodayItem
     let game: Game
     @State private var language: AppLanguage = AppLanguageStore.currentSync()
+    private let quickPlayGradient = LinearGradient(
+        colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -35,10 +40,9 @@ struct RecommendDetailView: View {
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
         .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
             if let language = notification.object as? AppLanguage {
                 self.language = language
@@ -49,42 +53,34 @@ struct RecommendDetailView: View {
     }
 
     private var hero: some View {
-        ZStack(alignment: .bottom) {
-            AsyncImage(
-                url: URL(string: item.coverURL),
-                transaction: Transaction(animation: NativeMotion.overlayTransition)
-            ) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .transition(NativeMotion.contentRevealTransition)
-                default:
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(hex: 0x24253A), Color(hex: 0x1A1A1D)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+        AsyncImage(
+            url: URL(string: item.coverURL),
+            transaction: Transaction(animation: NativeMotion.overlayTransition)
+        ) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .transition(NativeMotion.contentRevealTransition)
+            default:
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: 0x24253A), Color(hex: 0x1A1A1D)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .overlay(alignment: .bottomLeading) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                NativeSkeletonBlock(width: 76, height: 14, cornerRadius: 7)
-                                NativeSkeletonText(widths: [188, 236], lineHeight: 16, spacing: 10, cornerRadius: 8)
-                            }
-                            .padding(24)
+                    )
+                    .overlay(alignment: .bottomLeading) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            NativeSkeletonBlock(width: 76, height: 14, cornerRadius: 7)
+                            NativeSkeletonText(widths: [188, 236], lineHeight: 16, spacing: 10, cornerRadius: 8)
                         }
-                        .transition(NativeMotion.stateSwapTransition)
-                }
+                        .padding(24)
+                    }
+                    .transition(NativeMotion.stateSwapTransition)
             }
-
-            LinearGradient(
-                colors: [Color.clear, Color.black.opacity(0.58)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
         }
         .frame(height: 420)
         .clipped()
@@ -125,19 +121,12 @@ struct RecommendDetailView: View {
             Spacer()
 
             AuthGateLaunchLink(game: game) {
-                Text(item.actionText.isEmpty ? copy.play : item.actionText)
+                Text(copy.play)
                     .font(.system(size: 12, weight: .black))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(hex: 0x6B4EFF), Color(hex: 0xA04CFF)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        in: Capsule()
-                    )
+                    .background(quickPlayGradient, in: Capsule())
             }
             .buttonStyle(.plain)
         }
@@ -164,7 +153,12 @@ struct RecommendDetailView: View {
 
     private var resolvedTag: String {
         let candidates = [item.articleTag, item.cardCategory, game.category ?? ""]
-        return candidates.first(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false }) ?? ""
+        return candidates.first(where: { candidate in
+            let value = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
+            return value.isEmpty == false &&
+                value.caseInsensitiveCompare("all") != .orderedSame &&
+                value != "全部"
+        }) ?? ""
     }
 
     private var copy: RecommendDetailCopy {

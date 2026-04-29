@@ -60,9 +60,8 @@ struct DiscoverRankingView: View {
         .background(Color(hex: 0x121212).ignoresSafeArea())
         .navigationTitle(copy.title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .nexusTabBarHidden()
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
             if let language = notification.object as? AppLanguage {
                 self.language = language
