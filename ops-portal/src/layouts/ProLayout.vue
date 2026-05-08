@@ -85,16 +85,16 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.pro-shell { min-height: 100vh; display: flex; background: #f5f7fa; }
-.pro-sider { width: 240px; background: #001529; color: #fff; display: flex; flex-direction: column; }
+.pro-shell { height: 100vh; display: flex; background: #f5f7fa; overflow: hidden; }
+.pro-sider { width: 240px; height: 100vh; background: #001529; color: #fff; display: flex; flex-direction: column; overflow: hidden; }
 .pro-brand { height: 56px; display: flex; align-items: center; padding: 0 20px; font-size: 16px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.pro-menu { border-right: none; flex: 1; }
-.pro-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pro-menu { border-right: none; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.pro-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .pro-header { height: 56px; background: #fff; border-bottom: 1px solid #eef0f3; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 20px; }
 .pro-header-title { font-size: 16px; font-weight: 600; color: #1f2329; }
 .pro-header-actions { display: flex; align-items: center; gap: 10px; }
 .pro-user { color: #4b5563; font-size: 13px; }
-.pro-content { flex: 1; padding: 16px; overflow: auto; }
+.pro-content { flex: 1; min-height: 0; padding: 16px; overflow: auto; }
 @media (max-width: 980px) {
   .pro-sider { width: 84px; }
   .pro-brand { justify-content: center; padding: 0; font-size: 12px; }

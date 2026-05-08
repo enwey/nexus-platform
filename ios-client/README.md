@@ -58,6 +58,42 @@ PLATFORM_API_BASE_URL=http://你的Mac局域网IP:8080/api/v1 ruby scripts/gener
 - `Debug` 宿主配置保留本地联调所需的 ATS 例外，便于使用局域网或本机调试。
 - `Release` / `Archive` 宿主配置不再包含 `localhost` / `127.0.0.1` 的 HTTP 例外，避免这些调试放行进入发布产物。
 
+## 模拟器本地联调
+
+模拟器现在支持默认连接本机 backend：
+
+```bash
+cd ios-client
+./scripts/run-ios-simulator.sh
+```
+
+默认会使用：
+
+```text
+http://127.0.0.1:8080/api/v1
+```
+
+你也可以手动覆盖：
+
+```bash
+cd ios-client
+PLATFORM_API_BASE_URL=http://127.0.0.1:8080/api/v1 ./scripts/run-ios-simulator.sh "iPhone 17 Pro"
+```
+
+要求：
+
+1. backend 已启动
+2. backend 可通过 `http://127.0.0.1:8080/api/v1/actuator/health` 访问
+3. 本机已安装对应 iOS Simulator runtime
+
+如果你直接在 Xcode 里选择 `Debug + iOS Simulator` 运行，宿主工程默认也会走：
+
+```text
+http://127.0.0.1:8080/api/v1
+```
+
+不需要再手动改 scheme。
+
 ## 命令行真机安装
 
 先确保：
@@ -66,6 +102,7 @@ PLATFORM_API_BASE_URL=http://你的Mac局域网IP:8080/api/v1 ruby scripts/gener
 2. Xcode 已登录 Apple ID
 3. Mac 与 iPhone 在同一局域网
 4. backend 监听 `0.0.0.0:8080`
+5. 使用 Mac 的局域网 IP，而不是 `127.0.0.1`
 
 然后执行：
 

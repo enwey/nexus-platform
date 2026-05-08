@@ -41,7 +41,7 @@
       <el-empty v-if="!loading && !filteredGames.length" :description="lt('还没有游戏资产，先上传一个游戏包再回来完善资料。', '還沒有遊戲資產，先上傳一個遊戲包再回來完善資料。', 'No game assets yet. Upload a package first and then complete the content workspace.')" />
     </el-card>
 
-    <el-drawer v-model="drawerVisible" :title="lt('游戏资产工作台', '遊戲資產工作台', 'Game Content Workspace')" size="820px">
+    <el-drawer v-model="drawerVisible" :title="lt('游戏资产工作台', '遊戲資產工作台', 'Game Content Workspace')" size="820px" @close="handleDrawerClose">
       <template v-if="activeGame">
         <el-tabs v-model="activeTab">
           <el-tab-pane name="basic" :label="lt('主资料', '主資料', 'Metadata')">
@@ -380,7 +380,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   deleteDeveloperGameAsset,
@@ -399,6 +400,8 @@ import { formatDate, getGameStatusMeta } from '../utils/portal'
 
 const { lt } = useI18nLite()
 const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const listError = ref('')
 const versionsLoading = ref(false)
@@ -481,6 +484,19 @@ const filteredGames = computed(() => {
   )
 })
 
+const syncRouteSelection = async () => {
+  const gameId = Number(route.params.gameId)
+  if (!gameId) {
+    drawerVisible.value = false
+    activeGame.value = null
+    return
+  }
+  const match = games.value.find((item) => item.id === gameId)
+  if (match && (!activeGame.value || activeGame.value.id !== gameId || !drawerVisible.value)) {
+    await openEditor(match, { syncRoute: false })
+  }
+}
+
 const loadGames = async () => {
   loading.value = true
   listError.value = ''
@@ -560,7 +576,8 @@ const loadOpsProfile = async () => {
   }
 }
 
-const openEditor = async (row) => {
+const openEditor = async (row, options = {}) => {
+  const { syncRoute = true } = options
   activeGame.value = row
   activeTab.value = 'basic'
   assetGroupFilter.value = ''
@@ -578,6 +595,15 @@ const openEditor = async (row) => {
     loadAssets(),
     loadOpsProfile()
   ])
+  if (syncRoute && route.params.gameId !== String(row.id)) {
+    router.push(`/games/${row.id}`)
+  }
+}
+
+const handleDrawerClose = () => {
+  if (route.name === 'DeveloperGameDetail') {
+    router.push('/games/list')
+  }
 }
 
 const handleSave = async () => {
@@ -788,7 +814,14 @@ function parseTags(tagsJson) {
   }
 }
 
-onMounted(loadGames)
+onMounted(async () => {
+  await loadGames()
+  await syncRouteSelection()
+})
+
+watch(() => route.params.gameId, async () => {
+  await syncRouteSelection()
+})
 </script>
 
 <style scoped>

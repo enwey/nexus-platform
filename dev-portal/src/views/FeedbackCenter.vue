@@ -105,13 +105,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { createMyTicket, createMyTicketMessage, getMyTicketMessages, getMyTickets } from '../api'
 import { useI18nLite } from '../i18n'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const saving = ref(false)
 const messageLoading = ref(false)
@@ -140,10 +143,24 @@ const loadTickets = async () => {
   try {
     const res = await getMyTickets()
     tickets.value = res.data || []
+    await syncRouteTicket()
   } catch (error) {
     ElMessage.error(error.message || lt('加载工单失败', '載入工單失敗', 'Failed to load tickets'))
   } finally {
     loading.value = false
+  }
+}
+
+const syncRouteTicket = async () => {
+  const ticketId = Number(route.params.ticketId)
+  if (!ticketId) {
+    activeTicket.value = null
+    detailVisible.value = false
+    return
+  }
+  const match = tickets.value.find((item) => item.id === ticketId)
+  if (match) {
+    await openDetail(match, { syncRoute: false })
   }
 }
 
@@ -170,7 +187,8 @@ const submitTicket = async () => {
   }
 }
 
-const openDetail = async (row) => {
+const openDetail = async (row, options = {}) => {
+  const { syncRoute = true } = options
   activeTicket.value = row
   detailVisible.value = true
   replyText.value = ''
@@ -182,6 +200,9 @@ const openDetail = async (row) => {
     ElMessage.error(error.message || lt('加载工单消息失败', '載入工單訊息失敗', 'Failed to load ticket messages'))
   } finally {
     messageLoading.value = false
+  }
+  if (syncRoute && route.params.ticketId !== String(row.id)) {
+    router.push(`/support/tickets/${row.id}`)
   }
 }
 
@@ -233,6 +254,14 @@ const priorityTagType = (value) => ({
 }[value] || 'info')
 
 onMounted(loadTickets)
+watch(() => route.params.ticketId, async () => {
+  await syncRouteTicket()
+})
+watch(detailVisible, (visible) => {
+  if (!visible && route.name === 'DeveloperTicketDetail') {
+    router.push('/support/tickets')
+  }
+})
 </script>
 
 <style scoped>

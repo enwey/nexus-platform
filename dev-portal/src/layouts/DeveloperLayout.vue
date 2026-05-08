@@ -7,21 +7,24 @@
       </div>
 
       <el-menu
-        :default-active="route.path"
+        :default-active="activePath"
         class="developer-menu"
-        background-color="transparent"
-        text-color="rgba(255,255,255,0.78)"
-        active-text-color="#ffffff"
+        background-color="#0b1730"
+        text-color="rgba(255,255,255,0.72)"
+        active-text-color="#fff"
         @select="handleSelect"
       >
-        <el-menu-item index="/dashboard">{{ lt('工作台', '工作台', 'Dashboard') }}</el-menu-item>
-        <el-menu-item index="/games">{{ lt('我的游戏', '我的遊戲', 'My Games') }}</el-menu-item>
-        <el-menu-item index="/releases">{{ lt('版本发布', '版本發布', 'Release Center') }}</el-menu-item>
-        <el-menu-item index="/insights">{{ lt('数据概览', '數據概覽', 'Insights') }}</el-menu-item>
-        <el-menu-item index="/notifications">{{ lt('通知中心', '通知中心', 'Notifications') }}</el-menu-item>
-        <el-menu-item index="/feedback">{{ lt('反馈工单', '回饋工單', 'Support Tickets') }}</el-menu-item>
-        <el-menu-item index="/docs">{{ lt('开发文档', '開發文件', 'Docs') }}</el-menu-item>
-        <el-menu-item index="/account">{{ lt('账号中心', '帳號中心', 'Account') }}</el-menu-item>
+        <template v-for="section in menuSections" :key="section.index">
+          <el-menu-item v-if="section.type === 'item'" :index="section.index">
+            {{ lt(...section.label) }}
+          </el-menu-item>
+          <el-sub-menu v-else :index="section.index">
+            <template #title>{{ lt(...section.label) }}</template>
+            <el-menu-item v-for="item in section.items" :key="item.index" :index="item.index">
+              {{ lt(...item.label) }}
+            </el-menu-item>
+          </el-sub-menu>
+        </template>
       </el-menu>
     </aside>
 
@@ -59,50 +62,23 @@ import { ElMessage } from 'element-plus'
 import { logoutSession } from '../api'
 import { useI18nLite } from '../i18n'
 import { useUserStore } from '../stores/user'
+import { developerNavSections, resolveDeveloperPageTitle } from '../router/developerNavigation'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const { currentLocale, lt, setLocale } = useI18nLite()
 
-const pageMeta = {
-  '/dashboard': {
-    title: ['开发者工作台', '開發者工作台', 'Developer Dashboard'],
-    subtitle: ['跟进审核、版本和接入状态。', '追蹤審核、版本與接入狀態。', 'Track review status, releases, and onboarding progress.']
-  },
-  '/games': {
-    title: ['我的游戏', '我的遊戲', 'My Games'],
-    subtitle: ['维护游戏资料、分类、描述与版本全貌。', '維護遊戲資料、分類、描述與版本全貌。', 'Maintain game metadata, categories, descriptions, and version history.']
-  },
-  '/releases': {
-    title: ['版本发布中心', '版本發布中心', 'Release Center'],
-    subtitle: ['上传首个版本、提交审核、回滚历史版本。', '上傳首個版本、提交審核、回滾歷史版本。', 'Upload first package, submit versions for review, and roll back history.']
-  },
-  '/insights': {
-    title: ['数据概览', '數據概覽', 'Insights'],
-    subtitle: ['从审核通过率、版本分布和分类经营看整体质量。', '從審核通過率、版本分布和分類經營看整體品質。', 'See quality through approval rate, release cadence, and category mix.']
-  },
-  '/notifications': {
-    title: ['通知中心', '通知中心', 'Notifications'],
-    subtitle: ['接收平台审核、发布、治理和系统通知。', '接收平台審核、發布、治理與系統通知。', 'Receive review, release, governance, and system notices from the platform.']
-  },
-  '/feedback': {
-    title: ['反馈工单中心', '回饋工單中心', 'Support Ticket Center'],
-    subtitle: ['提交发布、审核、运行时和治理相关问题，并跟进平台处理进度。', '提交發布、審核、運行時和治理相關問題，並追蹤平台處理進度。', 'Submit release, review, runtime, and governance issues, then track platform responses.']
-  },
-  '/docs': {
-    title: ['开发文档中心', '開發文件中心', 'Docs Center'],
-    subtitle: ['接入规范、提审清单和引擎指南统一查阅。', '接入規範、提審清單和引擎指南統一查閱。', 'Access integration specs, submission checklists, and engine guides.']
-  },
-  '/account': {
-    title: ['账号中心', '帳號中心', 'Account Center'],
-    subtitle: ['维护资料、安全设置与登录设备。', '維護資料、安全設定與登入裝置。', 'Manage profile, security settings, and active devices.']
-  }
-}
-
-const currentMeta = computed(() => pageMeta[route.path] || pageMeta['/dashboard'])
-const pageTitle = computed(() => lt(...currentMeta.value.title))
-const pageSubtitle = computed(() => lt(...currentMeta.value.subtitle))
+const menuSections = developerNavSections
+const activePath = computed(() => route.meta?.navKey || route.path)
+const pageTitle = computed(() => {
+  const title = resolveDeveloperPageTitle(route)
+  return Array.isArray(title) ? lt(...title) : lt('开发者工作台', '開發者工作台', 'Developer Dashboard')
+})
+const pageSubtitle = computed(() => {
+  const subtitle = route.meta?.subtitle
+  return Array.isArray(subtitle) ? lt(...subtitle) : lt('跟进审核、版本和接入状态。', '追蹤審核、版本與接入狀態。', 'Track review status, releases, and onboarding progress.')
+})
 const userLabel = computed(() => userStore.user?.username || userStore.user?.email || 'developer')
 
 const handleSelect = (path) => {
@@ -126,7 +102,7 @@ const handleLogout = async () => {
 
 <style scoped>
 .developer-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   background:
     radial-gradient(circle at top left, rgba(38, 94, 255, 0.22), transparent 34%),
@@ -134,8 +110,11 @@ const handleLogout = async () => {
 }
 
 .developer-sider {
-  width: 252px;
+  width: 272px;
+  height: 100vh;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(180deg, #11203f 0%, #0b1730 100%);
   color: #fff;
   padding: 22px 16px 18px;
@@ -160,10 +139,16 @@ const handleLogout = async () => {
 
 .developer-menu {
   border-right: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: transparent;
 }
 
 .developer-main {
   min-width: 0;
+  min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -219,17 +204,31 @@ const handleLogout = async () => {
 }
 
 .developer-content {
+  min-height: 0;
   flex: 1;
+  overflow-y: auto;
   padding: 22px 24px 28px;
 }
 
 @media (max-width: 980px) {
   .developer-shell {
+    height: auto;
+    min-height: 100vh;
     flex-direction: column;
   }
 
   .developer-sider {
     width: 100%;
+    height: auto;
+  }
+
+  .developer-menu {
+    overflow: visible;
+  }
+
+  :deep(.el-sub-menu__title span),
+  :deep(.el-menu-item span) {
+    display: none;
   }
 
   .developer-header {

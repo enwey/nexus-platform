@@ -2,7 +2,7 @@
   <div class="account-page">
     <el-row :gutter="16">
       <el-col :xs="24" :xl="10">
-        <el-card class="panel-card">
+        <el-card id="profile-section" class="panel-card">
           <template #header>{{ lt('基础资料', '基礎資料', 'Profile') }}</template>
           <el-form :model="profileForm" label-position="top">
             <el-form-item :label="lt('显示名称', '顯示名稱', 'Display Name')">
@@ -27,7 +27,7 @@
           </el-form>
         </el-card>
 
-        <el-card class="panel-card section-gap">
+        <el-card id="certification-section" class="panel-card section-gap">
           <template #header>{{ lt('开发者资质', '開發者資質', 'Developer Certification') }}</template>
           <div class="summary-grid certification-summary">
             <div class="summary-item">
@@ -94,7 +94,7 @@
       </el-col>
 
       <el-col :xs="24" :xl="14">
-        <el-card class="panel-card">
+        <el-card id="security-section" class="panel-card">
           <template #header>{{ lt('安全设置', '安全設定', 'Security') }}</template>
           <div class="security-block">
             <div class="security-row">
@@ -123,7 +123,7 @@
 
     <el-row :gutter="16" class="section-row">
       <el-col :span="24">
-        <el-card class="panel-card">
+        <el-card id="team-section" class="panel-card">
           <template #header>
             <div class="table-head">
               <span>{{ lt('资质审核记录', '資質審核記錄', 'Certification Review Records') }}</span>
@@ -149,7 +149,7 @@
 
     <el-row :gutter="16" class="section-row">
       <el-col :xs="24" :xl="14">
-        <el-card class="panel-card">
+        <el-card id="keys-section" class="panel-card">
           <template #header>
             <div class="table-head">
               <span>{{ lt('登录设备', '登入裝置', 'Devices') }}</span>
@@ -405,7 +405,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   changePassword,
@@ -434,6 +435,7 @@ import { useUserStore } from '../stores/user'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const route = useRoute()
 const userStore = useUserStore()
 const savingProfile = ref(false)
 const sendingCode = ref(false)
@@ -543,6 +545,23 @@ const apiScopeOptions = computed(() => [
 
 const activeMembers = computed(() => teamMembers.value.filter((item) => item.memberStatus === 'ACTIVE').length)
 const invitedMembers = computed(() => teamMembers.value.filter((item) => item.memberStatus === 'INVITED').length)
+
+const focusSectionMap = {
+  profile: 'profile-section',
+  certification: 'certification-section',
+  security: 'security-section',
+  team: 'team-section',
+  keys: 'keys-section'
+}
+
+const scrollToFocusedSection = async () => {
+  const focusSection = route.meta?.focusSection
+  if (!focusSection) return
+  await nextTick()
+  const targetId = focusSectionMap[focusSection]
+  const target = targetId ? document.getElementById(targetId) : null
+  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const resetTeamForm = () => {
   editingMemberId.value = null
@@ -954,6 +973,11 @@ const certificationStatusTagType = (value) => ({
 
 onMounted(async () => {
   await Promise.all([loadProfile(), loadDevices(), loadTeamMembers(), loadApiKeys(), loadCertification(), loadCertificationReviews(), loadWorkspaceAuditLogs()])
+  await scrollToFocusedSection()
+})
+
+watch(() => route.meta?.focusSection, async () => {
+  await scrollToFocusedSection()
 })
 </script>
 

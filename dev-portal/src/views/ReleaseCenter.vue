@@ -248,7 +248,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createReviewAppeal, getDeveloperGames, getDeveloperReleaseHealth, getDeveloperUploadTasks, getDeveloperVersionPreflight, getGameVersions, getMyReviewAppeals, retryDeveloperUploadTask, rollbackVersion, submitGameVersion, uploadGame } from '../api'
 import { useI18nLite } from '../i18n'
@@ -257,6 +258,8 @@ import { formatDate, getGameStatusMeta, summarizeVersionHealth } from '../utils/
 
 const { lt } = useI18nLite()
 const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
 const uploadFormRef = ref()
 const uploading = ref(false)
 const versionsLoading = ref(false)
@@ -307,6 +310,19 @@ const healthDescription = computed(() => {
   return row.blockingReason || lt('当前还不满足提审条件，请先处理阻塞项。', '目前還不滿足提審條件，請先處理阻塞項。', 'This release is not ready yet. Resolve the blockers first.')
 })
 
+const syncRouteGame = async () => {
+  const routeGameId = Number(route.params.gameId)
+  const preferredId = routeGameId || activeGameId.value
+  if (!preferredId) return
+  const match = games.value.find((item) => item.id === preferredId)
+  if (match && activeGameId.value !== match.id) {
+    activeGameId.value = match.id
+  }
+  if (activeGameId.value) {
+    await loadVersions(activeGameId.value)
+  }
+}
+
 const loadGames = async () => {
   const developerId = userStore.user?.id
   if (!developerId) return
@@ -319,9 +335,9 @@ const loadGames = async () => {
   const appealRes = await getMyReviewAppeals()
   appeals.value = appealRes.data || []
   if (!activeGameId.value && games.value.length) {
-    activeGameId.value = games.value[0].id
-    await loadVersions(activeGameId.value)
+    activeGameId.value = Number(route.params.gameId) || games.value[0].id
   }
+  await syncRouteGame()
 }
 
 const loadUploadTasks = async () => {
@@ -355,6 +371,11 @@ const loadVersions = async (gameId) => {
 }
 
 const handleGameChange = async (gameId) => {
+  if (!gameId) return
+  if (route.name !== 'DeveloperReleaseDetail' || route.params.gameId !== String(gameId)) {
+    router.push(`/releases/game/${gameId}`)
+    return
+  }
   await loadVersions(gameId)
 }
 
@@ -535,6 +556,12 @@ const getTaskStatusText = (status) => {
 
 onMounted(async () => {
   await Promise.all([loadGames(), loadUploadTasks()])
+})
+
+watch(() => route.params.gameId, async () => {
+  if (games.value.length) {
+    await syncRouteGame()
+  }
 })
 </script>
 

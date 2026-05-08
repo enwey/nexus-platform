@@ -200,13 +200,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { createDeveloperDoc, getDeveloperDocs, getDeveloperDocVersions, updateDeveloperDoc } from '../api'
 import { useI18nLite } from '../i18n'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const route = useRoute()
+const router = useRouter()
 
 const docsLoading = ref(false)
 const docsError = ref('')
@@ -246,7 +249,10 @@ const loadDocs = async () => {
       activeVersionId.value = null
       return
     }
-    if (!documents.value.some((item) => item.id === selectedDocId.value)) {
+    const routeDocId = Number(route.params.docId)
+    if (routeDocId && documents.value.some((item) => item.id === routeDocId)) {
+      selectedDocId.value = routeDocId
+    } else if (!documents.value.some((item) => item.id === selectedDocId.value)) {
       selectedDocId.value = documents.value[0].id
     }
     await loadVersions(selectedDocId.value)
@@ -278,6 +284,9 @@ const loadVersions = async (articleId) => {
 const handleSelectDoc = async (doc) => {
   selectedDocId.value = doc.id
   await loadVersions(doc.id)
+  if (route.params.docId !== String(doc.id)) {
+    router.push(`/docs/${doc.id}`)
+  }
 }
 
 const handleFilterChange = async () => {
@@ -378,6 +387,16 @@ const getDocStatusText = (status) => {
 }
 
 onMounted(loadDocs)
+watch(() => route.params.docId, async (docId) => {
+  if (!documents.value.length) return
+  const numericDocId = Number(docId)
+  if (!numericDocId) return
+  const target = documents.value.find((item) => item.id === numericDocId)
+  if (target && selectedDocId.value !== numericDocId) {
+    selectedDocId.value = numericDocId
+    await loadVersions(numericDocId)
+  }
+})
 </script>
 
 <style scoped>
