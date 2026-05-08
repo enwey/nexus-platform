@@ -127,6 +127,7 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
         guard let entry = resolveEntryFile(in: staging) else {
             throw StorageError.entryNotFound
         }
+        try ensureHostedManifest(in: staging, package: package, entryFile: entry)
         onProgress?(GameInstallProgress(gameID: package.gameID, version: package.version, completedUnitCount: 100, totalUnitCount: 100))
         return LocalGameVersion(gameID: package.gameID, version: package.version, rootDirectory: staging, entryFile: entry, installedAt: Date())
     }
@@ -180,7 +181,7 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     }
 
     func cacheSizeInBytes() async -> Int64 {
-        let urls = cacheDirectories()
+        let urls = measurableCacheDirectories()
         let fileBytes = urls.reduce(into: Int64.zero) { total, url in
             total += directorySize(at: url)
         }
@@ -239,6 +240,96 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     private func installDate(_ url: URL) -> Date {
         let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
         return values?.contentModificationDate ?? Date()
+    }
+
+    private func ensureHostedManifest(in root: URL, package: GamePackageDescriptor, entryFile: URL) throws {
+        let manifestURL = root.appendingPathComponent("manifest.json")
+        let relativeEntry = entryFile.path.replacingOccurrences(of: root.path + "/", with: "")
+
+        if fileManager.fileExists(atPath: manifestURL.path) {
+            let data = try Data(contentsOf: manifestURL)
+            let manifest = try JSONDecoder().decode(HostedMiniAppManifest.self, from: data)
+            let normalized = try normalizedHostedManifest(manifest, package: package, relativeEntry: relativeEntry)
+            if normalized != manifest {
+                let normalizedData = try JSONEncoder().encode(normalized)
+                try normalizedData.write(to: manifestURL, options: .atomic)
+            }
+            return
+        }
+
+        let generated = HostedMiniAppManifest(
+            appId: package.gameID,
+            version: package.version,
+            name: package.gameID,
+            description: nil,
+            entry: relativeEntry,
+            icon: nil,
+            kind: "html5-mini-game",
+            locales: nil,
+            metadata: HostedMiniAppManifestMetadata(icon: nil, kind: "html5-mini-game", locales: nil)
+        )
+        let data = try JSONEncoder().encode(generated)
+        try data.write(to: manifestURL, options: .atomic)
+    }
+
+    private func normalizedHostedManifest(
+        _ manifest: HostedMiniAppManifest,
+        package: GamePackageDescriptor,
+        relativeEntry: String
+    ) throws -> HostedMiniAppManifest {
+        let entry = manifest.resolvedEntry.trimmingCharacters(in: .whitespacesAndNewlines)
+        if entry.isEmpty || entry != relativeEntry {
+            throw StorageError.invalidHostedManifest
+        }
+
+        let normalizedAppID: String?
+        if let appID = manifest.appId?.trimmingCharacters(in: .whitespacesAndNewlines),
+           appID.isEmpty == false {
+            if appID == package.gameID || appID == "replace-with-generated-app-id" {
+                normalizedAppID = package.gameID
+            } else {
+                throw StorageError.invalidHostedManifest
+            }
+        } else {
+            normalizedAppID = package.gameID
+        }
+
+        let normalizedVersion: String?
+        if let version = manifest.version?.trimmingCharacters(in: .whitespacesAndNewlines),
+           version.isEmpty == false {
+            if sanitizeVersion(version) == sanitizeVersion(package.version) {
+                normalizedVersion = package.version
+            } else {
+                throw StorageError.invalidHostedManifest
+            }
+        } else {
+            normalizedVersion = package.version
+        }
+
+        let allowedKinds = ["html5-mini-game", "html5-mini-app", "html5"]
+        let resolvedKind = manifest.resolvedKind.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if allowedKinds.contains(resolvedKind) == false {
+            throw StorageError.invalidHostedManifest
+        }
+
+        let normalizedKind = resolvedKind.isEmpty ? "html5-mini-game" : resolvedKind
+        let normalizedMetadata = HostedMiniAppManifestMetadata(
+            icon: manifest.metadata?.icon,
+            kind: normalizedKind,
+            locales: manifest.metadata?.locales
+        )
+
+        return HostedMiniAppManifest(
+            appId: normalizedAppID,
+            version: normalizedVersion,
+            name: manifest.name,
+            description: manifest.description,
+            entry: relativeEntry,
+            icon: manifest.icon,
+            kind: normalizedKind,
+            locales: manifest.locales,
+            metadata: normalizedMetadata
+        )
     }
 
     private func calculateMD5(fileURL: URL) throws -> String {
@@ -400,16 +491,10 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
         }
     }
 
-    private func cacheDirectories() -> [URL] {
-        let libraryRoot = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first
-        let cachesRoot = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
-
+    private func measurableCacheDirectories() -> [URL] {
         return [
             gamesRoot,
-            fileManager.temporaryDirectory,
-            libraryRoot?.appendingPathComponent("WebKit", isDirectory: true),
-            cachesRoot?.appendingPathComponent("WebKit", isDirectory: true),
-            cachesRoot?.appendingPathComponent("com.apple.WebKit.Networking", isDirectory: true)
+            fileManager.temporaryDirectory
         ].compactMap { $0 }
     }
 
@@ -443,6 +528,7 @@ enum StorageError: LocalizedError {
     case entryNotFound
     case versionNotFound
     case runtimeKeyUnavailable
+    case invalidHostedManifest
     case invalidSecurePackage
     case securePayloadMissing
     case unsupportedSecurePackage
@@ -457,6 +543,8 @@ enum StorageError: LocalizedError {
             return AppText.versionMissing()
         case .runtimeKeyUnavailable:
             return AppText.runtimeKeyUnavailable()
+        case .invalidHostedManifest:
+            return AppText.invalidHostedManifest()
         case .invalidSecurePackage:
             return AppText.invalidSecurePackage()
         case .securePayloadMissing:

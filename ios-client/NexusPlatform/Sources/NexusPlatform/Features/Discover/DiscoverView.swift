@@ -36,9 +36,12 @@ struct DiscoverView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-            guard hasLoaded == false else { return }
-            hasLoaded = true
-            viewModel.load()
+            if hasLoaded {
+                viewModel.refreshPresentationFromLocalMetadata()
+            } else {
+                hasLoaded = true
+                viewModel.load()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
             if let language = notification.object as? AppLanguage {
@@ -46,6 +49,9 @@ struct DiscoverView: View {
             } else {
                 language = AppLanguageStore.currentSync()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gameLocalMetadataDidChange)) { _ in
+            viewModel.refreshPresentationFromLocalMetadata()
         }
         .animation(NativeMotion.overlayTransition, value: isRefreshingContent)
     }
@@ -112,14 +118,18 @@ struct DiscoverView: View {
 
     private var discoverRowSkeleton: some View {
         HStack(spacing: 12) {
-            NativeSkeletonBlock(width: 52, height: 52, cornerRadius: 12)
+            HStack(spacing: 12) {
+                NativeSkeletonBlock(width: 56, height: 56, cornerRadius: 12)
 
-            VStack(alignment: .leading, spacing: 6) {
-                NativeSkeletonBlock(width: 136, height: 16, cornerRadius: 7)
-                NativeSkeletonBlock(width: 144, height: 12, cornerRadius: 6)
+                VStack(alignment: .leading, spacing: 6) {
+                    NativeSkeletonBlock(width: 112, height: 16, cornerRadius: 7)
+                    NativeSkeletonBlock(width: 124, height: 12, cornerRadius: 6)
+                }
+
+                Spacer(minLength: 0)
             }
 
-            Spacer()
+            NativeSkeletonBlock(width: 62, height: 32, cornerRadius: 16)
         }
         .padding(12)
         .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 16, style: .continuous))

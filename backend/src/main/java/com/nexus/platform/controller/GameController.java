@@ -1,6 +1,18 @@
 package com.nexus.platform.controller;
 
 import com.nexus.platform.dto.GameMetadataUpdateRequest;
+import com.nexus.platform.dto.DeveloperOperationsDashboardDto;
+import com.nexus.platform.dto.GameReviewAppealCreateRequest;
+import com.nexus.platform.dto.GameReviewAppealDto;
+import com.nexus.platform.dto.DeveloperReleaseHealthDto;
+import com.nexus.platform.dto.DeveloperVersionPreflightDto;
+import com.nexus.platform.dto.DeveloperUploadRetryRequest;
+import com.nexus.platform.dto.DeveloperUploadTaskDto;
+import com.nexus.platform.dto.GameOpsDtos.GameMediaAssetDeleteRequest;
+import com.nexus.platform.dto.GameOpsDtos.GameMediaAssetResponse;
+import com.nexus.platform.dto.GameOpsDtos.GameMediaAssetUpsertRequest;
+import com.nexus.platform.dto.GameOpsDtos.GameOpsProfileResponse;
+import com.nexus.platform.dto.GameOpsDtos.GameOpsProfileUpdateRequest;
 import com.nexus.platform.dto.PageResult;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.dto.GameUpdateCheckResponse;
@@ -12,6 +24,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 import com.nexus.platform.service.GameOpsProfileService;
+import com.nexus.platform.service.GameReviewAppealService;
 import com.nexus.platform.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +36,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,6 +50,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 public class GameController {
     private final GameService gameService;
     private final GameOpsProfileService gameOpsProfileService;
+    private final GameReviewAppealService gameReviewAppealService;
     @Value("${platform.download.mode:proxy}")
     private String downloadMode;
 
@@ -155,12 +170,129 @@ public class GameController {
         return gameService.getDeveloperGamesPaged(developerId, currentUser, page, size);
     }
 
+    @GetMapping("/developer/{developerId}/release-health")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<DeveloperReleaseHealthDto> getDeveloperReleaseHealth(
+            @PathVariable Long developerId,
+            @AuthenticationPrincipal User currentUser) {
+        return gameService.getDeveloperReleaseHealth(developerId, currentUser);
+    }
+
+    @GetMapping("/developer/{developerId}/upload-tasks")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<List<DeveloperUploadTaskDto>> getDeveloperUploadTasks(
+            @PathVariable Long developerId,
+            @AuthenticationPrincipal User currentUser) {
+        return gameService.getDeveloperUploadTasks(developerId, currentUser);
+    }
+
+    @PostMapping("/developer/{developerId}/upload-tasks/{gameId}/retry")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
+    public Result<DeveloperUploadTaskDto> retryDeveloperUploadTask(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @AuthenticationPrincipal User currentUser,
+            @RequestBody(required = false) DeveloperUploadRetryRequest request,
+            HttpServletRequest httpRequest) {
+        return gameService.retryDeveloperUploadTask(developerId, gameId, currentUser, request, httpRequest.getRequestURI());
+    }
+
+    @GetMapping("/developer/{developerId}/operations-dashboard")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<DeveloperOperationsDashboardDto> getDeveloperOperationsDashboard(
+            @PathVariable Long developerId,
+            @AuthenticationPrincipal User currentUser) {
+        return gameService.getDeveloperOperationsDashboard(developerId, currentUser);
+    }
+
+    @GetMapping("/developer/{developerId}/games/{gameId}/versions/{versionId}/preflight")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<DeveloperVersionPreflightDto> getDeveloperVersionPreflight(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @PathVariable Long versionId,
+            @RequestParam(value = "forceUpdate", required = false) Boolean forceUpdate,
+            @AuthenticationPrincipal User currentUser) {
+        return gameService.getDeveloperVersionPreflight(developerId, gameId, versionId, currentUser, forceUpdate);
+    }
+
+    @GetMapping("/developer/{developerId}/games/{gameId}/ops-profile")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<GameOpsProfileResponse> getDeveloperGameOpsProfile(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @AuthenticationPrincipal User currentUser) {
+        return gameOpsProfileService.getDeveloperProfile(developerId, gameId, currentUser);
+    }
+
+    @PutMapping("/developer/{developerId}/games/{gameId}/ops-profile")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
+    public Result<GameOpsProfileResponse> updateDeveloperGameOpsProfile(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @RequestBody GameOpsProfileUpdateRequest request,
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        return gameOpsProfileService.updateDeveloperProfile(developerId, gameId, request, currentUser, httpRequest.getRequestURI());
+    }
+
+    @GetMapping("/developer/{developerId}/games/{gameId}/assets")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<List<GameMediaAssetResponse>> getDeveloperGameAssets(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @RequestParam(value = "assetGroup", required = false) String assetGroup,
+            @AuthenticationPrincipal User currentUser) {
+        return gameOpsProfileService.listDeveloperAssets(developerId, gameId, assetGroup, currentUser);
+    }
+
+    @PostMapping("/developer/{developerId}/games/{gameId}/assets")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
+    public Result<GameMediaAssetResponse> upsertDeveloperGameAsset(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @RequestBody GameMediaAssetUpsertRequest request,
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        return gameOpsProfileService.upsertDeveloperAsset(developerId, gameId, request, currentUser, httpRequest.getRequestURI());
+    }
+
+    @PostMapping("/developer/{developerId}/games/{gameId}/assets/{assetId}/delete")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
+    public Result<Boolean> deleteDeveloperGameAsset(
+            @PathVariable Long developerId,
+            @PathVariable Long gameId,
+            @PathVariable Long assetId,
+            @RequestBody(required = false) GameMediaAssetDeleteRequest request,
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        return gameOpsProfileService.deleteDeveloperAsset(developerId, gameId, assetId, request, currentUser, httpRequest.getRequestURI());
+    }
+
     @GetMapping("/{gameId}/versions")
     @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
     public Result<java.util.List<com.nexus.platform.entity.GameVersion>> getGameVersions(
             @PathVariable Long gameId,
             @AuthenticationPrincipal User currentUser) {
         return gameService.getGameVersions(gameId, currentUser);
+    }
+
+    @GetMapping("/review-appeals")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_READ)")
+    public Result<List<GameReviewAppealDto>> getMyReviewAppeals(
+            @AuthenticationPrincipal User currentUser) {
+        return gameReviewAppealService.listDeveloperAppeals(currentUser);
+    }
+
+    @PostMapping("/{gameId}/versions/{versionId}/review-appeals")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).GAME_DEVELOPER_WRITE)")
+    public Result<GameReviewAppealDto> createReviewAppeal(
+            @PathVariable Long gameId,
+            @PathVariable Long versionId,
+            @RequestBody GameReviewAppealCreateRequest appealRequest,
+            @AuthenticationPrincipal User currentUser,
+            jakarta.servlet.http.HttpServletRequest request) {
+        return gameReviewAppealService.createAppeal(gameId, versionId, appealRequest, currentUser, request.getRequestURI());
     }
 
     @GetMapping("/download-url/{appId}")

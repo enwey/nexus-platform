@@ -14,13 +14,16 @@ final class DiscoverViewModel: ObservableObject {
 
     private let service: GameCatalogServiceProtocol
     private let homeService: DiscoverHomeServiceProtocol
+    private let metadataResolver: LocalGameMetadataResolver
 
     init(
         service: GameCatalogServiceProtocol = GameCatalogService(),
-        homeService: DiscoverHomeServiceProtocol = DiscoverHomeService()
+        homeService: DiscoverHomeServiceProtocol = DiscoverHomeService(),
+        metadataResolver: LocalGameMetadataResolver = .shared
     ) {
         self.service = service
         self.homeService = homeService
+        self.metadataResolver = metadataResolver
     }
 
     func load() {
@@ -109,6 +112,19 @@ final class DiscoverViewModel: ObservableObject {
         }
         return games.filter {
             ($0.category ?? "").caseInsensitiveCompare(selectedCategory) == .orderedSame
+        }
+    }
+
+    func refreshPresentationFromLocalMetadata() {
+        Task {
+            let refreshedGames = await metadataResolver.merge(games)
+            games = refreshedGames
+            topRanked = await metadataResolver.merge(topRanked)
+            if let heroGame {
+                self.heroGame = await metadataResolver.merge(heroGame)
+            } else if let hero, let matched = refreshedGames.first(where: { $0.id == hero.appID }) {
+                heroGame = matched
+            }
         }
     }
 }

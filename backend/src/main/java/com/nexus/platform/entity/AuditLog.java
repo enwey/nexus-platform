@@ -14,7 +14,11 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "audit_logs", indexes = {
-        @Index(name = "idx_audit_logs_created_at", columnList = "created_at")
+        @Index(name = "idx_audit_logs_created_at", columnList = "created_at"),
+        @Index(name = "idx_audit_logs_action_created_at", columnList = "action, created_at"),
+        @Index(name = "idx_audit_logs_success_created_at", columnList = "success, created_at"),
+        @Index(name = "idx_audit_logs_operator_created_at", columnList = "operator_id, created_at"),
+        @Index(name = "idx_audit_logs_target_app_created_at", columnList = "target_app_id, created_at")
 })
 public class AuditLog {
     @Id
@@ -45,6 +49,18 @@ public class AuditLog {
     @Column(name = "request_uri", length = 256)
     private String requestUri;
 
+    @Column(name = "snapshot_type", length = 64)
+    private String snapshotType;
+
+    @Column(name = "before_snapshot_json", columnDefinition = "TEXT")
+    private String beforeSnapshotJson;
+
+    @Column(name = "after_snapshot_json", columnDefinition = "TEXT")
+    private String afterSnapshotJson;
+
+    @Column(name = "diff_json", columnDefinition = "TEXT")
+    private String diffJson;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -53,4 +69,3 @@ public class AuditLog {
         createdAt = LocalDateTime.now();
     }
 }
-

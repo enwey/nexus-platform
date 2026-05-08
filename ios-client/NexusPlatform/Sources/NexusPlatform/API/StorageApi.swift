@@ -2,6 +2,7 @@ import Foundation
 
 class StorageApi: ApiHandler {
     private let userDefaults = UserDefaults.standard
+    private let keyPrefix = "nexus.bridge.storage."
     
     func handle(api: String, params: [String: Any]) async throws -> Any {
         switch api {
@@ -25,7 +26,7 @@ class StorageApi: ApiHandler {
         
         if let data = params["data"] {
             let jsonData = try JSONSerialization.data(withJSONObject: data)
-            userDefaults.set(jsonData, forKey: key)
+            userDefaults.set(jsonData, forKey: namespacedKey(for: key))
         }
         
         return ["errMsg": "setStorage:ok"]
@@ -36,7 +37,7 @@ class StorageApi: ApiHandler {
             throw ApiError.invalidParameter
         }
         
-        guard let jsonData = userDefaults.data(forKey: key),
+        guard let jsonData = userDefaults.data(forKey: namespacedKey(for: key)),
               let data = try? JSONSerialization.jsonObject(with: jsonData) else {
             return ["errMsg": "getStorage:fail"]
         }
@@ -52,16 +53,20 @@ class StorageApi: ApiHandler {
             throw ApiError.invalidParameter
         }
         
-        userDefaults.removeObject(forKey: key)
+        userDefaults.removeObject(forKey: namespacedKey(for: key))
         return ["errMsg": "removeStorage:ok"]
     }
     
     private func clearStorage() -> [String: String] {
         let dictionary = userDefaults.dictionaryRepresentation()
-        dictionary.keys.forEach { key in
+        dictionary.keys.filter { $0.hasPrefix(keyPrefix) }.forEach { key in
             userDefaults.removeObject(forKey: key)
         }
         return ["errMsg": "clearStorage:ok"]
+    }
+
+    private func namespacedKey(for rawKey: String) -> String {
+        keyPrefix + rawKey
     }
 }
 

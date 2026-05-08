@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "platform.share")
 public class ShareLandingProperties {
-    private String appSchemeTemplate = "bringbox://game/%s";
-    private String androidInstallUrl = "https://play.google.com/store/apps/details?id=com.nexus.platform";
-    private String iosInstallUrl = "https://apps.apple.com";
-    private String otherInstallUrl = "https://bringbox.com/download";
+    private String appSchemeTemplate = "";
+    private String androidInstallUrl = "";
+    private String iosInstallUrl = "";
+    private String otherInstallUrl = "";
 }

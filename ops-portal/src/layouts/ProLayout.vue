@@ -10,16 +10,17 @@
         active-text-color="#fff"
         @select="handleSelect"
       >
-        <el-menu-item index="/pro/dashboard">{{ lt('工作台', '工作台', 'Dashboard') }}</el-menu-item>
-        <el-sub-menu index="module_group">
-          <template #title>{{ lt('業務模塊', '業務模塊', 'Business Modules') }}</template>
-          <el-menu-item index="/pro/developers">{{ lt('開發者模塊', '開發者模塊', 'Developer Module') }}</el-menu-item>
-          <el-menu-item index="/pro/sms">{{ lt('短信模塊', '短信模塊', 'SMS Module') }}</el-menu-item>
-          <el-menu-item index="/pro/recommend">{{ lt('推薦模塊', '推薦模塊', 'Recommendation Module') }}</el-menu-item>
-          <el-menu-item index="/pro/recommend-categories">{{ lt('推薦分類模塊', '推薦分類模塊', 'Recommendation Categories') }}</el-menu-item>
-          <el-menu-item index="/pro/game-categories">{{ lt('遊戲分類管理', '遊戲分類管理', 'Game Categories') }}</el-menu-item>
-          <el-menu-item index="/pro/games">{{ lt('遊戲管理模塊', '遊戲管理模塊', 'Game Management Module') }}</el-menu-item>
-        </el-sub-menu>
+        <template v-for="section in navSections" :key="section.index">
+          <el-menu-item v-if="section.type === 'item'" :index="section.index">
+            {{ lt(...section.label) }}
+          </el-menu-item>
+          <el-sub-menu v-else :index="section.index">
+            <template #title>{{ lt(...section.label) }}</template>
+            <el-menu-item v-for="item in section.items" :key="item.index" :index="item.index">
+              {{ lt(...item.label) }}
+            </el-menu-item>
+          </el-sub-menu>
+        </template>
       </el-menu>
     </aside>
 
@@ -50,26 +51,18 @@ import { ElMessage } from 'element-plus'
 import { logoutSession } from '../api'
 import { useI18nLite } from '../i18n'
 import { useUserStore } from '../stores/user'
+import { proNavSections, resolveProPageTitle } from '../router/proNavigation'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const { lt, currentLocale, setLocale } = useI18nLite()
 
-const activePath = computed(() => route.path)
-
-const pageTitleMap = {
-  '/pro/dashboard': ['運營總覽', '運營總覽', 'Operations Overview'],
-  '/pro/developers': ['開發者模塊', '開發者模塊', 'Developer Module'],
-  '/pro/sms': ['短信模塊', '短信模塊', 'SMS Module'],
-  '/pro/recommend': ['推薦模塊', '推薦模塊', 'Recommendation Module'],
-  '/pro/recommend-categories': ['推薦分類模塊', '推薦分類模塊', 'Recommendation Categories'],
-  '/pro/game-categories': ['遊戲分類管理', '遊戲分類管理', 'Game Categories'],
-  '/pro/games': ['遊戲管理模塊', '遊戲管理模塊', 'Game Management Module']
-}
+const navSections = proNavSections
+const activePath = computed(() => route.meta.activeMenu || route.path)
 
 const pageTitle = computed(() => {
-  const title = pageTitleMap[route.path] || pageTitleMap['/pro/dashboard']
+  const title = resolveProPageTitle(route)
   return lt(title[0], title[1], title[2])
 })
 

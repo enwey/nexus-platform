@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "test:frontend-smoke": "node --test scripts/portal-api-env.test.mjs",
     "check:bridge-contract": "node scripts/check-bridge-contract.mjs",
     "check:backend-contract": "node scripts/check-backend-contract.mjs",
     "check:contracts": "npm run check:bridge-contract && npm run check:backend-contract",

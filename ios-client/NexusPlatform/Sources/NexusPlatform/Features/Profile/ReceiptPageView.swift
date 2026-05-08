@@ -7,18 +7,21 @@ struct ReceiptPageView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var reloadToken = UUID()
+    @State private var request: URLRequest?
 
     var body: some View {
         ZStack {
-            ReceiptWebView(
-                request: authorizedRequest(url: url),
-                isLoading: $isLoading,
-                errorMessage: $errorMessage
-            )
-            .id(reloadToken)
-            .opacity(isLoading || errorMessage != nil ? 0.001 : 1)
-            .animation(NativeMotion.overlayTransition, value: isLoading)
-            .animation(NativeMotion.overlayTransition, value: errorMessage != nil)
+            if let request {
+                ReceiptWebView(
+                    request: request,
+                    isLoading: $isLoading,
+                    errorMessage: $errorMessage
+                )
+                .id(reloadToken)
+                .opacity(isLoading || errorMessage != nil ? 0.001 : 1)
+                .animation(NativeMotion.overlayTransition, value: isLoading)
+                .animation(NativeMotion.overlayTransition, value: errorMessage != nil)
+            }
 
             if isLoading {
                 receiptSkeleton
@@ -49,6 +52,14 @@ struct ReceiptPageView: View {
         .toolbar(.hidden, for: .tabBar)
         .animation(NativeMotion.overlayTransition, value: isLoading)
         .animation(NativeMotion.overlayTransition, value: errorMessage != nil)
+        .task {
+            await loadAuthorizedRequest()
+        }
+        .onChange(of: reloadToken) {
+            Task {
+                await loadAuthorizedRequest()
+            }
+        }
     }
 
     private var receiptSkeleton: some View {
@@ -72,18 +83,20 @@ struct ReceiptPageView: View {
         .forLanguage(AppLanguageStore.currentSync())
     }
 
-    private func authorizedRequest(url: URL) -> URLRequest {
+    @MainActor
+    private func loadAuthorizedRequest() async {
+        request = await authorizedRequest(url: url)
+    }
+
+    private func authorizedRequest(url: URL) async -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
 
-        let defaults = UserDefaults.standard
-        let keys = ["authorization", "access_token", "token", "auth_token"]
-        for key in keys {
-            guard let raw = defaults.string(forKey: key), raw.isEmpty == false else { continue }
-            let hasBearer = raw.lowercased().hasPrefix("bearer ")
-            request.setValue(hasBearer ? raw : "Bearer \(raw)", forHTTPHeaderField: "Authorization")
-            break
+        if let session = await AuthSessionStore.shared.current(),
+           session.accessToken.isEmpty == false {
+            request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
         }
+
         return request
     }
 }

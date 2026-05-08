@@ -25,10 +25,11 @@ cmd /c android-client\gradlew.bat -p android-client assembleDebug
 
 ## 真机联调（重要）
 
-默认首选环境变量是 `PLATFORM_API_BASE_URL`，默认值是 `http://47.99.34.148:81/api/v1`。
-`BACKEND_BASE_URL` 仍可继续使用，但仅作为兼容旧配置的回退值。
+Android 宿主不再内置任何默认后端地址。
+构建时必须显式注入 `PLATFORM_API_BASE_URL`。
+`BACKEND_BASE_URL` 仍可继续使用，但仅作为兼容旧脚本的别名，不建议新链路继续使用。
 
-真机必须使用局域网地址重新编译：
+本地真机联调时，请使用你电脑的局域网地址重新编译：
 
 ```powershell
 $env:PLATFORM_API_BASE_URL='http://<你的电脑局域网IP>:8080/api/v1'
@@ -36,7 +37,7 @@ $env:PLATFORM_API_BASE_URL='http://<你的电脑局域网IP>:8080/api/v1'
 cmd /c android-client\gradlew.bat -p android-client assembleDebug
 ```
 
-否则会出现“页面获取不到数据/游戏下载失败”。
+如果没有注入地址，Gradle 会直接失败，避免把流量误打到错误环境。
 
 ## 安装 APK
 

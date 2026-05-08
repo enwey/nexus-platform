@@ -1,16 +1,44 @@
 package com.nexus.platform.controller;
 
 import com.nexus.platform.dto.AuthResponse;
+import com.nexus.platform.dto.DeveloperApiKeyCreateRequest;
+import com.nexus.platform.dto.DeveloperApiKeyCreateResponse;
+import com.nexus.platform.dto.DeveloperApiKeyDto;
+import com.nexus.platform.dto.DeveloperApiKeyRevokeRequest;
+import com.nexus.platform.dto.DeveloperApiKeyRotateRequest;
+import com.nexus.platform.dto.DeveloperDocArticleDto;
+import com.nexus.platform.dto.DeveloperDocArticleUpsertRequest;
+import com.nexus.platform.dto.DeveloperDocArticleVersionDto;
+import com.nexus.platform.dto.DeveloperCertificationProfileDto;
+import com.nexus.platform.dto.DeveloperCertificationReviewRecordDto;
+import com.nexus.platform.dto.DeveloperCertificationUpsertRequest;
+import com.nexus.platform.dto.DeveloperSupportTicketCreateRequest;
+import com.nexus.platform.dto.DeveloperTeamMemberDto;
+import com.nexus.platform.dto.DeveloperTeamMemberStatusRequest;
+import com.nexus.platform.dto.DeveloperTeamMemberUpsertRequest;
+import com.nexus.platform.dto.DeveloperWorkspaceAuditLogDto;
 import com.nexus.platform.dto.DeviceSessionDto;
+import com.nexus.platform.dto.OpsMessageNoticeDto;
+import com.nexus.platform.dto.OpsSupportTicketDto;
+import com.nexus.platform.dto.OpsSupportTicketMessageDto;
 import com.nexus.platform.dto.Result;
+import com.nexus.platform.dto.SupportTicketMessageCreateRequest;
 import com.nexus.platform.dto.UserProfileDetailDto;
 import com.nexus.platform.dto.UserProfileDto;
 import com.nexus.platform.dto.VerificationCodeResponse;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.service.AccountOpsService;
 import com.nexus.platform.service.AccountService;
+import com.nexus.platform.service.DeveloperCertificationService;
+import com.nexus.platform.service.DeveloperDocumentationService;
+import com.nexus.platform.service.OpsSupportTicketService;
+import com.nexus.platform.service.DeveloperWorkspaceService;
+import com.nexus.platform.service.OpsMessageNoticeService;
 import com.nexus.platform.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,6 +58,11 @@ public class UserController {
     private final UserService userService;
     private final AccountService accountService;
     private final AccountOpsService accountOpsService;
+    private final DeveloperCertificationService developerCertificationService;
+    private final DeveloperDocumentationService developerDocumentationService;
+    private final OpsSupportTicketService opsSupportTicketService;
+    private final DeveloperWorkspaceService developerWorkspaceService;
+    private final OpsMessageNoticeService opsMessageNoticeService;
 
     @PostMapping("/register")
     public Result<AuthResponse> register(@RequestBody RegisterRequest request) {
@@ -39,7 +72,13 @@ public class UserController {
     @PostMapping("/login")
     public Result<AuthResponse> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         String loginId = firstNotBlank(request.email(), request.username());
-        return userService.login(loginId, request.password(), extractClientIp(httpRequest));
+        return userService.login(
+                loginId,
+                request.password(),
+                extractClientIp(httpRequest),
+                extractDeviceId(httpRequest),
+                httpRequest.getHeader("User-Agent")
+        );
     }
 
     @PostMapping("/refresh")
@@ -153,6 +192,189 @@ public class UserController {
         );
     }
 
+    @GetMapping("/developer-certification")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<DeveloperCertificationProfileDto> getMyDeveloperCertification(@AuthenticationPrincipal User user) {
+        return developerCertificationService.getMyProfile(user);
+    }
+
+    @GetMapping("/developer-certification/reviews")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<DeveloperCertificationReviewRecordDto>> getMyDeveloperCertificationReviews(@AuthenticationPrincipal User user) {
+        return developerCertificationService.getMyReviewRecords(user);
+    }
+
+    @PostMapping("/developer-certification")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperCertificationProfileDto> saveMyDeveloperCertification(
+            @AuthenticationPrincipal User user,
+            @RequestBody DeveloperCertificationUpsertRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerCertificationService.saveMyProfile(user, request, httpRequest.getRequestURI());
+    }
+
+    @GetMapping("/tickets")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<OpsSupportTicketDto>> listMyTickets(@AuthenticationPrincipal User user) {
+        return opsSupportTicketService.listDeveloperTickets(user);
+    }
+
+    @PostMapping("/tickets")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<OpsSupportTicketDto> createMyTicket(
+            @AuthenticationPrincipal User user,
+            @RequestBody DeveloperSupportTicketCreateRequest request,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            HttpServletRequest httpRequest
+    ) {
+        return opsSupportTicketService.createDeveloperTicket(user, request, httpRequest.getRequestURI(), idempotencyKey);
+    }
+
+    @GetMapping("/tickets/{ticketId}/messages")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<OpsSupportTicketMessageDto>> listMyTicketMessages(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long ticketId
+    ) {
+        return opsSupportTicketService.listDeveloperMessages(user, ticketId);
+    }
+
+    @PostMapping("/tickets/{ticketId}/messages")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<OpsSupportTicketMessageDto> createMyTicketMessage(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long ticketId,
+            @RequestBody SupportTicketMessageCreateRequest request,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            HttpServletRequest httpRequest
+    ) {
+        return opsSupportTicketService.createDeveloperMessage(user, ticketId, request, httpRequest.getRequestURI(), idempotencyKey);
+    }
+
+    @GetMapping("/team-members")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<DeveloperTeamMemberDto>> listTeamMembers(@AuthenticationPrincipal User user) {
+        return developerWorkspaceService.listTeamMembers(user);
+    }
+
+    @PostMapping("/team-members")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperTeamMemberDto> createTeamMember(
+            @AuthenticationPrincipal User user,
+            @RequestBody DeveloperTeamMemberUpsertRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerWorkspaceService.createTeamMember(user, request, httpRequest.getRequestURI());
+    }
+
+    @PostMapping("/team-members/{memberId}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperTeamMemberDto> updateTeamMember(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long memberId,
+            @RequestBody DeveloperTeamMemberUpsertRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerWorkspaceService.updateTeamMember(user, memberId, request, httpRequest.getRequestURI());
+    }
+
+    @PostMapping("/team-members/{memberId}/status")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperTeamMemberDto> updateTeamMemberStatus(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long memberId,
+            @RequestBody DeveloperTeamMemberStatusRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerWorkspaceService.updateTeamMemberStatus(user, memberId, request, httpRequest.getRequestURI());
+    }
+
+    @GetMapping("/api-keys")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<DeveloperApiKeyDto>> listApiKeys(@AuthenticationPrincipal User user) {
+        return developerWorkspaceService.listApiKeys(user);
+    }
+
+    @GetMapping("/workspace-audit-logs")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<DeveloperWorkspaceAuditLogDto>> listWorkspaceAuditLogs(@AuthenticationPrincipal User user) {
+        return developerWorkspaceService.listWorkspaceAuditLogs(user);
+    }
+
+    @GetMapping("/notices")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<OpsMessageNoticeDto>> listMyNotices(@AuthenticationPrincipal User user) {
+        return opsMessageNoticeService.listDeveloperNotices(user);
+    }
+
+    @PostMapping("/api-keys")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperApiKeyCreateResponse> createApiKey(
+            @AuthenticationPrincipal User user,
+            @RequestBody DeveloperApiKeyCreateRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerWorkspaceService.createApiKey(user, request, httpRequest.getRequestURI());
+    }
+
+    @PostMapping("/api-keys/{keyId}/revoke")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperApiKeyDto> revokeApiKey(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long keyId,
+            @RequestBody DeveloperApiKeyRevokeRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerWorkspaceService.revokeApiKey(user, keyId, request, httpRequest.getRequestURI());
+    }
+
+    @PostMapping("/api-keys/{keyId}/rotate")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperApiKeyCreateResponse> rotateApiKey(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long keyId,
+            @RequestBody DeveloperApiKeyRotateRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return developerWorkspaceService.rotateApiKey(user, keyId, request, httpRequest.getRequestURI());
+    }
+
+    @GetMapping("/docs")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<DeveloperDocArticleDto>> listMyDocs(
+            @AuthenticationPrincipal User user,
+            @org.springframework.web.bind.annotation.RequestParam(value = "docType", required = false) String docType) {
+        return developerDocumentationService.listArticles(user, docType);
+    }
+
+    @GetMapping("/docs/{articleId}/versions")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_READ)")
+    public Result<List<DeveloperDocArticleVersionDto>> listMyDocVersions(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long articleId) {
+        return developerDocumentationService.listVersions(user, articleId);
+    }
+
+    @PostMapping("/docs")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperDocArticleDto> createMyDoc(
+            @AuthenticationPrincipal User user,
+            @RequestBody DeveloperDocArticleUpsertRequest request,
+            HttpServletRequest httpRequest) {
+        return developerDocumentationService.createArticle(user, request, httpRequest.getRequestURI());
+    }
+
+    @PostMapping("/docs/{articleId}")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).USER_PROFILE_WRITE)")
+    public Result<DeveloperDocArticleDto> updateMyDoc(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long articleId,
+            @RequestBody DeveloperDocArticleUpsertRequest request,
+            HttpServletRequest httpRequest) {
+        return developerDocumentationService.updateArticle(user, articleId, request, httpRequest.getRequestURI());
+    }
+
     @GetMapping("/{id}")
     public Result<UserProfileDto> getUser(@PathVariable Long id) {
         UserProfileDto user = userService.findById(id);
@@ -180,6 +402,19 @@ public class UserController {
         return authorization.substring("Bearer ".length()).trim();
     }
 
+    private String extractDeviceId(HttpServletRequest request) {
+        String explicitDeviceId = firstNotBlank(
+                request.getHeader("X-Device-Id"),
+                request.getHeader("X-Client-Device-Id")
+        );
+        if (explicitDeviceId != null) {
+            return explicitDeviceId;
+        }
+        String userAgent = firstNotBlank(request.getHeader("User-Agent"), "unknown-agent");
+        String clientIp = firstNotBlank(extractClientIp(request), "unknown-ip");
+        return "fp_" + sha256Hex(userAgent + "|" + clientIp).substring(0, 24);
+    }
+
     private String firstNotBlank(String first, String second) {
         if (first != null && !first.isBlank()) {
             return first.trim();
@@ -188,6 +423,20 @@ public class UserController {
             return second.trim();
         }
         return null;
+    }
+
+    private String sha256Hex(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder builder = new StringBuilder(bytes.length * 2);
+            for (byte current : bytes) {
+                builder.append(String.format("%02x", current));
+            }
+            return builder.toString();
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 algorithm unavailable", exception);
+        }
     }
 }
 

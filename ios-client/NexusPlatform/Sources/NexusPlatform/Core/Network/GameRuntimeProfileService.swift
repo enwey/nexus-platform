@@ -5,6 +5,10 @@ struct RuntimeProfile: Sendable {
     let gameName: String
     let studioName: String
     let playerCountText: String
+    let packageSizeBytes: Int64?
+    let categoryPlayerCount: Int64?
+    let categoryRank: Int?
+    let categoryName: String
     let runtimeBannerURL: String
     let runtimeLogoURL: String
     let shareTitle: String
@@ -40,11 +44,30 @@ struct GameRuntimeProfileService: GameRuntimeProfileServiceProtocol {
             gameName: payload["gameName"] as? String ?? "",
             studioName: payload["studioName"] as? String ?? "",
             playerCountText: payload["playerCountText"] as? String ?? "",
+            packageSizeBytes: parseInt64(payload["packageSizeBytes"]),
+            categoryPlayerCount: parseInt64(payload["categoryPlayerCount"]),
+            categoryRank: payload["categoryRank"] as? Int,
+            categoryName: payload["categoryName"] as? String ?? "",
             runtimeBannerURL: payload["runtimeBannerUrl"] as? String ?? "",
             runtimeLogoURL: payload["runtimeLogoUrl"] as? String ?? "",
             shareTitle: payload["shareTitle"] as? String ?? "",
             shareSubtitle: payload["shareSubtitle"] as? String ?? "",
             shareImageURL: payload["shareImageUrl"] as? String ?? ""
         )
+    }
+
+    private func parseInt64(_ value: Any?) -> Int64? {
+        switch value {
+        case let number as Int64:
+            return number
+        case let number as Int:
+            return Int64(number)
+        case let number as NSNumber:
+            return number.int64Value
+        case let text as String:
+            return Int64(text)
+        default:
+            return nil
+        }
     }
 }

@@ -9,8 +9,8 @@
       </template>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item :label="lt('用户名', '使用者名稱', 'Username')" prop="username">
-          <el-input v-model="form.username" :placeholder="lt('请输入用户名', '請輸入使用者名稱', 'Enter username')" />
+        <el-form-item :label="lt('账号 / 邮箱', '帳號 / 電子郵件', 'Username / Email')" prop="loginId">
+          <el-input v-model="form.loginId" :placeholder="lt('请输入账号或邮箱', '請輸入帳號或電子郵件', 'Enter username or email')" />
         </el-form-item>
 
         <el-form-item :label="lt('密码', '密碼', 'Password')" prop="password">
@@ -40,9 +40,9 @@ const { lt } = useI18nLite()
 const formRef = ref()
 const loading = ref(false)
 
-const form = reactive({ username: '', password: '' })
+const form = reactive({ loginId: '', password: '' })
 const rules = {
-  username: [{ required: true, message: lt('请输入用户名', '請輸入使用者名稱', 'Enter username'), trigger: 'blur' }],
+  loginId: [{ required: true, message: lt('请输入账号或邮箱', '請輸入帳號或電子郵件', 'Enter username or email'), trigger: 'blur' }],
   password: [{ required: true, message: lt('请输入密码', '請輸入密碼', 'Enter password'), trigger: 'blur' }]
 }
 
@@ -51,7 +51,11 @@ const handleLogin = async () => {
     await formRef.value.validate()
     loading.value = true
 
-    const res = await login(form)
+    const res = await login({
+      email: form.loginId,
+      username: form.loginId,
+      password: form.password
+    })
     userStore.setSession(res.data.user, res.data.token, res.data.refreshToken)
 
     if (res.data.user?.role !== 'ADMIN') {

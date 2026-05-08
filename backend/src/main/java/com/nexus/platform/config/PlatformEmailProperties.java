@@ -9,6 +9,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "platform.email")
 public class PlatformEmailProperties {
     private boolean enabled = false;
-    private String fromAddress = "noreply@nexus.local";
+    private String fromAddress = "";
     private String fromName = "Nexus Platform";
 }

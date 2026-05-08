@@ -5,6 +5,7 @@ import com.nexus.platform.dto.GameOpsDtos.GameOpsProfileUpdateRequest;
 import com.nexus.platform.dto.Result;
 import com.nexus.platform.entity.User;
 import com.nexus.platform.service.GameOpsProfileService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,7 +33,8 @@ public class OpsGameProfileAdminController {
     public Result<GameOpsProfileResponse> updateProfile(
             @PathVariable Long gameId,
             @RequestBody GameOpsProfileUpdateRequest request,
-            @AuthenticationPrincipal User currentUser) {
-        return gameOpsProfileService.updateProfile(gameId, request, currentUser);
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        return gameOpsProfileService.updateProfile(gameId, request, currentUser, httpRequest.getRequestURI());
     }
 }

@@ -231,7 +231,7 @@ enum BackendPinnedSession {
 }
 
 private final class BackendPinningDelegate: NSObject, URLSessionDelegate {
-    private let expectedCertSHA256: String
+    private let expectedCertSHA256Pins: Set<String>
     private let pinnedHost: String?
     private let isHTTPS: Bool
 
@@ -240,11 +240,11 @@ private final class BackendPinningDelegate: NSObject, URLSessionDelegate {
         self.isHTTPS = environment.apiBaseURL.scheme?.lowercased() == "https"
 
         if let raw = ProcessInfo.processInfo.environment["BACKEND_CERT_SHA256"], raw.isEmpty == false {
-            self.expectedCertSHA256 = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            self.expectedCertSHA256Pins = Self.parsePins(raw)
         } else if let raw = Bundle.main.object(forInfoDictionaryKey: "BACKEND_CERT_SHA256") as? String, raw.isEmpty == false {
-            self.expectedCertSHA256 = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            self.expectedCertSHA256Pins = Self.parsePins(raw)
         } else {
-            self.expectedCertSHA256 = ""
+            self.expectedCertSHA256Pins = []
         }
         super.init()
     }
@@ -256,23 +256,33 @@ private final class BackendPinningDelegate: NSObject, URLSessionDelegate {
     ) {
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               isHTTPS,
-              expectedCertSHA256.isEmpty == false,
+              expectedCertSHA256Pins.isEmpty == false,
               let pinnedHost,
               challenge.protectionSpace.host == pinnedHost,
               let trust = challenge.protectionSpace.serverTrust,
-              let certificate = SecTrustGetCertificateAtIndex(trust, 0) else {
+              let certificateChain = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
+              let certificate = certificateChain.first else {
             completionHandler(.performDefaultHandling, nil)
             return
         }
 
         let certificateData = SecCertificateCopyData(certificate) as Data
         let actual = SHA256.hash(data: certificateData).map { String(format: "%02x", $0) }.joined()
-        guard actual == expectedCertSHA256 else {
+        guard expectedCertSHA256Pins.contains(actual) else {
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
 
         completionHandler(.useCredential, URLCredential(trust: trust))
+    }
+
+    private static func parsePins(_ raw: String) -> Set<String> {
+        Set(
+            raw
+                .components(separatedBy: CharacterSet(charactersIn: ",;\n\r"))
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+                .filter { $0.isEmpty == false }
+        )
     }
 }
 

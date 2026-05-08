@@ -11,6 +11,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -64,6 +65,12 @@ public class GameVersion {
     @Column(name = "audit_reason", length = 256)
     private String auditReason;
 
+    @Column(name = "assigned_reviewer_id")
+    private Long assignedReviewerId;
+
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
     @Column(name = "is_forced_update", nullable = false)
     private Boolean forcedUpdate = false;
 
@@ -76,6 +83,18 @@ public class GameVersion {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Transient
+    private Boolean hostedManifestValid;
+
+    @Transient
+    private String hostedManifestKind;
+
+    @Transient
+    private String hostedManifestEntry;
+
+    @Transient
+    private String hostedManifestSummary;
 
     @PrePersist
     protected void onCreate() {

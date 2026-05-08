@@ -5,13 +5,25 @@ import { ltGlobal } from '../i18n'
 import { useUserStore } from '../stores/user'
 
 const routes = [
-  { path: '/', redirect: '/login' },
+  { path: '/', redirect: '/dashboard' },
   { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
   { path: '/register', name: 'Register', component: () => import('../views/Register.vue') },
-  { path: '/dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue'), meta: { requiresAuth: true, requiresDeveloper: true } },
-  { path: '/games', name: 'Games', component: () => import('../views/Games.vue'), meta: { requiresAuth: true, requiresDeveloper: true } },
-  { path: '/games/upload', name: 'GameUpload', component: () => import('../views/GameUpload.vue'), meta: { requiresAuth: true, requiresDeveloper: true } },
-  { path: '/docs', name: 'DeveloperDocs', component: () => import('../views/DeveloperDocs.vue'), meta: { requiresAuth: true, requiresDeveloper: true } }
+  {
+    path: '/',
+    component: () => import('../layouts/DeveloperLayout.vue'),
+    meta: { requiresAuth: true, requiresDeveloper: true },
+    children: [
+      { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue') },
+      { path: 'games', name: 'Games', component: () => import('../views/Games.vue') },
+      { path: 'releases', name: 'ReleaseCenter', component: () => import('../views/ReleaseCenter.vue') },
+      { path: 'insights', name: 'Insights', component: () => import('../views/Insights.vue') },
+      { path: 'notifications', name: 'Notifications', component: () => import('../views/Notifications.vue') },
+      { path: 'feedback', name: 'FeedbackCenter', component: () => import('../views/FeedbackCenter.vue') },
+      { path: 'docs', name: 'DeveloperDocs', component: () => import('../views/DeveloperDocs.vue') },
+      { path: 'account', name: 'Account', component: () => import('../views/Account.vue') }
+    ]
+  },
+  { path: '/games/upload', redirect: '/releases' }
 ]
 
 const router = createRouter({

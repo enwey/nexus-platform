@@ -17,17 +17,9 @@ struct ProfileView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             ZStack(alignment: .top) {
-                if viewModel.isLoading {
-                    profileSkeleton
-                        .transition(NativeMotion.stateSwapTransition)
-                } else {
-                    VStack(spacing: 24) {
-                        userCard
-                        walletCard
-                        referralCard
-                        menuGroup
-                    }
-                    .transition(NativeMotion.contentRevealTransition)
+                VStack(spacing: 24) {
+                    userCard
+                    menuGroup
                 }
             }
             .frame(maxWidth: .infinity, alignment: .top)
@@ -96,85 +88,6 @@ struct ProfileView: View {
                 onLogoutCurrent: { viewModel.logout() }
             )
         }
-        .animation(NativeMotion.overlayTransition, value: viewModel.isLoading)
-    }
-
-    private var profileSkeleton: some View {
-        VStack(spacing: 24) {
-            HStack(alignment: .center, spacing: 20) {
-                NativeSkeletonBlock(width: 84, height: 84, cornerRadius: 42)
-                VStack(alignment: .leading, spacing: 10) {
-                    NativeSkeletonBlock(width: 164, height: 32, cornerRadius: 10)
-                    NativeSkeletonBlock(width: 92, height: 19, cornerRadius: 8)
-                }
-                Spacer()
-                NativeSkeletonBlock(width: 78, height: 32, cornerRadius: 16)
-            }
-
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x24253A), Color(hex: 0x1C1C1F)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(height: 164)
-                .overlay {
-                    VStack(alignment: .leading, spacing: 0) {
-                        NativeSkeletonBlock(width: 72, height: 12, cornerRadius: 6)
-                        Spacer().frame(height: 8)
-                        NativeSkeletonBlock(width: 142, height: 34, cornerRadius: 10)
-                        Spacer()
-                        HStack(spacing: 12) {
-                            NativeSkeletonBlock(height: 38, cornerRadius: 12)
-                            NativeSkeletonBlock(height: 38, cornerRadius: 12)
-                        }
-                    }
-                    .padding(20)
-                }
-
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(hex: 0x1C1C1F))
-                .frame(height: 96)
-                .overlay {
-                    HStack(spacing: 16) {
-                        NativeSkeletonBlock(width: 34, height: 34, cornerRadius: 17)
-                        VStack(alignment: .leading, spacing: 10) {
-                            NativeSkeletonBlock(width: 116, height: 16, cornerRadius: 7)
-                            NativeSkeletonBlock(width: 174, height: 13, cornerRadius: 6)
-                        }
-                        Spacer()
-                        NativeSkeletonBlock(width: 70, height: 30, cornerRadius: 15)
-                    }
-                    .padding(20)
-                }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
-                )
-
-            VStack(spacing: 0) {
-                ForEach(0..<4, id: \.self) { index in
-                    HStack {
-                        NativeSkeletonBlock(width: index == 0 ? 72 : 96, height: 16, cornerRadius: 7)
-                        Spacer()
-                        NativeSkeletonBlock(width: index == 0 ? 14 : 58, height: 13, cornerRadius: 6)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 18)
-
-                    if index != 3 {
-                        divider
-                    }
-                }
-            }
-            .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color(hex: 0x2D2D31), lineWidth: 1)
-            )
-        }
     }
 
     private var copy: ProfileCopy {
@@ -183,38 +96,53 @@ struct ProfileView: View {
 
     private var userCard: some View {
         HStack(alignment: .center, spacing: 20) {
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(width: 84, height: 84)
+            if viewModel.isLoading {
+                NativeSkeletonBlock(width: 84, height: 84, cornerRadius: 42)
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 84, height: 84)
 
-                BrandLogoImage(size: 76, cornerRadius: 38)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
+                    BrandLogoImage(size: 76, cornerRadius: 38)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        )
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(displayName)
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundStyle(.white)
+                if viewModel.isLoading {
+                    NativeSkeletonBlock(width: 164, height: 32, cornerRadius: 10)
+                    NativeSkeletonBlock(width: 92, height: 19, cornerRadius: 8)
+                } else {
+                    Text(displayName)
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .minimumScaleFactor(0.78)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text(accountBadgeText)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color(hex: 0x232326))
-                    )
+                    Text(accountBadgeText)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color(hex: 0xA0A0A0))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color(hex: 0x232326))
+                        )
+                }
             }
 
             Spacer()
 
-            if viewModel.isLoggedIn == false {
+            if viewModel.isLoading {
+                NativeSkeletonBlock(width: 78, height: 32, cornerRadius: 16)
+            } else if viewModel.isLoggedIn == false {
                 Button(copy.loginButton) {
                     showAuthFlow = true
                 }
@@ -236,11 +164,15 @@ struct ProfileView: View {
                     .foregroundStyle(Color.white.opacity(0.8))
                     .lineLimit(1)
 
-                Text(walletBalanceText)
-                    .font(.system(size: 34, weight: .heavy, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                if viewModel.isLoading || viewModel.isWalletLoading {
+                    NativeSkeletonBlock(width: 142, height: 34, cornerRadius: 10)
+                } else {
+                    Text(walletBalanceText)
+                        .font(.system(size: 34, weight: .heavy, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
 
             Spacer()
@@ -367,8 +299,8 @@ struct ProfileView: View {
                     let clearedBytes = await storage.cacheSizeInBytes()
                     try? await storage.clearAllLocalCaches()
                     await MainActor.run {
-                        cacheSizeText = ByteCountFormatter.string(fromByteCount: 0, countStyle: .file)
-                        let clearedText = ByteCountFormatter.string(fromByteCount: clearedBytes, countStyle: .file)
+                        cacheSizeText = formattedCacheSize(for: 0)
+                        let clearedText = formattedCacheSize(for: clearedBytes)
                         toastMessage = "\(copy.cacheCleared) (\(clearedText))"
                     }
                     refreshCacheSize()
@@ -504,9 +436,21 @@ struct ProfileView: View {
         Task {
             let bytes = await storage.cacheSizeInBytes()
             await MainActor.run {
-                cacheSizeText = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+                cacheSizeText = formattedCacheSize(for: bytes)
             }
         }
+    }
+
+    private func formattedCacheSize(for bytes: Int64) -> String {
+        let normalizedBytes = max(bytes, 0)
+        guard normalizedBytes > 0 else { return "0 B" }
+
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.includesUnit = true
+        formatter.isAdaptive = true
+        formatter.allowsNonnumericFormatting = false
+        return formatter.string(fromByteCount: normalizedBytes)
     }
 }
 

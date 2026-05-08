@@ -24,4 +24,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     Game findByAppId(String appId);
 
     long countByCategoryIgnoreCase(String category);
+
+    List<Game> findByStatusAndCategoryIgnoreCase(Game.GameStatus status, String category);
 }

@@ -9,8 +9,8 @@
       </template>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item :label="lt('邮箱', '電子郵件', 'Email')" prop="email">
-          <el-input v-model="form.email" :placeholder="lt('请输入邮箱', '請輸入電子郵件', 'Enter email')" />
+        <el-form-item :label="lt('账号 / 邮箱', '帳號 / 電子郵件', 'Username / Email')" prop="loginId">
+          <el-input v-model="form.loginId" :placeholder="lt('请输入账号或邮箱', '請輸入帳號或電子郵件', 'Enter username or email')" />
         </el-form-item>
 
         <el-form-item :label="lt('密码', '密碼', 'Password')" prop="password">
@@ -47,15 +47,12 @@ const formRef = ref()
 const loading = ref(false)
 
 const form = reactive({
-  email: '',
+  loginId: '',
   password: ''
 })
 
 const rules = {
-  email: [
-    { required: true, message: lt('请输入邮箱', '請輸入電子郵件', 'Enter email'), trigger: 'blur' },
-    { type: 'email', message: lt('请输入正确的邮箱地址', '請輸入正確的電子郵件地址', 'Enter a valid email address'), trigger: 'blur' }
-  ],
+  loginId: [{ required: true, message: lt('请输入账号或邮箱', '請輸入帳號或電子郵件', 'Enter username or email'), trigger: 'blur' }],
   password: [{ required: true, message: lt('请输入密码', '請輸入密碼', 'Enter password'), trigger: 'blur' }]
 }
 
@@ -64,7 +61,11 @@ const handleLogin = async () => {
     await formRef.value.validate()
     loading.value = true
 
-    const res = await login(form)
+    const res = await login({
+      email: form.loginId,
+      username: form.loginId,
+      password: form.password
+    })
     userStore.setSession(res.data.user, res.data.token, res.data.refreshToken)
 
     ElMessage.success(lt('登录成功', '登入成功', 'Signed in successfully'))

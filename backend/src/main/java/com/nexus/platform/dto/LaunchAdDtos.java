@@ -11,6 +11,9 @@ public class LaunchAdDtos {
             String targetUrl,
             String imageVersion,
             Integer displaySeconds,
+            String status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
             String sponsorZhCn,
             String sponsorZhTw,
             String sponsorEn,
@@ -26,6 +29,7 @@ public class LaunchAdDtos {
             String footerZhCn,
             String footerZhTw,
             String footerEn,
+            String effectiveState,
             LocalDateTime updatedAt
     ) {}
 
@@ -52,6 +56,9 @@ public class LaunchAdDtos {
             String footerZhTw,
             String footerEn,
             String status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            String effectiveState,
             String updatedBy,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -77,6 +84,8 @@ public class LaunchAdDtos {
             String footerZhCn,
             String footerZhTw,
             String footerEn,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
             String status
     ) {}
 

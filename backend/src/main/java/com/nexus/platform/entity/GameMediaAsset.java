@@ -25,11 +25,32 @@ public class GameMediaAsset {
     @Column(name = "version_id")
     private Long versionId;
 
+    @Column(name = "asset_group", nullable = false, length = 32)
+    private String assetGroup = "LIBRARY";
+
+    @Column(name = "asset_role", nullable = false, length = 32)
+    private String assetRole = "SCREENSHOT";
+
     @Column(name = "media_type", nullable = false, length = 32)
     private String mediaType;
 
+    @Column(name = "asset_status", nullable = false, length = 32)
+    private String assetStatus = "DRAFT";
+
+    @Column(length = 80)
+    private String title;
+
+    @Column(length = 500)
+    private String description;
+
     @Column(nullable = false, length = 512)
     private String url;
+
+    @Column(name = "action_title", length = 40)
+    private String actionTitle;
+
+    @Column(name = "action_url", length = 512)
+    private String actionUrl;
 
     private Integer width;
     private Integer height;
@@ -54,6 +75,15 @@ public class GameMediaAsset {
 
     @PrePersist
     protected void onCreate() {
+        if (assetGroup == null || assetGroup.isBlank()) {
+            assetGroup = "LIBRARY";
+        }
+        if (assetRole == null || assetRole.isBlank()) {
+            assetRole = "SCREENSHOT";
+        }
+        if (assetStatus == null || assetStatus.isBlank()) {
+            assetStatus = "DRAFT";
+        }
         if (locale == null || locale.isBlank()) {
             locale = "zh-CN";
         }

@@ -50,6 +50,47 @@ actor BridgeStorageBox {
     }
 }
 
+private struct BridgeRequestAccessPolicy {
+    let backendBaseURL: URL
+
+    var allowedHosts: Set<String> {
+        guard let host = backendBaseURL.host?.lowercased(), host.isEmpty == false else {
+            return []
+        }
+        return [host]
+    }
+
+    func resolveURL(from rawURL: String) throws -> URL {
+        guard rawURL.isEmpty == false else {
+            throw JSBridgeError(code: -1, message: "request:fail url required")
+        }
+
+        if rawURL.hasPrefix("/") {
+            guard let merged = URL(string: rawURL, relativeTo: backendBaseURL)?.absoluteURL else {
+                throw JSBridgeError(code: -1, message: "request:fail invalid url")
+            }
+            return merged
+        }
+
+        guard let absolute = URL(string: rawURL),
+              let scheme = absolute.scheme?.lowercased(),
+              ["http", "https"].contains(scheme) else {
+            throw JSBridgeError(code: -1, message: "request:fail invalid url")
+        }
+
+        guard let host = absolute.host?.lowercased(), allowedHosts.contains(host) else {
+            throw JSBridgeError(code: -1, message: "request:fail host not allowed")
+        }
+
+        return absolute
+    }
+
+    func shouldAttachAuthHeaders(to url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return allowedHosts.contains(host)
+    }
+}
+
 struct StorageSetBridgeAPI: JSBridgeAPIHandling {
     let apiName: String = "setStorage"
     let box: BridgeStorageBox
@@ -179,20 +220,24 @@ struct BridgeHTTPResponse: Sendable {
 actor BridgeRequestClient {
     private let session: URLSession
     private let backendBaseURL: URL
+    private let accessPolicy: BridgeRequestAccessPolicy
 
     init(session: URLSession = BackendPinnedSession.shared, backendBaseURL: URL = BackendEnvironment.current().apiBaseURL) {
         self.session = session
         self.backendBaseURL = backendBaseURL
+        self.accessPolicy = BridgeRequestAccessPolicy(backendBaseURL: backendBaseURL)
     }
 
     func send(params: [String: AnySendable]) async throws -> [String: AnySendable] {
-        let url = try resolveURL(params: params)
+        let url = try accessPolicy.resolveURL(from: resolveRawURL(params: params))
         var request = URLRequest(url: url)
         request.httpMethod = resolveMethod(params: params)
         request.timeoutInterval = resolveTimeout(params: params)
 
         var headers = resolveHeaders(params: params)
-        headers.merge(resolveAuthHeaders(url: url), uniquingKeysWith: { existing, _ in existing })
+        if accessPolicy.shouldAttachAuthHeaders(to: url) {
+            headers.merge(await resolveAuthHeaders(url: url), uniquingKeysWith: { existing, _ in existing })
+        }
         for (k, v) in headers {
             request.setValue(v, forHTTPHeaderField: k)
         }
@@ -230,22 +275,11 @@ actor BridgeRequestClient {
         }
     }
 
-    private func resolveURL(params: [String: AnySendable]) throws -> URL {
+    private func resolveRawURL(params: [String: AnySendable]) throws -> String {
         guard case .string(let rawURL)? = params["url"], rawURL.isEmpty == false else {
             throw JSBridgeError(code: -1, message: "request:fail url required")
         }
-
-        if rawURL.hasPrefix("/") {
-            guard let merged = URL(string: rawURL, relativeTo: backendBaseURL)?.absoluteURL else {
-                throw JSBridgeError(code: -1, message: "request:fail invalid url")
-            }
-            return merged
-        }
-
-        if let absolute = URL(string: rawURL) {
-            return absolute
-        }
-        throw JSBridgeError(code: -1, message: "request:fail invalid url")
+        return rawURL
     }
 
     private func resolveMethod(params: [String: AnySendable]) -> String {
@@ -276,21 +310,14 @@ actor BridgeRequestClient {
         }
     }
 
-    private func resolveAuthHeaders(url: URL) -> [String: String] {
+    private func resolveAuthHeaders(url: URL) async -> [String: String] {
         var output: [String: String] = [:]
 
-        // Token strategy: align with existing client conventions.
-        let defaults = UserDefaults.standard
-        let tokenKeys = ["access_token", "token", "auth_token", "authorization"]
-        for key in tokenKeys {
-            if let raw = defaults.string(forKey: key), raw.isEmpty == false {
-                let hasBearer = raw.lowercased().hasPrefix("bearer ")
-                output["Authorization"] = hasBearer ? raw : "Bearer \(raw)"
-                break
-            }
+        if let session = await AuthSessionStore.shared.current(),
+           session.accessToken.isEmpty == false {
+            output["Authorization"] = "Bearer \(session.accessToken)"
         }
 
-        // Cookie strategy: forward shared cookie storage if caller didn't specify.
         if let cookies = HTTPCookieStorage.shared.cookies(for: url), cookies.isEmpty == false {
             let cookieValue = cookies.map { "\($0.name)=\($0.value)" }.joined(separator: "; ")
             if cookieValue.isEmpty == false {

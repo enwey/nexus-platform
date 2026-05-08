@@ -11,7 +11,9 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Index;
+import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.Data;
 
 @Data
@@ -43,6 +45,24 @@ public class Game {
     @Column(name = "source_storage_key")
     private String sourceStorageKey;
 
+    @Column(name = "upload_file_name", length = 128)
+    private String uploadFileName;
+
+    @Column(name = "upload_file_size_bytes")
+    private Long uploadFileSizeBytes;
+
+    @Column(name = "upload_processing_failure_reason", length = 256)
+    private String uploadProcessingFailureReason;
+
+    @Column(name = "upload_processing_retry_count", nullable = false)
+    private Integer uploadProcessingRetryCount = 0;
+
+    @Column(name = "upload_processing_started_at")
+    private LocalDateTime uploadProcessingStartedAt;
+
+    @Column(name = "upload_processing_finished_at")
+    private LocalDateTime uploadProcessingFinishedAt;
+
     private String version;
     private String md5;
 
@@ -67,6 +87,42 @@ public class Game {
     @Column(name = "requires_online", nullable = false)
     private Boolean requiresOnline = false;
 
+    @Column(name = "visibility_status", nullable = false, length = 32)
+    private String visibilityStatus = "VISIBLE";
+
+    @Column(name = "visibility_reason", length = 256)
+    private String visibilityReason;
+
+    @Column(name = "visibility_until")
+    private LocalDateTime visibilityUntil;
+
+    @Column(name = "channel_governance_mode", nullable = false, length = 32)
+    private String channelGovernanceMode = "ALL";
+
+    @Column(name = "channel_governance_values", length = 1024)
+    private String channelGovernanceValues;
+
+    @Column(name = "region_governance_mode", nullable = false, length = 32)
+    private String regionGovernanceMode = "ALL";
+
+    @Column(name = "region_governance_values", length = 2048)
+    private String regionGovernanceValues;
+
+    @Column(name = "version_governance_mode", nullable = false, length = 32)
+    private String versionGovernanceMode = "ALL";
+
+    @Column(name = "version_min", length = 64)
+    private String versionMin;
+
+    @Column(name = "version_max", length = 64)
+    private String versionMax;
+
+    @Column(name = "version_blocklist", length = 1024)
+    private String versionBlocklist;
+
+    @Column(name = "governance_note", length = 256)
+    private String governanceNote;
+
     @Enumerated(EnumType.STRING)
     private GameStatus status;
 
@@ -79,8 +135,23 @@ public class Game {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Transient
+    private Map<String, Map<String, String>> locales;
+
     @PrePersist
     protected void onCreate() {
+        if (visibilityStatus == null || visibilityStatus.isBlank()) {
+            visibilityStatus = "VISIBLE";
+        }
+        if (channelGovernanceMode == null || channelGovernanceMode.isBlank()) {
+            channelGovernanceMode = "ALL";
+        }
+        if (regionGovernanceMode == null || regionGovernanceMode.isBlank()) {
+            regionGovernanceMode = "ALL";
+        }
+        if (versionGovernanceMode == null || versionGovernanceMode.isBlank()) {
+            versionGovernanceMode = "ALL";
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

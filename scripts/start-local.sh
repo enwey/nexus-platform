@@ -81,6 +81,7 @@ export PATH="$NODE_BIN_DIR:$PATH"
 export JAVA_HOME="$JAVA_HOME_DIR"
 export PATH="$JAVA_HOME/bin:$PATH"
 export PATH="$SYSTEM_PATH:$PATH"
+export PLATFORM_CORS_ALLOWED_ORIGIN_PATTERNS="${PLATFORM_CORS_ALLOWED_ORIGIN_PATTERNS:-http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}"
 
 # Local fallback for empty DB when migrations are not present.
 export SPRING_JPA_HIBERNATE_DDL_AUTO="${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}"

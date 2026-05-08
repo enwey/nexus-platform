@@ -1,5 +1,6 @@
 package com.nexus.platform.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record OpsDiscoverConfigUpdateRequest(
@@ -25,7 +26,11 @@ public record OpsDiscoverConfigUpdateRequest(
             String title,
             String subtitle,
             String badgeText,
-            String coverUrl
+            String coverUrl,
+            String status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Integer sortOrder
     ) {
     }
 
@@ -37,7 +42,11 @@ public record OpsDiscoverConfigUpdateRequest(
             String articleTag,
             String articleTitle,
             String articleBody,
-            String actionText
+            String actionText,
+            String status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Integer sortOrder
     ) {
     }
 }

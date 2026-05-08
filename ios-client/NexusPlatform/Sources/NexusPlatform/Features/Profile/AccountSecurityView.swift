@@ -12,7 +12,7 @@ struct AccountSecurityView: View {
     let onLogoutCurrent: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
-    @State private var biometricEnabled = true
+    @StateObject private var biometricController = BiometricAuthController.shared
     @State private var showLogoutConfirm = false
     @State private var showChangePassword = false
     @State private var showDeviceManagement = false
@@ -49,6 +49,10 @@ struct AccountSecurityView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            biometricController.loadIfNeeded()
+            biometricController.refreshAvailability()
+        }
         .confirmationDialog(copy.logoutButton, isPresented: $showLogoutConfirm, titleVisibility: .visible) {
             Button(copy.confirm, role: .destructive) {
                 onLogoutCurrent?()
@@ -87,9 +91,10 @@ struct AccountSecurityView: View {
             accountMenuItem(
                 icon: "🧬",
                 title: copy.biometric,
-                subtitle: copy.biometricSubtitle,
+                subtitle: biometricSubtitle,
                 showSwitch: true,
-                switchBinding: $biometricEnabled
+                switchBinding: biometricBinding,
+                switchDisabled: biometricController.availability.supported == false
             )
 
             divider
@@ -116,6 +121,35 @@ struct AccountSecurityView: View {
         )
     }
 
+    private var biometricBinding: Binding<Bool> {
+        Binding(
+            get: { biometricController.isEnabled },
+            set: { newValue in
+                Task {
+                    let result = await biometricController.updateEnabled(newValue, language: selectedLanguage)
+                    await MainActor.run {
+                        switch result {
+                        case .enabled:
+                            toastMessage = copy.biometricEnabledMessage
+                        case .disabled:
+                            toastMessage = copy.biometricDisabledMessage
+                        case .failed(let message):
+                            toastMessage = message
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    private var biometricSubtitle: String {
+        if biometricController.availability.supported {
+            let title = biometricController.availability.kind.title(for: selectedLanguage)
+            return copy.biometricSupportedSubtitle.replacingOccurrences(of: "{biometric}", with: title)
+        }
+        return copy.biometricUnavailableSubtitle
+    }
+
     private func accountMenuItem(
         icon: String,
         title: String,
@@ -123,6 +157,7 @@ struct AccountSecurityView: View {
         showChevron: Bool = false,
         showSwitch: Bool = false,
         switchBinding: Binding<Bool> = .constant(false),
+        switchDisabled: Bool = false,
         action: @escaping () -> Void = {}
     ) -> some View {
         Button {
@@ -150,6 +185,7 @@ struct AccountSecurityView: View {
                     Toggle("", isOn: switchBinding)
                         .labelsHidden()
                         .tint(Color(hex: 0x6B4EFF))
+                        .disabled(switchDisabled)
                 } else if showChevron {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
@@ -687,7 +723,10 @@ private struct AccountSecurityCopy {
     let changePassword: String
     let changePasswordSubtitle: String
     let biometric: String
-    let biometricSubtitle: String
+    let biometricSupportedSubtitle: String
+    let biometricUnavailableSubtitle: String
+    let biometricEnabledMessage: String
+    let biometricDisabledMessage: String
     let deviceSection: String
     let deviceManagement: String
     let deviceManagementSubtitle: String
@@ -708,7 +747,10 @@ private struct AccountSecurityCopy {
                 changePassword: "修改密码",
                 changePasswordSubtitle: "更新当前账号的登录密码",
                 biometric: "生物识别",
-                biometricSubtitle: "使用 Face ID 或 Touch ID 快速验证",
+                biometricSupportedSubtitle: "使用 {biometric} 快速验证",
+                biometricUnavailableSubtitle: "当前设备暂不支持生物识别验证",
+                biometricEnabledMessage: "生物识别已开启",
+                biometricDisabledMessage: "生物识别已关闭",
                 deviceSection: "设备与账号",
                 deviceManagement: "设备管理",
                 deviceManagementSubtitle: "查看当前已登录设备",
@@ -727,7 +769,10 @@ private struct AccountSecurityCopy {
                 changePassword: "修改密碼",
                 changePasswordSubtitle: "更新目前帳號的登入密碼",
                 biometric: "生物辨識",
-                biometricSubtitle: "使用 Face ID 或 Touch ID 快速驗證",
+                biometricSupportedSubtitle: "使用 {biometric} 快速驗證",
+                biometricUnavailableSubtitle: "目前裝置暫不支援生物辨識驗證",
+                biometricEnabledMessage: "生物辨識已開啟",
+                biometricDisabledMessage: "生物辨識已關閉",
                 deviceSection: "裝置與帳號",
                 deviceManagement: "裝置管理",
                 deviceManagementSubtitle: "查看目前已登入裝置",
@@ -746,7 +791,10 @@ private struct AccountSecurityCopy {
                 changePassword: "Change Password",
                 changePasswordSubtitle: "Update the password for this account",
                 biometric: "Biometric Login",
-                biometricSubtitle: "Use Face ID or Touch ID for quick verification",
+                biometricSupportedSubtitle: "Use {biometric} for quick verification",
+                biometricUnavailableSubtitle: "Biometric verification is not available on this device",
+                biometricEnabledMessage: "Biometric login enabled",
+                biometricDisabledMessage: "Biometric login disabled",
                 deviceSection: "Devices & Account",
                 deviceManagement: "Device Management",
                 deviceManagementSubtitle: "See devices currently signed in",

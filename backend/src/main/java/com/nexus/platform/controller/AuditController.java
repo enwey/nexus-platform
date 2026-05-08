@@ -1,7 +1,7 @@
 package com.nexus.platform.controller;
 
+import com.nexus.platform.dto.AuditLogItemDto;
 import com.nexus.platform.dto.Result;
-import com.nexus.platform.entity.AuditLog;
 import com.nexus.platform.service.AuditLogService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,13 @@ public class AuditController {
     private final AuditLogService auditLogService;
 
     @GetMapping("/logs")
-    public Result<List<AuditLog>> getAuditLogs(@RequestParam(defaultValue = "50") int limit) {
-        return Result.success(auditLogService.getRecentLogs(limit));
+    public Result<List<AuditLogItemDto>> getAuditLogs(
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) Boolean success,
+            @RequestParam(required = false) Long operatorId,
+            @RequestParam(required = false) String targetAppId
+    ) {
+        return Result.success(auditLogService.searchLogs(action, success, operatorId, targetAppId, limit));
     }
 }
-

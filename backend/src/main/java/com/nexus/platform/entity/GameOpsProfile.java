@@ -49,6 +49,33 @@ public class GameOpsProfile {
     @Column(name = "discover_card_logo_url", length = 512)
     private String discoverCardLogoUrl;
 
+    @Column(name = "marketing_tagline", length = 160)
+    private String marketingTagline;
+
+    @Column(name = "marketing_summary", length = 500)
+    private String marketingSummary;
+
+    @Column(name = "feature_highlights_json")
+    private String featureHighlightsJson;
+
+    @Column(name = "target_audience", length = 120)
+    private String targetAudience;
+
+    @Column(name = "support_email", length = 160)
+    private String supportEmail;
+
+    @Column(name = "support_url", length = 512)
+    private String supportUrl;
+
+    @Column(name = "community_url", length = 512)
+    private String communityUrl;
+
+    @Column(name = "compliance_note", length = 500)
+    private String complianceNote;
+
+    @Column(name = "operations_status", nullable = false, length = 32)
+    private String operationsStatus = "DRAFT";
+
     @Column(name = "updated_by")
     private Long updatedBy;
 
@@ -60,6 +87,9 @@ public class GameOpsProfile {
 
     @PrePersist
     protected void onCreate() {
+        if (operationsStatus == null || operationsStatus.isBlank()) {
+            operationsStatus = "DRAFT";
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

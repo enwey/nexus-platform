@@ -6,6 +6,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
 @Component
 @Slf4j
 public class SecuritySanityCheck implements CommandLineRunner {
@@ -37,10 +41,40 @@ public class SecuritySanityCheck implements CommandLineRunner {
     @Value("${spring.mail.host:}")
     private String mailHost;
 
+    @Value("${platform.public-base-url:}")
+    private String publicBaseUrl;
+
+    @Value("${platform.legal.terms-html:}")
+    private String termsHtml;
+
+    @Value("${platform.legal.privacy-html:}")
+    private String privacyHtml;
+
+    @Value("${platform.legal.terms-title:}")
+    private String termsTitle;
+
+    @Value("${platform.legal.privacy-title:}")
+    private String privacyTitle;
+
+    @Value("${platform.share.android-install-url:}")
+    private String androidInstallUrl;
+
+    @Value("${platform.share.ios-install-url:}")
+    private String iosInstallUrl;
+
+    @Value("${platform.share.other-install-url:}")
+    private String otherInstallUrl;
+
+    @Value("${platform.share.app-scheme-template:}")
+    private String appSchemeTemplate;
+
+    private final PlatformCorsProperties corsProperties;
+
     private final Environment environment;
 
-    public SecuritySanityCheck(Environment environment) {
+    public SecuritySanityCheck(Environment environment, PlatformCorsProperties corsProperties) {
         this.environment = environment;
+        this.corsProperties = corsProperties;
     }
 
     @Override
@@ -85,6 +119,9 @@ public class SecuritySanityCheck implements CommandLineRunner {
                     "Insecure runtime ticket signing key detected. Please set PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_SIGNING_KEY with a strong value.");
         }
 
+        validateCors(enforce, prodProfile);
+        validatePublicFacingConfiguration(enforce, prodProfile);
+
         if (!emailEnabled) {
             throw new IllegalStateException("Email delivery must be enabled. Please set PLATFORM_EMAIL_ENABLED=true.");
         }
@@ -96,5 +133,67 @@ public class SecuritySanityCheck implements CommandLineRunner {
         if (emailFromAddress == null || emailFromAddress.isBlank()) {
             throw new IllegalStateException("Email delivery is enabled but PLATFORM_EMAIL_FROM is not set.");
         }
+    }
+
+    private void validateCors(boolean enforce, boolean prodProfile) {
+        if (!enforce) {
+            return;
+        }
+        List<String> allowedOrigins = corsProperties.getAllowedOriginPatterns();
+        if (allowedOrigins == null || allowedOrigins.stream().noneMatch(origin -> origin != null && !origin.isBlank())) {
+            throw new IllegalStateException("CORS origin patterns must be configured. Please set PLATFORM_CORS_ALLOWED_ORIGIN_PATTERNS.");
+        }
+        if (prodProfile && allowedOrigins.stream().anyMatch(this::isLocalAddress)) {
+            throw new IllegalStateException("CORS origin patterns must not contain localhost or loopback origins in production.");
+        }
+    }
+
+    private void validatePublicFacingConfiguration(boolean enforce, boolean prodProfile) {
+        if (!enforce) {
+            return;
+        }
+        validateAbsoluteUrl(publicBaseUrl, "PLATFORM_PUBLIC_BASE_URL", prodProfile);
+        requireText(termsTitle, "PLATFORM_LEGAL_TERMS_TITLE");
+        requireText(termsHtml, "PLATFORM_LEGAL_TERMS_HTML");
+        requireText(privacyTitle, "PLATFORM_LEGAL_PRIVACY_TITLE");
+        requireText(privacyHtml, "PLATFORM_LEGAL_PRIVACY_HTML");
+        requireText(appSchemeTemplate, "PLATFORM_SHARE_APP_SCHEME_TEMPLATE");
+        if (!appSchemeTemplate.contains("%s")) {
+            throw new IllegalStateException("PLATFORM_SHARE_APP_SCHEME_TEMPLATE must contain a %s placeholder for the app id.");
+        }
+        validateAbsoluteUrl(androidInstallUrl, "PLATFORM_SHARE_ANDROID_INSTALL_URL", prodProfile);
+        validateAbsoluteUrl(iosInstallUrl, "PLATFORM_SHARE_IOS_INSTALL_URL", prodProfile);
+        validateAbsoluteUrl(otherInstallUrl, "PLATFORM_SHARE_OTHER_INSTALL_URL", prodProfile);
+    }
+
+    private void requireText(String value, String propertyName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(propertyName + " must be configured with non-empty production content.");
+        }
+    }
+
+    private void validateAbsoluteUrl(String value, String propertyName, boolean prodProfile) {
+        requireText(value, propertyName);
+        try {
+            URI uri = new URI(value);
+            if (!uri.isAbsolute() || uri.getHost() == null || uri.getHost().isBlank()) {
+                throw new IllegalStateException(propertyName + " must be a valid absolute URL.");
+            }
+            if (prodProfile && isLocalAddress(uri.getHost())) {
+                throw new IllegalStateException(propertyName + " must not point to localhost or loopback hosts in production.");
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(propertyName + " must be a valid absolute URL.", e);
+        }
+    }
+
+    private boolean isLocalAddress(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.toLowerCase();
+        return normalized.contains("localhost")
+                || normalized.contains("127.0.0.1")
+                || normalized.contains("::1");
     }
 }

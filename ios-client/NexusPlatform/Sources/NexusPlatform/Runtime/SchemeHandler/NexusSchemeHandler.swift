@@ -28,12 +28,16 @@ final class NexusSchemeHandler: NSObject, WKURLSchemeHandler {
         }
 
         do {
-            let data = try Data(contentsOf: fileURL)
+            let values = try fileURL.resourceValues(forKeys: [.fileSizeKey])
+            let data = try Data(contentsOf: fileURL, options: [.mappedIfSafe])
             guard !isCancelled(taskID: taskID) else {
                 return
             }
 
-            let headers = ["Content-Type": MIMETypeResolver.resolve(for: fileURL.pathExtension)]
+            var headers = ["Content-Type": MIMETypeResolver.resolve(for: fileURL.pathExtension)]
+            if let fileSize = values.fileSize, fileSize > 0 {
+                headers["Content-Length"] = String(fileSize)
+            }
             let response = HTTPURLResponse(
                 url: requestURL,
                 statusCode: 200,

@@ -31,15 +31,14 @@ actor LocalGameMetadataResolver {
 
         let manifestURL = local.rootDirectory.appendingPathComponent("manifest.json")
         guard let data = try? Data(contentsOf: manifestURL),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+              let manifest = try? JSONDecoder().decode(HostedMiniAppManifest.self, from: data) else {
             return localizedRemote
         }
 
-        let manifest = ParsedManifest(payload: json)
-        let mergedLocalizedNames = localizedRemote.localizedNames.merging(manifest.localizedNames) { _, new in new }
-        let mergedLocalizedDescriptions = localizedRemote.localizedDescriptions.merging(manifest.localizedDescriptions) { _, new in new }
+        let mergedLocalizedNames = localizedRemote.localizedNames.merging(extract(field: \.name, from: manifest.resolvedLocales)) { _, new in new }
+        let mergedLocalizedDescriptions = localizedRemote.localizedDescriptions.merging(extract(field: \.description, from: manifest.resolvedLocales)) { _, new in new }
         let iconURL: String? = {
-            guard let iconPath = manifest.iconPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+            guard let iconPath = manifest.resolvedIconPath?.trimmingCharacters(in: .whitespacesAndNewlines),
                   iconPath.isEmpty == false else {
                 return localizedRemote.iconUrl
             }
@@ -47,42 +46,27 @@ actor LocalGameMetadataResolver {
             return FileManager.default.fileExists(atPath: fileURL.path) ? fileURL.absoluteString : localizedRemote.iconUrl
         }()
 
+        let localizedName = localizedValue(
+            values: extract(field: \.name, from: manifest.resolvedLocales),
+            language: language,
+            fallback: manifest.name ?? ""
+        )
+        let localizedDescription = localizedValue(
+            values: extract(field: \.description, from: manifest.resolvedLocales),
+            language: language,
+            fallback: manifest.description ?? ""
+        )
+
         return localizedRemote.applyingPresentation(
-            name: manifest.localizedName(for: language).ifEmpty(localizedRemote.name),
-            description: manifest.localizedDescription(for: language).ifEmpty(localizedRemote.description),
+            name: localizedName.ifEmpty(localizedRemote.name),
+            description: localizedDescription.ifEmpty(localizedRemote.description),
             iconUrl: iconURL,
             localizedNames: mergedLocalizedNames,
             localizedDescriptions: mergedLocalizedDescriptions
         )
     }
-}
 
-private struct ParsedManifest {
-    let name: String
-    let description: String
-    let iconPath: String?
-    let localizedNames: [String: String]
-    let localizedDescriptions: [String: String]
-
-    init(payload: [String: Any]) {
-        let metadata = payload["metadata"] as? [String: Any]
-        let locales = (metadata?["locales"] as? [String: Any]) ?? (payload["locales"] as? [String: Any]) ?? [:]
-        self.name = payload["name"] as? String ?? ""
-        self.description = payload["description"] as? String ?? ""
-        self.iconPath = (metadata?["icon"] as? String) ?? (payload["icon"] as? String)
-        self.localizedNames = Self.extract(field: "name", from: locales)
-        self.localizedDescriptions = Self.extract(field: "description", from: locales)
-    }
-
-    func localizedName(for language: AppLanguage) -> String {
-        resolve(values: localizedNames, language: language, fallback: name)
-    }
-
-    func localizedDescription(for language: AppLanguage) -> String {
-        resolve(values: localizedDescriptions, language: language, fallback: description)
-    }
-
-    private func resolve(values: [String: String], language: AppLanguage, fallback: String) -> String {
+    private func localizedValue(values: [String: String], language: AppLanguage, fallback: String) -> String {
         guard values.isEmpty == false else { return fallback }
         let target = language.rawValue.lowercased()
         let languageOnly = target.split(separator: "-").first.map(String.init) ?? target
@@ -93,10 +77,12 @@ private struct ParsedManifest {
             ?? fallback
     }
 
-    private static func extract(field: String, from locales: [String: Any]) -> [String: String] {
-        locales.compactMapValues { value in
-            guard let dict = value as? [String: Any],
-                  let text = dict[field] as? String,
+    private func extract(
+        field: KeyPath<HostedMiniAppManifestLocale, String?>,
+        from locales: [String: HostedMiniAppManifestLocale]
+    ) -> [String: String] {
+        locales.compactMapValues { locale in
+            guard let text = locale[keyPath: field]?.trimmingCharacters(in: .whitespacesAndNewlines),
                   text.isEmpty == false else {
                 return nil
             }

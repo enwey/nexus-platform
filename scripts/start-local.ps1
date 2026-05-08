@@ -22,18 +22,23 @@ if (-not $dockerOk) {
 }
 
 Write-Host ""
-Write-Host "[1/3] Starting infrastructure..."
+Write-Host "[1/4] Starting infrastructure..."
 npm.cmd run infra:up
 
 Write-Host ""
-Write-Host "[2/3] Starting backend..."
+Write-Host "[2/4] Starting backend..."
 Start-Process powershell -ArgumentList '-ExecutionPolicy', 'Bypass', '-NoExit', '-Command', "& '$PSScriptRoot\env-local.ps1'; mvn -f '$root\backend\pom.xml' spring-boot:run"
 
 Write-Host ""
-Write-Host "[3/3] Starting dev portal..."
+Write-Host "[3/4] Starting dev portal..."
 Start-Process powershell -ArgumentList '-ExecutionPolicy', 'Bypass', '-NoExit', '-Command', "Set-Location '$root'; npm.cmd run dev:portal"
 
 Write-Host ""
+Write-Host "[4/4] Starting ops portal..."
+Start-Process powershell -ArgumentList '-ExecutionPolicy', 'Bypass', '-NoExit', '-Command', "Set-Location '$root'; npm.cmd run dev:ops"
+
+Write-Host ""
 Write-Host "Startup commands launched."
-Write-Host "Portal:  http://localhost:5173"
-Write-Host "Backend: http://localhost:8080/api/v1/actuator/health"
+Write-Host "Dev Portal: http://localhost:5173"
+Write-Host "Ops Portal: http://localhost:5174"
+Write-Host "Backend:    http://localhost:8080/api/v1/actuator/health"

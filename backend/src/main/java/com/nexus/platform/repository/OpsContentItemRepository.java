@@ -23,6 +23,8 @@ public interface OpsContentItemRepository extends JpaRepository<OpsContentItem, 
 
     List<OpsContentItem> findBySlotIdOrderBySortOrderAscUpdatedAtDesc(Long slotId);
 
+    List<OpsContentItem> findByIdIn(List<Long> ids);
+
     void deleteBySlotId(Long slotId);
 
     long countBySlotIdAndBadgeText(Long slotId, String badgeText);

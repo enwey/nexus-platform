@@ -24,13 +24,17 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>用于验证账号身份，保护你的登录与账号安全内容。</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>允许访问本地网络服务器以加载游戏、推荐与账号数据。</string>
 	<key>UIApplicationSceneManifest</key>

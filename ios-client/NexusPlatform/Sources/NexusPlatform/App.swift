@@ -43,6 +43,8 @@ struct RootTabView: View {
 
     @State private var selection: Tab = .library
     @State private var language: AppLanguage = AppLanguageStore.currentSync()
+    @StateObject private var biometricController = BiometricAuthController.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: $selection) {
@@ -82,12 +84,119 @@ struct RootTabView: View {
         .tint(Color(hex: 0x6B4EFF))
         .toolbarBackground(Color(hex: 0x121212), for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+        .overlay {
+            if biometricController.isEnabled && biometricController.isLocked {
+                BiometricLockOverlay(
+                    language: language,
+                    biometricTitle: biometricController.availability.kind.title(for: language),
+                    isAuthenticating: biometricController.isAuthenticating,
+                    onUnlock: {
+                        biometricController.unlock(language: language)
+                    }
+                )
+            }
+        }
+        .onAppear {
+            biometricController.loadIfNeeded()
+            biometricController.handleScenePhase(scenePhase)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            biometricController.handleScenePhase(newPhase)
+        }
         .onReceive(NotificationCenter.default.publisher(for: AppLanguageStore.didChangeNotification)) { notification in
             if let language = notification.object as? AppLanguage {
                 self.language = language
             } else {
                 language = AppLanguageStore.currentSync()
             }
+        }
+    }
+}
+
+private struct BiometricLockOverlay: View {
+    let language: AppLanguage
+    let biometricTitle: String
+    let isAuthenticating: Bool
+    let onUnlock: () -> Void
+
+    private var copy: BiometricOverlayCopy {
+        .forLanguage(language)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.78)
+                .ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(.white)
+
+                Text(copy.title)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white)
+
+                Text(copy.message.replacingOccurrences(of: "{biometric}", with: biometricTitle))
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.white.opacity(0.72))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+
+                Button {
+                    onUnlock()
+                } label: {
+                    Text(isAuthenticating ? copy.authenticating : copy.button)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Color(hex: 0x6B4EFF), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(isAuthenticating)
+            }
+            .padding(24)
+            .frame(maxWidth: 320)
+            .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .padding(.horizontal, 24)
+        }
+    }
+}
+
+private struct BiometricOverlayCopy {
+    let title: String
+    let message: String
+    let button: String
+    let authenticating: String
+
+    static func forLanguage(_ language: AppLanguage) -> BiometricOverlayCopy {
+        switch language {
+        case .simplifiedChinese:
+            return .init(
+                title: "需要身份验证",
+                message: "请使用 {biometric} 或设备密码继续访问账号内容。",
+                button: "立即验证",
+                authenticating: "验证中..."
+            )
+        case .traditionalChinese:
+            return .init(
+                title: "需要身分驗證",
+                message: "請使用 {biometric} 或裝置密碼繼續存取帳號內容。",
+                button: "立即驗證",
+                authenticating: "驗證中..."
+            )
+        case .english:
+            return .init(
+                title: "Verification Required",
+                message: "Use {biometric} or your device passcode to continue.",
+                button: "Verify Now",
+                authenticating: "Verifying..."
+            )
         }
     }
 }
@@ -333,6 +442,14 @@ enum AppText {
         }
     }
 
+    static func invalidHostedManifest(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
+        switch language {
+        case .simplifiedChinese: return "小游戏清单无效，请重新上传符合规范的包"
+        case .traditionalChinese: return "小遊戲清單無效，請重新上傳符合規範的包"
+        case .english: return "Mini app manifest is invalid. Please upload a compliant package."
+        }
+    }
+
     static func invalidSecurePackage(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
         switch language {
         case .simplifiedChinese: return "游戏安全包无效"
@@ -418,6 +535,38 @@ enum AppText {
         case .simplifiedChinese: return "云同步已关闭"
         case .traditionalChinese: return "雲端同步已關閉"
         case .english: return "Cloud sync disabled"
+        }
+    }
+
+    static func biometricUnavailable(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
+        switch language {
+        case .simplifiedChinese: return "当前设备暂不支持生物识别验证"
+        case .traditionalChinese: return "目前裝置暫不支援生物辨識驗證"
+        case .english: return "Biometric verification is not available on this device"
+        }
+    }
+
+    static func biometricEnableFailed(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
+        switch language {
+        case .simplifiedChinese: return "生物识别未开启，请完成系统验证后重试"
+        case .traditionalChinese: return "生物辨識未開啟，請完成系統驗證後再試一次"
+        case .english: return "Biometric login was not enabled. Complete system verification and try again."
+        }
+    }
+
+    static func biometricEnableReason(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
+        switch language {
+        case .simplifiedChinese: return "开启生物识别，用于保护账号安全"
+        case .traditionalChinese: return "開啟生物辨識，用於保護帳號安全"
+        case .english: return "Enable biometric login to protect your account"
+        }
+    }
+
+    static func biometricUnlockReason(_ language: AppLanguage = AppLanguageStore.currentSync()) -> String {
+        switch language {
+        case .simplifiedChinese: return "验证身份后继续访问账号内容"
+        case .traditionalChinese: return "驗證身分後繼續存取帳號內容"
+        case .english: return "Verify your identity to continue"
         }
     }
 }

@@ -26,4 +26,8 @@ public interface GameVersionRepository extends JpaRepository<GameVersion, Long> 
     Optional<GameVersion> findByIdAndGameId(Long id, Long gameId);
 
     List<GameVersion> findByGameIdOrderByCreatedAtDesc(Long gameId);
+
+    boolean existsByGameIdAndStatus(Long gameId, GameVersion.VersionStatus status);
+
+    boolean existsByGameIdAndSourceMd5AndIdNot(Long gameId, String sourceMd5, Long id);
 }

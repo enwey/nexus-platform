@@ -51,12 +51,12 @@ public class UserService {
         return Result.success(new AuthResponse(accessToken, refreshToken, UserProfileDto.from(savedUser)));
     }
 
-    public Result<AuthResponse> login(String loginId, String password, String clientIp) {
+    public Result<AuthResponse> login(String loginId, String password, String clientIp, String deviceId, String userAgent) {
         String normalizedLoginId = normalizeEmail(loginId);
         if (normalizedLoginId == null) {
             return Result.error("Email is required");
         }
-        String blockedReason = loginSecurityService.getBlockReason(normalizedLoginId, clientIp);
+        String blockedReason = loginSecurityService.getBlockReason(normalizedLoginId, clientIp, deviceId);
         if (blockedReason != null) {
             return Result.error(429, blockedReason);
         }
@@ -66,16 +66,21 @@ public class UserService {
             user = userRepository.findByUsernameIgnoreCase(normalizedLoginId).orElse(null);
         }
         if (user == null) {
-            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp);
+            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp, deviceId, userAgent, "User not found");
             return Result.error("User not found");
+        }
+        String governanceBlockReason = accountOpsService.getAccountBlockReason(user);
+        if (governanceBlockReason != null) {
+            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp, deviceId, userAgent, governanceBlockReason);
+            return Result.error(403, governanceBlockReason);
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp);
+            loginSecurityService.onLoginFailed(normalizedLoginId, clientIp, deviceId, userAgent, "Incorrect password");
             return Result.error("Incorrect password");
         }
 
-        loginSecurityService.onLoginSuccess(normalizedLoginId, clientIp);
+        loginSecurityService.onLoginSuccess(normalizedLoginId, user.getId(), clientIp, deviceId, userAgent);
         String accessToken = authTokenService.issueAccessToken(user);
         String refreshToken = authTokenService.issueRefreshToken(user);
         accountOpsService.recordDeviceLogin(user, clientIp, authTokenService.extractDeviceId(accessToken));
@@ -86,6 +91,11 @@ public class UserService {
         AuthTokenService.TokenPair pair = authTokenService.rotateByRefreshToken(refreshToken);
         if (pair == null) {
             return Result.error("Refresh token is invalid or expired");
+        }
+        String governanceBlockReason = accountOpsService.getAccountBlockReason(pair.user());
+        if (governanceBlockReason != null) {
+            authTokenService.markUserTokensInvalidBefore(pair.user().getId());
+            return Result.error(403, governanceBlockReason);
         }
         return Result.success(new AuthResponse(pair.accessToken(), pair.refreshToken(), UserProfileDto.from(pair.user())));
     }

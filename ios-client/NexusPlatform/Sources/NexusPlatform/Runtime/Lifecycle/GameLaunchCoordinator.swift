@@ -5,6 +5,10 @@ struct GameLaunchResult: Sendable {
     let forceUpdated: Bool
 }
 
+extension Notification.Name {
+    static let gameLocalMetadataDidChange = Notification.Name("gameLocalMetadataDidChange")
+}
+
 enum GameLaunchError: LocalizedError {
     case updateCheckFailed(String)
     case packageInstallFailed(String)
@@ -71,6 +75,7 @@ actor GameLaunchCoordinator {
                     md5: updateInfo?.md5,
                     forceProgress: forceProgress
                 )
+                notifyLocalMetadataChanged(gameID: game.id)
                 await updateState.markNoUpdate(gameID: game.id)
                 return GameLaunchResult(activeVersion: latest, forceUpdated: true)
             } catch {
@@ -87,6 +92,7 @@ actor GameLaunchCoordinator {
                     _ = try await storage.install(package: descriptor, mode: .silent, onProgress: forceProgress)
                     try await storage.activate(gameID: game.id, version: latest)
                     try await storage.pruneObsoleteVersions(gameID: game.id, keeping: [latest])
+                    notifyLocalMetadataChanged(gameID: game.id)
                     await updateState.markNoUpdate(gameID: game.id)
                     return GameLaunchResult(activeVersion: latest, forceUpdated: false)
                 }
@@ -95,6 +101,7 @@ actor GameLaunchCoordinator {
                 _ = try await storage.install(package: fallbackDescriptor, mode: .silent, onProgress: forceProgress)
                 try await storage.activate(gameID: game.id, version: fallbackDescriptor.version)
                 try await storage.pruneObsoleteVersions(gameID: game.id, keeping: [fallbackDescriptor.version])
+                notifyLocalMetadataChanged(gameID: game.id)
                 await updateState.markNoUpdate(gameID: game.id)
                 return GameLaunchResult(activeVersion: fallbackDescriptor.version, forceUpdated: false)
             } catch {
@@ -159,5 +166,9 @@ actor GameLaunchCoordinator {
             }
         }
         throw lastError ?? GameLaunchError.packageInstallFailed("未知错误")
+    }
+
+    private func notifyLocalMetadataChanged(gameID: String) {
+        NotificationCenter.default.post(name: .gameLocalMetadataDidChange, object: gameID)
     }
 }

@@ -25,6 +25,7 @@
         </el-table-column>
         <el-table-column :label="lt('操作', '操作', 'Actions')" width="220" fixed="right">
           <template #default="{ row }">
+            <el-button type="info" plain size="small" @click="inspectVersion(row)">{{ lt('版本检查', '版本檢查', 'Version Check') }}</el-button>
             <el-button v-if="row.status === 'DRAFT' || row.status === 'REJECTED'" type="warning" size="small" @click="handleSubmit(row)">{{ lt('提交审核', '提交審核', 'Submit For Review') }}</el-button>
             <el-button v-if="row.status === 'PENDING'" type="success" size="small" @click="handleApprove(row)">{{ lt('通过', '通過', 'Approve') }}</el-button>
             <el-button v-if="row.status === 'PENDING'" type="danger" size="small" @click="handleReject(row)">{{ lt('拒绝', '拒絕', 'Reject') }}</el-button>
@@ -39,7 +40,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { approveGame, getGameList, logoutSession, rejectGame, submitGameForAudit } from '../api'
+import { approveGame, getGameList, getGameVersions, logoutSession, rejectGame, submitGameForAudit } from '../api'
 import { useUserStore } from '../stores/user'
 import { useI18nLite } from '../i18n'
 
@@ -60,6 +61,12 @@ const getStatusText = (status) => {
   return map[status] || status || lt('未知', '未知', 'Unknown')
 }
 const getStatusType = (status) => ({ PROCESSING: 'warning', DRAFT: 'info', PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[status] || 'info')
+
+const manifestStatusText = (value) => {
+  if (value === true) return lt('通过', '通過', 'Passed')
+  if (value === false) return lt('未通过', '未通過', 'Failed')
+  return lt('未知', '未知', 'Unknown')
+}
 
 const loadGames = async () => {
   loading.value = true
@@ -107,6 +114,34 @@ const handleReject = async (row) => {
   } catch (error) {
     if (error !== 'cancel') ElMessage.error(error.message || lt('审核操作失败', '審核操作失敗', 'Review action failed'))
   }
+}
+
+const inspectVersion = async (row) => {
+  let latestVersionText = row.version || lt('暂无', '暫無', 'N/A')
+  let manifestStatus = lt('暂无', '暫無', 'N/A')
+  let manifestSummary = lt('暂无', '暫無', 'N/A')
+
+  try {
+    const res = await getGameVersions(row.id)
+    const latest = Array.isArray(res.data) ? res.data[0] : null
+    if (latest) {
+      latestVersionText = latest.versionName || latestVersionText
+      manifestStatus = manifestStatusText(latest.hostedManifestValid)
+      manifestSummary = latest.hostedManifestSummary || manifestSummary
+    }
+  } catch (error) {
+    manifestSummary = error.message || lt('加载版本检查结果失败', '載入版本檢查結果失敗', 'Failed to load manifest inspection result')
+  }
+
+  await ElMessageBox.alert(
+    lt(
+      `游戏名称：${row.name}\n版本：${latestVersionText}\n状态：${getStatusText(row.status)}\nManifest 检查：${manifestStatus}\nManifest 摘要：${manifestSummary}`,
+      `遊戲名稱：${row.name}\n版本：${latestVersionText}\n狀態：${getStatusText(row.status)}\nManifest 檢查：${manifestStatus}\nManifest 摘要：${manifestSummary}`,
+      `Game: ${row.name}\nVersion: ${latestVersionText}\nStatus: ${getStatusText(row.status)}\nManifest Check: ${manifestStatus}\nManifest Summary: ${manifestSummary}`
+    ),
+    lt('版本检查', '版本檢查', 'Version Check'),
+    { confirmButtonText: lt('知道了', '知道了', 'OK') }
+  )
 }
 
 const handleSubmit = async (row) => {

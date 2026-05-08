@@ -7,7 +7,7 @@ PROJECT_PATH="$ROOT/NexusPlatformApp.xcodeproj"
 SCHEME="NexusPlatformApp"
 DERIVED_DATA_PATH="$ROOT/.build/ios-device"
 DEVICE_ID="${1:-}"
-PLATFORM_API_BASE_URL="${PLATFORM_API_BASE_URL:-${BACKEND_BASE_URL:-http://47.99.34.148:81/api/v1}}"
+PLATFORM_API_BASE_URL="${PLATFORM_API_BASE_URL:-${BACKEND_BASE_URL:-}}"
 BACKEND_CERT_SHA256="${BACKEND_CERT_SHA256:-}"
 USER_SUFFIX="${USER//[^[:alnum:]]/}"
 USER_SUFFIX="${USER_SUFFIX:l}"
@@ -24,6 +24,13 @@ if [[ -z "$DEVICE_ID" ]]; then
   echo
   echo "Known devices:"
   xcrun xcdevice list
+  exit 1
+fi
+
+if [[ -z "$PLATFORM_API_BASE_URL" ]]; then
+  echo "Missing PLATFORM_API_BASE_URL."
+  echo "Inject your backend API base URL explicitly before running this script."
+  echo 'Example: PLATFORM_API_BASE_URL=http://<your-mac-lan-ip>:8080/api/v1 ./scripts/run-ios-device.sh <device-udid>'
   exit 1
 fi
 

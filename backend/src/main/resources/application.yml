@@ -9,7 +9,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -62,18 +62,24 @@ security:
     refresh-ttl-days: ${SECURITY_JWT_REFRESH_TTL_DAYS:14}
 
 platform:
-  public-base-url: ${PLATFORM_API_BASE_URL:${PLATFORM_PUBLIC_BASE_URL:http://47.99.34.148:81/api/v1}}
+  public-base-url: ${PLATFORM_API_BASE_URL:${PLATFORM_PUBLIC_BASE_URL:}}
   cdn-base-url: ${PLATFORM_CDN_BASE_URL:}
+  cors:
+    allowed-origin-patterns: ${PLATFORM_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174}
+    allowed-methods: ${PLATFORM_CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,PATCH,OPTIONS}
+    allowed-headers: ${PLATFORM_CORS_ALLOWED_HEADERS:*}
+    allow-credentials: ${PLATFORM_CORS_ALLOW_CREDENTIALS:true}
+    max-age-seconds: ${PLATFORM_CORS_MAX_AGE_SECONDS:3600}
   legal:
-    terms-title: ${PLATFORM_LEGAL_TERMS_TITLE:Nexus User Agreement}
-    terms-html: ${PLATFORM_LEGAL_TERMS_HTML:<p>Welcome to Nexus Platform.</p><p>This is the default user agreement content.</p>}
-    privacy-title: ${PLATFORM_LEGAL_PRIVACY_TITLE:Nexus Privacy Policy}
-    privacy-html: ${PLATFORM_LEGAL_PRIVACY_HTML:<p>Welcome to Nexus Platform.</p><p>This is the default privacy policy content.</p>}
+    terms-title: ${PLATFORM_LEGAL_TERMS_TITLE:}
+    terms-html: ${PLATFORM_LEGAL_TERMS_HTML:}
+    privacy-title: ${PLATFORM_LEGAL_PRIVACY_TITLE:}
+    privacy-html: ${PLATFORM_LEGAL_PRIVACY_HTML:}
   share:
-    app-scheme-template: ${PLATFORM_SHARE_APP_SCHEME_TEMPLATE:bringbox://game/%s}
-    android-install-url: ${PLATFORM_SHARE_ANDROID_INSTALL_URL:https://play.google.com/store/apps/details?id=com.nexus.platform}
-    ios-install-url: ${PLATFORM_SHARE_IOS_INSTALL_URL:https://apps.apple.com}
-    other-install-url: ${PLATFORM_SHARE_OTHER_INSTALL_URL:https://bringbox.com/download}
+    app-scheme-template: ${PLATFORM_SHARE_APP_SCHEME_TEMPLATE:}
+    android-install-url: ${PLATFORM_SHARE_ANDROID_INSTALL_URL:}
+    ios-install-url: ${PLATFORM_SHARE_IOS_INSTALL_URL:}
+    other-install-url: ${PLATFORM_SHARE_OTHER_INSTALL_URL:}
   game-package:
     master-key: ${PLATFORM_GAME_PACKAGE_MASTER_KEY:nexus-platform-dev-master-key}
     runtime-ticket-ttl-seconds: ${PLATFORM_GAME_PACKAGE_RUNTIME_TICKET_TTL_SECONDS:120}
@@ -87,13 +93,13 @@ platform:
     email: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:admin@nexus.local}
   email:
     enabled: ${PLATFORM_EMAIL_ENABLED:false}
-    from-address: ${PLATFORM_EMAIL_FROM:${SPRING_MAIL_USERNAME:noreply@nexus.local}}
+    from-address: ${PLATFORM_EMAIL_FROM:${SPRING_MAIL_USERNAME:}}
     from-name: ${PLATFORM_EMAIL_FROM_NAME:Nexus Platform}
 
 logging:
   level:
-    com.nexus.platform: DEBUG
-    org.springframework.web: INFO
+    com.nexus.platform: ${PLATFORM_LOG_LEVEL:INFO}
+    org.springframework.web: ${SPRING_WEB_LOG_LEVEL:INFO}
 
 management:
   health:

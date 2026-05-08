@@ -83,6 +83,12 @@ public class LaunchAd {
     @Column(nullable = false, length = 32)
     private String status = "DRAFT";
 
+    @Column(name = "start_at")
+    private LocalDateTime startAt;
+
+    @Column(name = "end_at")
+    private LocalDateTime endAt;
+
     @Column(name = "updated_by", length = 128)
     private String updatedBy;
 

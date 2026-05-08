@@ -69,6 +69,11 @@ minigame-starter/
 ```
 
 Android / iOS 客户端会优先读取已安装小游戏包中的这些字段，用于覆盖默认游戏 logo、名称和描述。
+客户端展示页与运行页会跟随宿主 App 当前语言自动匹配对应 locale；运行中的小游戏也会收到语言更新事件。
+
+- 平台展示：游戏列表、游戏详情、运行页标题会优先按宿主语言读取 `metadata.locales`
+- 运行时语言：可通过 `navigator.language`、`wx.getSystemInfoSync().language` 读取
+- 语言切换事件：宿主切换语言时，小游戏页面会收到 `window` 上的 `nexuslanguagechange`
 
 ## 打包
 

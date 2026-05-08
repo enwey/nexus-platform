@@ -32,6 +32,55 @@ struct LocalGameVersion: Sendable {
     let installedAt: Date
 }
 
+struct HostedMiniAppManifestLocale: Codable, Hashable, Sendable {
+    let name: String?
+    let description: String?
+}
+
+struct HostedMiniAppManifestMetadata: Codable, Hashable, Sendable {
+    let icon: String?
+    let kind: String?
+    let locales: [String: HostedMiniAppManifestLocale]?
+}
+
+struct HostedMiniAppManifest: Codable, Hashable, Sendable {
+    let appId: String?
+    let version: String?
+    let name: String?
+    let description: String?
+    let entry: String?
+    let icon: String?
+    let kind: String?
+    let locales: [String: HostedMiniAppManifestLocale]?
+    let metadata: HostedMiniAppManifestMetadata?
+
+    var resolvedEntry: String {
+        let raw = entry?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return raw.isEmpty ? "index.html" : raw
+    }
+
+    var resolvedIconPath: String? {
+        let candidates = [
+            metadata?.icon?.trimmingCharacters(in: .whitespacesAndNewlines),
+            icon?.trimmingCharacters(in: .whitespacesAndNewlines)
+        ]
+        return candidates.first(where: { ($0?.isEmpty == false) }) ?? nil
+    }
+
+    var resolvedKind: String {
+        let raw = metadata?.kind?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? kind?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "html5-mini-game"
+        return raw.isEmpty ? "html5-mini-game" : raw
+    }
+
+    var resolvedLocales: [String: HostedMiniAppManifestLocale] {
+        let topLevel = locales ?? [:]
+        let nested = metadata?.locales ?? [:]
+        return topLevel.merging(nested) { current, _ in current }
+    }
+}
+
 protocol GameStorageManagerProtocol: Sendable {
     func bootstrapStorageIfNeeded() throws
 

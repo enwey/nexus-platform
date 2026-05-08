@@ -15,6 +15,9 @@
         <el-table-column type="index" width="60" :label="lt('序號', '序號', 'No.')" />
         <el-table-column prop="name" :label="lt('分類名稱', '分類名稱', 'Category Name')" min-width="200" />
         <el-table-column prop="sortOrder" :label="lt('排序', '排序', 'Sort Order')" width="120" />
+        <el-table-column prop="usageCount" :label="lt('总引用数', '總引用數', 'Usage Count')" width="120" />
+        <el-table-column prop="bannerUsageCount" :label="lt('广告引用', '廣告引用', 'Banner Usage')" width="120" />
+        <el-table-column prop="recommendationUsageCount" :label="lt('推荐引用', '推薦引用', 'Recommendation Usage')" width="120" />
         <el-table-column :label="lt('操作', '操作', 'Actions')" width="220" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEdit(row)">{{ lt('編輯', '編輯', 'Edit') }}</el-button>

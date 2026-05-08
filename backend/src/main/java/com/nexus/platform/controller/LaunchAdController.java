@@ -31,6 +31,9 @@ public class LaunchAdController {
                 data.targetUrl(),
                 data.imageVersion(),
                 data.displaySeconds(),
+                data.status(),
+                data.startAt(),
+                data.endAt(),
                 data.sponsorZhCn(),
                 data.sponsorZhTw(),
                 data.sponsorEn(),
@@ -46,6 +49,7 @@ public class LaunchAdController {
                 data.footerZhCn(),
                 data.footerZhTw(),
                 data.footerEn(),
+                data.effectiveState(),
                 data.updatedAt()
         ));
     }

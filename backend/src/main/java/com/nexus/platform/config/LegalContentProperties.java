@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "platform.legal")
 public class LegalContentProperties {
-    private String termsTitle = "Nexus User Agreement";
-    private String termsHtml = "<p>Welcome to Nexus Platform.</p><p>This is the default user agreement content.</p>";
-    private String privacyTitle = "Nexus Privacy Policy";
-    private String privacyHtml = "<p>Welcome to Nexus Platform.</p><p>This is the default privacy policy content.</p>";
+    private String termsTitle = "";
+    private String termsHtml = "";
+    private String privacyTitle = "";
+    private String privacyHtml = "";
 }

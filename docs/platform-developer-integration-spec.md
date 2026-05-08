@@ -11,6 +11,7 @@
 ### 必选要求
 
 - ZIP 根目录必须包含 `index.html`
+- ZIP 根目录必须包含 `manifest.json`
 - 资源路径必须是相对路径
 - 文本资源统一 UTF-8
 - 不依赖本地 Node 进程
@@ -20,15 +21,33 @@
 ```text
 my-game.zip
 ├── index.html
+├── manifest.json
 ├── assets/
 ├── js/ 或 dist/
-└── manifest.json（可选）
+└── ...
 ```
+
+### `manifest.json` 最小结构
+
+```json
+{
+  "name": "Demo Game",
+  "description": "Hosted mini game package",
+  "entry": "index.html",
+  "kind": "html5-mini-game"
+}
+```
+
+约束：
+
+- `entry` 必须指向 ZIP 内真实存在的启动文件
+- `kind` 当前仅允许：`html5-mini-game`、`html5-mini-app`、`html5`
+- 开发者上传阶段可不填写 `appId`、`version`，平台会在生成运行包时注入并规范化这两个字段
 
 ## 3. 开发者上传流程
 
 1. 登录开发者后台
-2. 上传 ZIP 并填写基础信息
+2. 上传包含 `manifest.json` 的 ZIP 并填写基础信息
 3. 生成游戏条目与版本草稿
 4. 提交审核
 
@@ -69,10 +88,11 @@ my-game.zip
 ## 7. 提审清单
 
 1. ZIP 根目录有 `index.html`
-2. 运行无白屏/无乱码
-3. 顶部安全区无遮挡
-4. 弱网失败有重试
-5. 更新提示流程可验证
+2. ZIP 根目录有合法的 `manifest.json`
+3. 运行无白屏/无乱码
+4. 顶部安全区无遮挡
+5. 弱网失败有重试
+6. 更新提示流程可验证
 
 ## 8. 常见问题
 

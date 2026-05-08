@@ -14,6 +14,34 @@ struct AuthFlowView: View {
         case backward
     }
 
+    private struct LoginFormState {
+        var email = ""
+        var password = ""
+        var passwordVisible = false
+        var message: String?
+    }
+
+    private struct RegisterFormState {
+        var email = ""
+        var verificationCode = ""
+        var password = ""
+        var passwordVisible = false
+        var confirmPassword = ""
+        var confirmPasswordVisible = false
+        var agreedToTerms = true
+        var message: String?
+        var codeCooldown = 0
+    }
+
+    private struct ResetFormState {
+        var email = ""
+        var verificationCode = ""
+        var password = ""
+        var passwordVisible = false
+        var message: String?
+        var codeCooldown = 0
+    }
+
     let onAuthenticated: (AuthSession) -> Void
 
     @Environment(\.openURL) private var openURL
@@ -21,16 +49,10 @@ struct AuthFlowView: View {
     @State private var screen: Screen = .login
     @State private var language: AppLanguage = AppLanguageStore.currentSync()
     @State private var navigationDirection: NavigationDirection = .forward
-    @State private var email = ""
-    @State private var password = ""
-    @State private var passwordVisible = false
-    @State private var verificationCode = ""
-    @State private var confirmPassword = ""
-    @State private var confirmPasswordVisible = false
-    @State private var agreedToTerms = true
+    @State private var loginForm = LoginFormState()
+    @State private var registerForm = RegisterFormState()
+    @State private var resetForm = ResetFormState()
     @State private var isLoading = false
-    @State private var message: String?
-    @State private var codeCooldown = 0
     @State private var cooldownTask: Task<Void, Never>?
     @State private var legalLinks: LegalLinks?
 
@@ -45,12 +67,12 @@ struct AuthFlowView: View {
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                authContent(copy: copy)
+                screenView(copy: copy)
                     .id(screen)
                     .transition(screenTransition)
-                .padding(.horizontal, 24)
-                .padding(.top, 12)
-                .padding(.bottom, 32)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+                    .padding(.bottom, 32)
             }
         }
         .animation(.snappy(duration: 0.32, extraBounce: 0.02), value: screen)
@@ -64,12 +86,72 @@ struct AuthFlowView: View {
         }
     }
 
-    private func authContent(copy: AuthCopy) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            topBar(copy: copy)
-            titleBlock(copy: copy)
-            formBlock(copy: copy)
-            footerBlock(copy: copy)
+    @ViewBuilder
+    private func screenView(copy: AuthCopy) -> some View {
+        switch screen {
+        case .login:
+            LoginScreenView(
+                copy: copy,
+                email: $loginForm.email,
+                password: $loginForm.password,
+                passwordVisible: $loginForm.passwordVisible,
+                isLoading: isLoading,
+                message: loginForm.message,
+                onDismiss: dismiss.callAsFunction,
+                onForgotPassword: { switchScreen(to: .reset) },
+                onSubmit: {
+                    loginForm.message = nil
+                    submit(copy: copy)
+                },
+                onShowRegister: { switchScreen(to: .register) }
+            )
+        case .register:
+            RegisterScreenView(
+                copy: copy,
+                email: $registerForm.email,
+                verificationCode: $registerForm.verificationCode,
+                password: $registerForm.password,
+                passwordVisible: $registerForm.passwordVisible,
+                confirmPassword: $registerForm.confirmPassword,
+                confirmPasswordVisible: $registerForm.confirmPasswordVisible,
+                agreedToTerms: $registerForm.agreedToTerms,
+                isLoading: isLoading,
+                message: registerForm.message,
+                codeCooldown: registerForm.codeCooldown,
+                onBack: { switchScreen(to: .login) },
+                onOpenTerms: { openLegalURL(legalLinks?.termsURL) },
+                onOpenPrivacy: { openLegalURL(legalLinks?.privacyURL) },
+                onSendCode: {
+                    registerForm.message = nil
+                    sendCode(copy: copy)
+                },
+                onSubmit: {
+                    registerForm.message = nil
+                    submit(copy: copy)
+                },
+                onShowLogin: { switchScreen(to: .login) }
+            )
+        case .reset:
+            ResetPasswordScreenView(
+                copy: copy,
+                email: $resetForm.email,
+                verificationCode: $resetForm.verificationCode,
+                password: $resetForm.password,
+                passwordVisible: $resetForm.passwordVisible,
+                isLoading: isLoading,
+                message: resetForm.message,
+                codeCooldown: resetForm.codeCooldown,
+                onBack: { switchScreen(to: .login) },
+                onSendCode: {
+                    resetForm.message = nil
+                    sendCode(copy: copy)
+                },
+                onSubmit: {
+                    resetForm.message = nil
+                    submit(copy: copy)
+                },
+                onShowLogin: { switchScreen(to: .login) }
+            )
         }
     }
 
@@ -88,196 +170,16 @@ struct AuthFlowView: View {
         }
     }
 
-    @ViewBuilder
-    private func topBar(copy: AuthCopy) -> some View {
-        HStack {
-            if screen == .login {
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(NativeNavigationButtonStyle())
-            } else {
-                Button {
-                    switchScreen(to: .login)
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(NativeNavigationButtonStyle())
-                Spacer()
-            }
-        }
-        .padding(.top, 8)
-        .padding(.bottom, 24)
-    }
-
-    private func titleBlock(copy: AuthCopy) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(copy.title(for: screen))
-                .font(.system(size: 34, weight: .black))
-                .foregroundStyle(.white)
-
-            Text(copy.subtitle(for: screen))
-                .font(.system(size: 16))
-                .foregroundStyle(Color(hex: 0xA0A0A0))
-                .padding(.top, 8)
-        }
-        .padding(.bottom, 40)
-    }
-
-    @ViewBuilder
-    private func formBlock(copy: AuthCopy) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            AuthInputField(
-                title: screen == .reset ? copy.accountLabelForgot : copy.accountLabel,
-                text: $email,
-                keyboardType: .emailAddress
-            )
-
-            if screen == .register || screen == .reset {
-                HStack(spacing: 12) {
-                    AuthInputField(
-                        title: copy.codeLabel(for: screen),
-                        text: $verificationCode,
-                        keyboardType: .numberPad
-                    )
-
-                    Button(codeButtonTitle(copy: copy)) {
-                        message = nil
-                        sendCode(copy: copy)
-                    }
-                    .disabled(isLoading || normalizedEmail.isEmpty || codeCooldown > 0)
-                    .frame(width: 110, height: 56)
-                    .background(Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
-                    )
-                    .foregroundStyle(Color(hex: 0x6B4EFF))
-                    .font(.system(size: 15, weight: .semibold))
-                }
-            }
-
-            AuthInputField(
-                title: copy.passwordLabel(for: screen),
-                text: $password,
-                isSecure: true,
-                isSecureVisible: $passwordVisible
-            )
-
-            if screen == .register {
-                VStack(alignment: .leading, spacing: 16) {
-                    AuthInputField(
-                        title: copy.confirmPasswordLabel,
-                        text: $confirmPassword,
-                        isSecure: true,
-                        isSecureVisible: $confirmPasswordVisible
-                    )
-
-                    HStack(alignment: .top, spacing: 10) {
-                        Button {
-                            agreedToTerms.toggle()
-                        } label: {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                    .fill(agreedToTerms ? Color(hex: 0x6B4EFF, alpha: 0.2) : .clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                            .stroke(
-                                                agreedToTerms ? Color.clear : Color(hex: 0xA0A0A0, alpha: 0.3),
-                                                lineWidth: 1
-                                            )
-                                    )
-                                if agreedToTerms {
-                                    Text("✓")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundStyle(Color(hex: 0x6B4EFF))
-                                }
-                            }
-                            .frame(width: 18, height: 18)
-                        }
-                        .buttonStyle(.plain)
-
-                        legalText(copy: copy)
-                    }
-                    .padding(.top, 2)
-                }
-            }
-
-            if screen == .login {
-                HStack {
-                    Spacer()
-                    Button(copy.forgotPassword) {
-                        switchScreen(to: .reset)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Color(hex: 0x6B4EFF))
-                    .font(.system(size: 15, weight: .medium))
-                }
-            }
-
-            Button(isLoading ? copy.loading : copy.submitTitle(for: screen)) {
-                message = nil
-                submit(copy: copy)
-            }
-            .disabled(isLoading)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(hex: 0x6B4EFF))
-            )
-            .foregroundStyle(.white)
-            .font(.system(size: 17, weight: .bold))
-            .padding(.top, screen == .login ? 20 : 8)
-
-            if let message, message.isEmpty == false {
-                Text(message)
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
-                    .padding(.top, 4)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func footerBlock(copy: AuthCopy) -> some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 24)
-            HStack(spacing: 6) {
-                Text(copy.footerPrefix(for: screen))
-                    .foregroundStyle(Color(hex: 0xA0A0A0))
-                Text(copy.footerAction(for: screen))
-                    .foregroundStyle(Color(hex: 0x6B4EFF))
-                    .fontWeight(.bold)
-                    .onTapGesture {
-                        switchScreen(to: copy.footerTarget(for: screen))
-                    }
-            }
-            .font(.system(size: 15))
-            .frame(maxWidth: .infinity)
-            .padding(.top, 24)
-        }
-    }
-
     private var normalizedEmail: String {
-        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        formEmail(for: screen).trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private var normalizedCode: String {
-        verificationCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        formCode(for: screen).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func codeButtonTitle(copy: AuthCopy) -> String {
-        codeCooldown > 0 ? "\(codeCooldown)s" : copy.getCode
+        currentCodeCooldown > 0 ? "\(currentCodeCooldown)s" : copy.getCode
     }
 
     private func sendCode(copy: AuthCopy) {
@@ -300,11 +202,11 @@ struct AuthFlowView: View {
         defer { isLoading = false }
 
         guard normalizedEmail.isEmpty == false else {
-            message = copy.emailRequired
+            setMessage(copy.emailRequired, for: screen)
             return
         }
         guard normalizedEmail.contains("@") else {
-            message = copy.invalidEmail
+            setMessage(copy.invalidEmail, for: screen)
             return
         }
 
@@ -312,10 +214,10 @@ struct AuthFlowView: View {
             let purpose = screen == .register ? "REGISTER" : "RESET_PASSWORD"
             let scene = screen == .register ? "AUTH_REGISTER" : "AUTH_FORGOT_PASSWORD"
             try await service.sendCode(email: normalizedEmail, purpose: purpose, source: "ios-client", scene: scene)
-            message = copy.codeSent
+            setMessage(copy.codeSent, for: screen)
             startCooldown(seconds: 60)
         } catch {
-            message = error.localizedDescription
+            setMessage(error.localizedDescription, for: screen)
         }
     }
 
@@ -323,53 +225,53 @@ struct AuthFlowView: View {
         defer { isLoading = false }
 
         guard normalizedEmail.isEmpty == false else {
-            message = copy.emailRequired
+            setMessage(copy.emailRequired, for: screen)
             return
         }
 
         do {
             switch screen {
             case .login:
-                guard password.isEmpty == false else {
-                    message = copy.passwordRequired
+                guard loginForm.password.isEmpty == false else {
+                    setMessage(copy.passwordRequired, for: .login)
                     return
                 }
-                guard password.count >= 8 else {
-                    message = copy.passwordTooShort
+                guard loginForm.password.count >= 8 else {
+                    setMessage(copy.passwordTooShort, for: .login)
                     return
                 }
-                let session = try await service.login(email: normalizedEmail, password: password)
+                let session = try await service.login(email: normalizedEmail, password: loginForm.password)
                 await AuthSessionStore.shared.save(session)
                 onAuthenticated(session)
                 dismiss()
             case .register:
                 guard normalizedEmail.contains("@") else {
-                    message = copy.invalidEmail
+                    setMessage(copy.invalidEmail, for: .register)
                     return
                 }
-                guard password.isEmpty == false else {
-                    message = copy.passwordRequired
+                guard registerForm.password.isEmpty == false else {
+                    setMessage(copy.passwordRequired, for: .register)
                     return
                 }
-                guard password.count >= 8 else {
-                    message = copy.passwordTooShort
+                guard registerForm.password.count >= 8 else {
+                    setMessage(copy.passwordTooShort, for: .register)
                     return
                 }
                 guard normalizedCode.isEmpty == false else {
-                    message = copy.codeRequired
+                    setMessage(copy.codeRequired, for: .register)
                     return
                 }
-                guard password == confirmPassword else {
-                    message = copy.passwordMismatch
+                guard registerForm.password == registerForm.confirmPassword else {
+                    setMessage(copy.passwordMismatch, for: .register)
                     return
                 }
-                guard agreedToTerms else {
-                    message = copy.termsRequired
+                guard registerForm.agreedToTerms else {
+                    setMessage(copy.termsRequired, for: .register)
                     return
                 }
                 let session = try await service.register(
                     email: normalizedEmail,
-                    password: password,
+                    password: registerForm.password,
                     code: normalizedCode,
                     accountType: "PLAYER"
                 )
@@ -378,50 +280,49 @@ struct AuthFlowView: View {
                 dismiss()
             case .reset:
                 guard normalizedEmail.contains("@") else {
-                    message = copy.invalidEmail
+                    setMessage(copy.invalidEmail, for: .reset)
                     return
                 }
                 guard normalizedCode.isEmpty == false else {
-                    message = copy.codeRequired
+                    setMessage(copy.codeRequired, for: .reset)
                     return
                 }
-                guard password.isEmpty == false else {
-                    message = copy.passwordRequired
+                guard resetForm.password.isEmpty == false else {
+                    setMessage(copy.passwordRequired, for: .reset)
                     return
                 }
-                guard password.count >= 8 else {
-                    message = copy.passwordTooShort
+                guard resetForm.password.count >= 8 else {
+                    setMessage(copy.passwordTooShort, for: .reset)
                     return
                 }
                 try await service.resetPassword(
                     email: normalizedEmail,
                     code: normalizedCode,
-                    newPassword: password
+                    newPassword: resetForm.password
                 )
-                message = copy.resetSuccess
+                resetForm.message = copy.resetSuccess
                 navigationDirection = .backward
                 screen = .login
-                password = ""
-                passwordVisible = false
-                verificationCode = ""
-                confirmPassword = ""
-                confirmPasswordVisible = false
+                resetForm.password = ""
+                resetForm.passwordVisible = false
+                resetForm.verificationCode = ""
             }
         } catch {
-            message = error.localizedDescription
+            setMessage(error.localizedDescription, for: screen)
         }
     }
 
     private func startCooldown(seconds: Int) {
         cooldownTask?.cancel()
-        codeCooldown = max(seconds, 0)
+        setCodeCooldown(max(seconds, 0), for: screen)
+        let cooldownScreen = screen
         cooldownTask = Task {
             var remaining = max(seconds, 0)
             while remaining > 0, Task.isCancelled == false {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 remaining -= 1
                 await MainActor.run {
-                    codeCooldown = max(0, remaining)
+                    setCodeCooldown(max(0, remaining), for: cooldownScreen)
                 }
             }
         }
@@ -429,7 +330,7 @@ struct AuthFlowView: View {
 
     private func switchScreen(to target: Screen) {
         navigationDirection = navigationDirectionForTransition(from: screen, to: target)
-        message = nil
+        setMessage(nil, for: screen)
         screen = target
     }
 
@@ -448,28 +349,458 @@ struct AuthFlowView: View {
         }
     }
 
-    @ViewBuilder
-    private func legalText(copy: AuthCopy) -> some View {
+    private func openLegalURL(_ url: URL?) {
+        guard let url else { return }
+        openURL(url)
+    }
+
+    private var currentCodeCooldown: Int {
+        switch screen {
+        case .login:
+            return 0
+        case .register:
+            return registerForm.codeCooldown
+        case .reset:
+            return resetForm.codeCooldown
+        }
+    }
+
+    private func formEmail(for screen: Screen) -> String {
+        switch screen {
+        case .login:
+            return loginForm.email
+        case .register:
+            return registerForm.email
+        case .reset:
+            return resetForm.email
+        }
+    }
+
+    private func formCode(for screen: Screen) -> String {
+        switch screen {
+        case .login:
+            return ""
+        case .register:
+            return registerForm.verificationCode
+        case .reset:
+            return resetForm.verificationCode
+        }
+    }
+
+    private func setMessage(_ value: String?, for screen: Screen) {
+        switch screen {
+        case .login:
+            loginForm.message = value
+        case .register:
+            registerForm.message = value
+        case .reset:
+            resetForm.message = value
+        }
+    }
+
+    private func setCodeCooldown(_ value: Int, for screen: Screen) {
+        switch screen {
+        case .login:
+            break
+        case .register:
+            registerForm.codeCooldown = value
+        case .reset:
+            resetForm.codeCooldown = value
+        }
+    }
+}
+
+private struct LoginScreenView: View {
+    let copy: AuthCopy
+    @Binding var email: String
+    @Binding var password: String
+    @Binding var passwordVisible: Bool
+    let isLoading: Bool
+    let message: String?
+    let onDismiss: () -> Void
+    let onForgotPassword: () -> Void
+    let onSubmit: () -> Void
+    let onShowRegister: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            AuthTopBar(kind: .close, action: onDismiss)
+            AuthTitleBlock(title: copy.loginTitle, subtitle: copy.loginSubtitle)
+
+            VStack(alignment: .leading, spacing: 16) {
+                AuthInputField(
+                    title: copy.accountLabel,
+                    text: $email,
+                    keyboardType: .emailAddress
+                )
+
+                AuthInputField(
+                    title: copy.passwordLabel,
+                    text: $password,
+                    isSecure: true,
+                    isSecureVisible: $passwordVisible
+                )
+
+                HStack {
+                    Spacer()
+                    Button(copy.forgotPassword, action: onForgotPassword)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color(hex: 0x6B4EFF))
+                        .font(.system(size: 15, weight: .medium))
+                }
+
+                AuthPrimaryButton(
+                    title: isLoading ? copy.loading : copy.loginAction,
+                    isDisabled: isLoading,
+                    topPadding: 20,
+                    action: onSubmit
+                )
+
+                AuthMessageView(message: message)
+            }
+
+            AuthFooter(
+                prefix: copy.footerLoginPrefix,
+                action: copy.footerLoginAction,
+                onTap: onShowRegister
+            )
+        }
+    }
+}
+
+private struct RegisterScreenView: View {
+    let copy: AuthCopy
+    @Binding var email: String
+    @Binding var verificationCode: String
+    @Binding var password: String
+    @Binding var passwordVisible: Bool
+    @Binding var confirmPassword: String
+    @Binding var confirmPasswordVisible: Bool
+    @Binding var agreedToTerms: Bool
+    let isLoading: Bool
+    let message: String?
+    let codeCooldown: Int
+    let onBack: () -> Void
+    let onOpenTerms: () -> Void
+    let onOpenPrivacy: () -> Void
+    let onSendCode: () -> Void
+    let onSubmit: () -> Void
+    let onShowLogin: () -> Void
+
+    private var normalizedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            AuthTopBar(kind: .back, action: onBack)
+            AuthTitleBlock(title: copy.registerTitle, subtitle: copy.registerSubtitle)
+
+            VStack(alignment: .leading, spacing: 16) {
+                AuthInputField(
+                    title: copy.accountLabel,
+                    text: $email,
+                    keyboardType: .emailAddress
+                )
+
+                AuthCodeRow(
+                    title: copy.registerCodeLabel,
+                    text: $verificationCode,
+                    buttonTitle: codeCooldown > 0 ? "\(codeCooldown)s" : copy.getCode,
+                    isButtonDisabled: isLoading || normalizedEmail.isEmpty || codeCooldown > 0,
+                    onTap: onSendCode
+                )
+
+                AuthInputField(
+                    title: copy.passwordLabel,
+                    text: $password,
+                    isSecure: true,
+                    isSecureVisible: $passwordVisible
+                )
+
+                AuthInputField(
+                    title: copy.confirmPasswordLabel,
+                    text: $confirmPassword,
+                    isSecure: true,
+                    isSecureVisible: $confirmPasswordVisible
+                )
+
+                HStack(alignment: .top, spacing: 10) {
+                    Button {
+                        agreedToTerms.toggle()
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .fill(agreedToTerms ? Color(hex: 0x6B4EFF, alpha: 0.2) : .clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                        .stroke(
+                                            agreedToTerms ? Color.clear : Color(hex: 0xA0A0A0, alpha: 0.3),
+                                            lineWidth: 1
+                                        )
+                                )
+                            if agreedToTerms {
+                                Text("✓")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(Color(hex: 0x6B4EFF))
+                            }
+                        }
+                        .frame(width: 18, height: 18)
+                    }
+                    .buttonStyle(.plain)
+
+                    AuthLegalText(
+                        copy: copy,
+                        onOpenTerms: onOpenTerms,
+                        onOpenPrivacy: onOpenPrivacy
+                    )
+                }
+                .padding(.top, 2)
+
+                AuthPrimaryButton(
+                    title: isLoading ? copy.loading : copy.registerAction,
+                    isDisabled: isLoading,
+                    topPadding: 8,
+                    action: onSubmit
+                )
+
+                AuthMessageView(message: message)
+            }
+
+            AuthFooter(
+                prefix: copy.footerRegisterPrefix,
+                action: copy.footerRegisterAction,
+                onTap: onShowLogin
+            )
+        }
+    }
+}
+
+private struct ResetPasswordScreenView: View {
+    let copy: AuthCopy
+    @Binding var email: String
+    @Binding var verificationCode: String
+    @Binding var password: String
+    @Binding var passwordVisible: Bool
+    let isLoading: Bool
+    let message: String?
+    let codeCooldown: Int
+    let onBack: () -> Void
+    let onSendCode: () -> Void
+    let onSubmit: () -> Void
+    let onShowLogin: () -> Void
+
+    private var normalizedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            AuthTopBar(kind: .back, action: onBack)
+            AuthTitleBlock(title: copy.resetTitle, subtitle: copy.resetSubtitle)
+
+            VStack(alignment: .leading, spacing: 16) {
+                AuthInputField(
+                    title: copy.accountLabelForgot,
+                    text: $email,
+                    keyboardType: .emailAddress
+                )
+
+                AuthCodeRow(
+                    title: copy.resetCodeLabel,
+                    text: $verificationCode,
+                    buttonTitle: codeCooldown > 0 ? "\(codeCooldown)s" : copy.getCode,
+                    isButtonDisabled: isLoading || normalizedEmail.isEmpty || codeCooldown > 0,
+                    onTap: onSendCode
+                )
+
+                AuthInputField(
+                    title: copy.newPasswordLabel,
+                    text: $password,
+                    isSecure: true,
+                    isSecureVisible: $passwordVisible
+                )
+
+                AuthPrimaryButton(
+                    title: isLoading ? copy.loading : copy.resetAction,
+                    isDisabled: isLoading,
+                    topPadding: 8,
+                    action: onSubmit
+                )
+
+                AuthMessageView(message: message)
+            }
+
+            AuthFooter(
+                prefix: copy.footerResetPrefix,
+                action: copy.footerResetAction,
+                onTap: onShowLogin
+            )
+        }
+    }
+}
+
+private struct AuthTopBar: View {
+    enum Kind {
+        case close
+        case back
+    }
+
+    let kind: Kind
+    let action: () -> Void
+
+    var body: some View {
+        HStack {
+            if kind == .back {
+                Button(action: action) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(NativeNavigationButtonStyle())
+                Spacer()
+            } else {
+                Spacer()
+                Button(action: action) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(NativeNavigationButtonStyle())
+            }
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 24)
+    }
+}
+
+private struct AuthTitleBlock: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(.white)
+
+            Text(subtitle)
+                .font(.system(size: 16))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+                .padding(.top, 8)
+        }
+        .padding(.bottom, 40)
+    }
+}
+
+private struct AuthCodeRow: View {
+    let title: String
+    @Binding var text: String
+    let buttonTitle: String
+    let isButtonDisabled: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            AuthInputField(
+                title: title,
+                text: $text,
+                keyboardType: .numberPad
+            )
+
+            Button(buttonTitle, action: onTap)
+                .disabled(isButtonDisabled)
+                .frame(width: 110, height: 56)
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color(hex: 0x6B4EFF), lineWidth: 1)
+                )
+                .foregroundStyle(Color(hex: 0x6B4EFF))
+                .font(.system(size: 15, weight: .semibold))
+        }
+    }
+}
+
+private struct AuthPrimaryButton: View {
+    let title: String
+    let isDisabled: Bool
+    let topPadding: CGFloat
+    let action: () -> Void
+
+    var body: some View {
+        Button(title, action: action)
+            .disabled(isDisabled)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(hex: 0x6B4EFF))
+            )
+            .foregroundStyle(.white)
+            .font(.system(size: 17, weight: .bold))
+            .padding(.top, topPadding)
+    }
+}
+
+private struct AuthMessageView: View {
+    let message: String?
+
+    var body: some View {
+        if let message, message.isEmpty == false {
+            Text(message)
+                .font(.system(size: 14))
+                .foregroundStyle(Color(hex: 0xA0A0A0))
+                .padding(.top, 4)
+        }
+    }
+}
+
+private struct AuthFooter: View {
+    let prefix: String
+    let action: String
+    let onTap: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 24)
+            HStack(spacing: 6) {
+                Text(prefix)
+                    .foregroundStyle(Color(hex: 0xA0A0A0))
+                Text(action)
+                    .foregroundStyle(Color(hex: 0x6B4EFF))
+                    .fontWeight(.bold)
+                    .onTapGesture(perform: onTap)
+            }
+            .font(.system(size: 15))
+            .frame(maxWidth: .infinity)
+            .padding(.top, 24)
+        }
+    }
+}
+
+private struct AuthLegalText: View {
+    let copy: AuthCopy
+    let onOpenTerms: () -> Void
+    let onOpenPrivacy: () -> Void
+
+    var body: some View {
         HStack(spacing: 0) {
             Text(copy.termsPrefix)
                 .foregroundColor(Color(hex: 0xA0A0A0))
 
-            Button(copy.userAgreement) {
-                guard let url = legalLinks?.termsURL else { return }
-                openURL(url)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Color(hex: 0x6B4EFF))
+            Button(copy.userAgreement, action: onOpenTerms)
+                .buttonStyle(.plain)
+                .foregroundStyle(Color(hex: 0x6B4EFF))
 
             Text(copy.termsConnector)
                 .foregroundColor(Color(hex: 0xA0A0A0))
 
-            Button(copy.privacyPolicy) {
-                guard let url = legalLinks?.privacyURL else { return }
-                openURL(url)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Color(hex: 0x6B4EFF))
+            Button(copy.privacyPolicy, action: onOpenPrivacy)
+                .buttonStyle(.plain)
+                .foregroundStyle(Color(hex: 0x6B4EFF))
         }
         .font(.system(size: 13))
         .fixedSize(horizontal: false, vertical: true)

@@ -2,12 +2,48 @@ import Foundation
 import UIKit
 import Alamofire
 
-class RequestApi: ApiHandler {
-    func handle(api: String, params: [String: Any]) async throws -> Any {
-        guard let urlString = params["url"] as? String,
-              let url = URL(string: urlString) else {
+private struct LegacyBridgeRequestAccessPolicy {
+    let backendBaseURL: URL
+
+    var allowedHosts: Set<String> {
+        guard let host = backendBaseURL.host?.lowercased(), host.isEmpty == false else {
+            return []
+        }
+        return [host]
+    }
+
+    func resolveURL(from rawURL: String) throws -> URL {
+        guard rawURL.isEmpty == false else {
             throw ApiError.invalidParameter
         }
+
+        if rawURL.hasPrefix("/") {
+            guard let merged = URL(string: rawURL, relativeTo: backendBaseURL)?.absoluteURL else {
+                throw ApiError.invalidParameter
+            }
+            return merged
+        }
+
+        guard let absolute = URL(string: rawURL),
+              let scheme = absolute.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              let host = absolute.host?.lowercased(),
+              allowedHosts.contains(host) else {
+            throw ApiError.invalidParameter
+        }
+
+        return absolute
+    }
+}
+
+class RequestApi: ApiHandler {
+    private let accessPolicy = LegacyBridgeRequestAccessPolicy(backendBaseURL: BackendEnvironment.current().apiBaseURL)
+
+    func handle(api: String, params: [String: Any]) async throws -> Any {
+        guard let urlString = params["url"] as? String else {
+            throw ApiError.invalidParameter
+        }
+        let url = try accessPolicy.resolveURL(from: urlString)
         
         let method = params["method"] as? String ?? "GET"
         let data = params["data"]
@@ -112,6 +148,43 @@ class ModalApi: ApiHandler {
                     rootViewController.present(alert, animated: true)
                 }
             }
+        }
+    }
+}
+
+class UpdateCheckApi: ApiHandler {
+    func handle(api: String, params: [String: Any]) async throws -> Any {
+        let gameID = params["appId"] as? String
+
+        guard let snapshot = await GameManager.shared.updateSnapshot(gameID: gameID) else {
+            return [
+                "hasUpdate": false,
+                "ready": false,
+                "forceUpdate": false,
+                "latestVersion": "",
+                "errMsg": "update.check:ok"
+            ]
+        }
+
+        return [
+            "hasUpdate": snapshot.hasUpdate,
+            "ready": snapshot.ready,
+            "forceUpdate": snapshot.force,
+            "latestVersion": snapshot.latestVersion ?? "",
+            "errMsg": snapshot.errMsg
+        ]
+    }
+}
+
+class UpdateApplyApi: ApiHandler {
+    func handle(api: String, params: [String: Any]) async throws -> Any {
+        let gameID = params["appId"] as? String
+
+        do {
+            try await GameManager.shared.applyPendingUpdate(gameID: gameID)
+            return ["errMsg": "update.apply:ok"]
+        } catch {
+            return ["errMsg": "update.apply:fail \(error.localizedDescription)"]
         }
     }
 }

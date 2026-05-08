@@ -13,19 +13,8 @@ const hintEl = document.getElementById("hintText");
 const logoEl = document.getElementById("gameLogo");
 const logoFallbackEl = document.getElementById("logoFallback");
 
-const locale = detectLocale();
-const i18n = createI18n(locale);
+const i18n = createI18n(detectLocale());
 const manifest = await loadGameManifest();
-const manifestLocale = resolveManifestLocale(manifest, locale);
-
-document.documentElement.lang = manifestLocale.tag;
-document.title = manifestLocale.name;
-titleEl.textContent = manifestLocale.name;
-descriptionEl.textContent = manifestLocale.description;
-hintEl.textContent = i18n.t("hint.move");
-startBtn.textContent = i18n.t("action.start");
-restartBtn.textContent = i18n.t("action.restart");
-logoFallbackEl.textContent = manifestLocale.name.slice(0, 1).toUpperCase();
 
 const iconPath = resolveIconPath(manifest);
 if (iconPath) {
@@ -58,6 +47,21 @@ const game = new Game(canvas, {
   }
 });
 
+function applyLocalizedPresentation(rawLocale) {
+  const resolvedLocale = i18n.setLocale(rawLocale);
+  const manifestLocale = resolveManifestLocale(manifest, resolvedLocale);
+
+  document.documentElement.lang = manifestLocale.tag;
+  document.title = manifestLocale.name;
+  titleEl.textContent = manifestLocale.name;
+  descriptionEl.textContent = manifestLocale.description;
+  hintEl.textContent = i18n.t("hint.move");
+  startBtn.textContent = i18n.t("action.start");
+  restartBtn.textContent = i18n.t("action.restart");
+  logoFallbackEl.textContent = manifestLocale.name.slice(0, 1).toUpperCase();
+  hud.refresh();
+}
+
 startBtn.addEventListener("click", async () => {
   await platformApi.ensureLogin(i18n);
   game.start();
@@ -67,5 +71,10 @@ restartBtn.addEventListener("click", () => {
   game.restart();
 });
 
+window.addEventListener("nexuslanguagechange", (event) => {
+  applyLocalizedPresentation(event?.detail?.language || detectLocale());
+});
+
+applyLocalizedPresentation(detectLocale());
 hud.setBest(await platformApi.getBestScore());
 game.render();

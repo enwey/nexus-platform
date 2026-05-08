@@ -1,6 +1,7 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { ltGlobal } from '../i18n'
+import { getRuntimeApiBaseUrl } from '../config/apiBaseUrl'
 
 const TOKEN_KEY = 'ops_token'
 const USER_KEY = 'ops_user'
@@ -30,21 +31,15 @@ function safeRemove(key) {
   }
 }
 
-function resolveApiBaseUrl() {
-  const platformBaseUrl = import.meta.env.VITE_PLATFORM_API_BASE_URL
-  if (platformBaseUrl) return platformBaseUrl
-  const envBaseUrl = import.meta.env.VITE_API_BASE_URL
-  if (envBaseUrl) return envBaseUrl
-  return 'http://47.99.34.148:81/api/v1'
-}
-
 const request = axios.create({
-  baseURL: resolveApiBaseUrl(),
   timeout: 30000
 })
 
+request.defaults.baseURL = getRuntimeApiBaseUrl()
+
 let redirectingToLogin = false
 let refreshPromise = null
+const recentIdempotencyKeys = new Map()
 
 const msgAuthExpired = () => ltGlobal('登录状态已失效，请重新登录', '登入狀態已失效，請重新登入', 'Session expired. Please sign in again.')
 const msgRequestFailed = () => ltGlobal('请求失败', '請求失敗', 'Request failed')
@@ -52,6 +47,56 @@ const msgNetworkError = () => ltGlobal('网络错误', '網路錯誤', 'Network 
 
 function isAuthExpiredMessage(message = '') {
   return /登录|憑證|失效|未授權|unauthorized|token/i.test(message)
+}
+
+function createRequestError(payload, fallbackMessage) {
+  const message = payload?.error?.userMessage || payload?.message || fallbackMessage
+  const error = new Error(message)
+  error.code = payload?.code
+  error.errorCode = payload?.error?.errorCode
+  error.details = payload?.error?.details
+  error.requestId = payload?.error?.requestId
+  error.retryable = payload?.error?.retryable
+  return error
+}
+
+function createIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `idem_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+function buildIdempotencyFingerprint(config) {
+  const method = (config?.method || 'get').toUpperCase()
+  const url = config?.url || ''
+  let body = ''
+  if (config?.data instanceof FormData) {
+    body = '[form-data]'
+  } else if (typeof config?.data === 'string') {
+    body = config.data
+  } else if (config?.data != null) {
+    try {
+      body = JSON.stringify(config.data)
+    } catch {
+      body = '[unserializable]'
+    }
+  }
+  return `${method}|${url}|${body}`
+}
+
+function resolveIdempotencyKey(config) {
+  const method = (config?.method || 'get').toUpperCase()
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return null
+  const fingerprint = buildIdempotencyFingerprint(config)
+  const now = Date.now()
+  const existing = recentIdempotencyKeys.get(fingerprint)
+  if (existing && existing.expiresAt > now) {
+    return existing.key
+  }
+  const key = createIdempotencyKey()
+  recentIdempotencyKeys.set(fingerprint, { key, expiresAt: now + 5000 })
+  return key
 }
 
 function redirectToLogin(message = msgAuthExpired()) {
@@ -73,6 +118,13 @@ request.interceptors.request.use(
     if (token) {
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${token}`
+    }
+    config.headers = config.headers || {}
+    if (!config.headers['X-Idempotency-Key']) {
+      const idempotencyKey = resolveIdempotencyKey(config)
+      if (idempotencyKey) {
+        config.headers['X-Idempotency-Key'] = idempotencyKey
+      }
     }
     return config
   },
@@ -135,32 +187,37 @@ request.interceptors.response.use(
     if (typeof res !== 'object' || res === null) return res
 
     if (res.code === 401 || isAuthExpiredMessage(res.message)) {
-      const message = res.message || msgAuthExpired()
+      const message = res?.error?.userMessage || res.message || msgAuthExpired()
       const retried = await retryWithRefresh(response.config, message)
       if (retried) return retried
       redirectToLogin(message)
-      return Promise.reject(new Error(message))
+      return Promise.reject(createRequestError(res, message))
     }
 
     if (res.code !== 0) {
-      const message = res.message || msgRequestFailed()
+      const message = res?.error?.userMessage || res.message || msgRequestFailed()
       ElMessage.error(message)
-      return Promise.reject(new Error(message))
+      return Promise.reject(createRequestError(res, message))
     }
 
     return res
   },
   async (error) => {
     if (error?.response?.status === 401) {
-      const message = typeof error?.response?.data === 'string' ? error.response.data : msgAuthExpired()
+      const message = typeof error?.response?.data === 'string'
+        ? error.response.data
+        : error?.response?.data?.error?.userMessage || msgAuthExpired()
       const retried = await retryWithRefresh(error.config, message)
       if (retried) return retried
       redirectToLogin(message)
       return Promise.reject(error)
     }
 
-    ElMessage.error(error.message || msgNetworkError())
-    return Promise.reject(error)
+    const normalizedError = error?.response?.data && typeof error.response.data === 'object'
+      ? createRequestError(error.response.data, error.message || msgNetworkError())
+      : error
+    ElMessage.error(normalizedError?.message || msgNetworkError())
+    return Promise.reject(normalizedError)
   }
 )
 

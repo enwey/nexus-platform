@@ -53,4 +53,12 @@ public class LaunchAdAdminController {
             @AuthenticationPrincipal User currentUser) {
         return launchAdService.activate(id, currentUser);
     }
+
+    @PostMapping("/{id}/deactivate")
+    @PreAuthorize("@rolePermissionService.hasPermission(authentication, T(com.nexus.platform.security.Permission).ANDROID_ADMIN_WRITE)")
+    public Result<LaunchAdAdminItem> deactivate(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser) {
+        return launchAdService.deactivate(id, currentUser);
+    }
 }

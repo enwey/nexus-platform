@@ -37,22 +37,39 @@ struct BackendEnvironment {
 
     static func current() -> BackendEnvironment {
         if let raw = ProcessInfo.processInfo.environment["PLATFORM_API_BASE_URL"],
-           let url = URL(string: raw) {
+           let url = normalizedURL(from: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
         if let raw = ProcessInfo.processInfo.environment["BACKEND_BASE_URL"],
-           let url = URL(string: raw) {
+           let url = normalizedURL(from: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
         if let raw = Bundle.main.object(forInfoDictionaryKey: "PLATFORM_API_BASE_URL") as? String,
-           let url = URL(string: raw) {
+           let url = normalizedURL(from: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
         if let raw = Bundle.main.object(forInfoDictionaryKey: "BACKEND_BASE_URL") as? String,
-           let url = URL(string: raw) {
+           let url = normalizedURL(from: raw) {
             return BackendEnvironment(apiBaseURL: url)
         }
-        return BackendEnvironment(apiBaseURL: URL(string: "http://47.99.34.148:81/api/v1")!)
+        fatalError(
+            "Missing PLATFORM_API_BASE_URL (or legacy BACKEND_BASE_URL). " +
+            "Inject a backend API base URL through the scheme, build settings, or launch script."
+        )
+    }
+
+    private static func normalizedURL(from raw: String) -> URL? {
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.isEmpty == false else {
+            return nil
+        }
+        guard let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host?.isEmpty == false else {
+            return nil
+        }
+        return url
     }
 }
 
