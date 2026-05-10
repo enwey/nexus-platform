@@ -17,7 +17,7 @@
             <el-input
               v-model.trim="keyword"
               clearable
-              style="width: 260px"
+              class="search-input"
               :placeholder="lt('搜索关键字段', '搜尋關鍵欄位', 'Search key fields')"
             />
             <el-button @click="refresh">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
@@ -244,7 +244,13 @@ onMounted(() => {
 .panel-title { font-size: 18px; font-weight: 700; color: #111827; }
 .panel-subtitle { margin-top: 6px; color: #6b7280; font-size: 13px; line-height: 1.6; max-width: 760px; }
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.search-input { width: 260px; max-width: 100%; }
 .summary-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .summary-chip { border-radius: 999px; background: #eef4ff; color: #1d4ed8; padding: 8px 14px; font-size: 13px; font-weight: 600; }
 .summary-chip.subtle { background: #f3f4f6; color: #4b5563; font-weight: 500; }
+@media (max-width: 768px) {
+  .head-row { flex-direction: column; }
+  .actions { width: 100%; }
+  .search-input { width: 100%; }
+}
 </style>

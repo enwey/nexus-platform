@@ -6,7 +6,7 @@
         <p>{{ lt('把接入规范、提审清单和复盘案例沉淀成你团队自己的版本化文档资产。', '把接入規範、提審清單和複盤案例沉澱成你團隊自己的版本化文件資產。', 'Turn integration specs, submission checklists, and review cases into your own versioned team knowledge base.') }}</p>
       </div>
       <div class="docs-header-actions">
-        <el-select v-model="docTypeFilter" style="width: 180px" @change="handleFilterChange">
+        <el-select v-model="docTypeFilter" class="doc-filter" @change="handleFilterChange">
           <el-option :label="lt('全部文档', '全部文件', 'All Documents')" value="" />
           <el-option :label="lt('接入指南', '接入指南', 'Guides')" value="GUIDE" />
           <el-option :label="lt('提审清单', '提審清單', 'Checklists')" value="CHECKLIST" />
@@ -143,7 +143,7 @@
     <el-dialog
       v-model="editorVisible"
       :title="editingDocId ? lt('编辑文档并生成新版本', '編輯文件並產生新版本', 'Edit Document as New Version') : lt('新建文档', '新建文件', 'Create Document')"
-      width="760px"
+      :width="editorDialogWidth"
     >
       <el-form :model="editorForm" label-position="top">
         <el-row :gutter="16">
@@ -204,10 +204,12 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { createDeveloperDoc, getDeveloperDocs, getDeveloperDocVersions, updateDeveloperDoc } from '../api'
+import { useViewport } from '../composables/useViewport'
 import { useI18nLite } from '../i18n'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const route = useRoute()
 const router = useRouter()
 
@@ -236,6 +238,7 @@ const editorForm = reactive({
 
 const selectedDoc = computed(() => documents.value.find((item) => item.id === selectedDocId.value) || null)
 const activeVersion = computed(() => versions.value.find((item) => item.id === activeVersionId.value) || null)
+const editorDialogWidth = computed(() => (isPhone.value ? '96%' : isTabletOrBelow.value ? '88%' : '760px'))
 
 const loadDocs = async () => {
   docsLoading.value = true
@@ -405,6 +408,7 @@ watch(() => route.params.docId, async (docId) => {
 .docs-header h1 { margin: 0 0 8px; }
 .docs-header p { margin: 0; color: #667085; }
 .docs-header-actions { flex-shrink: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.doc-filter { width: 180px; }
 .docs-alert { margin-bottom: 16px; }
 .docs-list-card, .docs-detail-card { border-radius: 20px; }
 .card-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -432,7 +436,10 @@ watch(() => route.params.docId, async (docId) => {
 .content-meta { margin-bottom: 12px; color: #667085; font-size: 13px; }
 .content-preview { margin: 0; padding: 16px; border-radius: 14px; background: #0f172a; color: #e2e8f0; white-space: pre-wrap; line-height: 1.7; max-height: 520px; overflow: auto; }
 @media (max-width: 900px) {
+  .docs-page { padding: 16px; }
   .docs-header { flex-direction: column; }
+  .docs-header-actions { width: 100%; }
+  .doc-filter { width: 100%; }
   .detail-overview { flex-direction: column; }
 }
 </style>

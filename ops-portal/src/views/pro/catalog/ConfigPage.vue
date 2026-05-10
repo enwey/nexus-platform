@@ -21,7 +21,7 @@
           class="section-card"
         >
           <template #header>{{ lt(...section.title) }}</template>
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="descriptionColumns" border>
             <el-descriptions-item
               v-for="field in section.fields"
               :key="field.label"
@@ -41,6 +41,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18nLite } from '../../../i18n'
 import { getConfigDefinition } from './catalogRegistry'
+import { useViewport } from '../../../composables/useViewport'
 
 const props = defineProps({
   configKey: {
@@ -50,10 +51,12 @@ const props = defineProps({
 })
 
 const { lt } = useI18nLite()
+const { isPhone } = useViewport()
 const loading = ref(false)
 const detail = ref(null)
 
 const definition = computed(() => getConfigDefinition(props.configKey))
+const descriptionColumns = computed(() => (isPhone.value ? 1 : 2))
 const sections = computed(() => {
   if (!definition.value || !detail.value) return []
   return definition.value.sections(detail.value)
@@ -84,4 +87,7 @@ onMounted(load)
 .panel-subtitle { margin-top: 6px; color: #6b7280; font-size: 13px; line-height: 1.6; max-width: 720px; }
 .section-stack { display: flex; flex-direction: column; gap: 16px; }
 .section-card { border-radius: 14px; }
+@media (max-width: 768px) {
+  .head-row { flex-direction: column; }
+}
 </style>

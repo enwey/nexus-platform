@@ -495,4 +495,14 @@ onMounted(loadData)
   color: #475467;
   font-size: 13px;
 }
+
+@media (max-width: 920px) {
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .ops-mini-value {
+    font-size: 20px;
+  }
+}
 </style>

@@ -14,11 +14,11 @@
               class="keyword-input"
               :placeholder="lt('搜索游戏名称、AppID 或版本号', '搜尋遊戲名稱、AppID 或版本號', 'Search by game name, AppID, or version')"
             />
-            <el-select v-model="statusFilter" clearable style="width: 150px">
+            <el-select v-model="statusFilter" clearable class="filter-select filter-select-sm">
               <el-option :label="lt('全部状态', '全部狀態', 'All Statuses')" value="" />
               <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
-            <el-select v-if="isGameMode" v-model="categoryFilter" clearable filterable style="width: 180px">
+            <el-select v-if="isGameMode" v-model="categoryFilter" clearable filterable class="filter-select">
               <el-option :label="lt('全部分类', '全部分類', 'All Categories')" value="" />
               <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.name" />
             </el-select>
@@ -74,7 +74,7 @@
           </div>
         </template>
 
-        <el-descriptions :column="3" border>
+        <el-descriptions :column="detailDescriptionColumns" border>
           <el-descriptions-item label="AppID">{{ selectedGameDetail.appId || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="lt('分类', '分類', 'Category')">{{ selectedGameDetail.category || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="lt('联网', '連網', 'Online')">{{ selectedGameDetail.requiresOnline ? lt('是', '是', 'Yes') : lt('否', '否', 'No') }}</el-descriptions-item>
@@ -138,7 +138,7 @@
           </div>
         </template>
 
-        <el-descriptions :column="3" border>
+        <el-descriptions :column="detailDescriptionColumns" border>
           <el-descriptions-item :label="lt('游戏', '遊戲', 'Game')">{{ selectedVersionDetail.gameName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="AppID">{{ selectedVersionDetail.appId || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="lt('状态', '狀態', 'Status')">
@@ -261,8 +261,8 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="createVisible" :title="lt('上传新游戏', '上傳新遊戲', 'Upload New Game')" width="680px">
-      <el-form :model="createForm" label-width="120px">
+    <el-dialog v-model="createVisible" :title="lt('上传新游戏', '上傳新遊戲', 'Upload New Game')" :width="dialogWidth('680px')">
+      <el-form :model="createForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('ZIP 包', 'ZIP 包', 'ZIP Package')" required>
           <el-upload
             :auto-upload="false"
@@ -301,8 +301,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="versionUploadVisible" :title="lt('上传游戏版本', '上傳遊戲版本', 'Upload Game Version')" width="620px">
-      <el-form :model="versionUploadForm" label-width="120px">
+    <el-dialog v-model="versionUploadVisible" :title="lt('上传游戏版本', '上傳遊戲版本', 'Upload Game Version')" :width="dialogWidth('620px')">
+      <el-form :model="versionUploadForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('目标游戏', '目標遊戲', 'Target Game')">
           <el-input :model-value="versionUploadForm.targetGameName" disabled />
         </el-form-item>
@@ -331,9 +331,9 @@
     <el-dialog
       v-model="editorVisible"
       :title="lt('编辑游戏信息', '編輯遊戲資訊', 'Edit Game Info')"
-      width="640px"
+      :width="dialogWidth('640px')"
     >
-      <el-form :model="editorForm" label-width="120px">
+      <el-form :model="editorForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('游戏名称', '遊戲名稱', 'Game Name')" required>
           <el-input v-model="editorForm.name" maxlength="100" show-word-limit />
         </el-form-item>
@@ -369,9 +369,9 @@
     <el-dialog
       v-model="visibilityVisible"
       :title="lt('前端展示控制', '前端展示控制', 'Frontend Visibility Control')"
-      width="560px"
+      :width="dialogWidth('560px')"
     >
-      <el-form :model="visibilityForm" label-width="120px">
+      <el-form :model="visibilityForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('控制状态', '控制狀態', 'Control Status')" required>
           <el-select v-model="visibilityForm.visibilityStatus" style="width: 100%">
             <el-option :label="lt('正常展示', '正常展示', 'Visible')" value="VISIBLE" />
@@ -395,9 +395,9 @@
     <el-dialog
       v-model="batchVisibilityVisible"
       :title="lt('批量前端展示控制', '批量前端展示控制', 'Batch Frontend Visibility')"
-      width="560px"
+      :width="dialogWidth('560px')"
     >
-      <el-form :model="batchVisibilityForm" label-width="120px">
+      <el-form :model="batchVisibilityForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('选中数量', '選中數量', 'Selected Count')">
           <el-input :model-value="String(selectedGameIds.length)" disabled />
         </el-form-item>
@@ -424,9 +424,9 @@
     <el-dialog
       v-model="governanceVisible"
       :title="lt('多维治理控制', '多維治理控制', 'Multidimensional Governance')"
-      width="720px"
+      :width="dialogWidth('720px')"
     >
-      <el-form :model="governanceForm" label-width="130px">
+      <el-form :model="governanceForm" :label-width="governanceLabelWidth">
         <el-form-item :label="lt('渠道模式', '渠道模式', 'Channel Mode')">
           <el-select v-model="governanceForm.channelMode" style="width: 100%">
             <el-option :label="lt('不限制', '不限制', 'No Restriction')" value="ALL" />
@@ -502,10 +502,12 @@ import {
   updateOpsGameVisibilityBatch
 } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const router = useRouter()
 const route = useRoute()
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -588,8 +590,17 @@ const governanceForm = reactive({
 
 const isVersionMode = computed(() => String(route.name || '').includes('Version'))
 const isGameMode = computed(() => !isVersionMode.value)
+const detailDescriptionColumns = computed(() => (isPhone.value ? 1 : isTabletOrBelow.value ? 2 : 3))
+const formLabelWidth = computed(() => (isPhone.value ? '96px' : '120px'))
+const governanceLabelWidth = computed(() => (isPhone.value ? '108px' : '130px'))
 const currentGameId = computed(() => route.params.gameId ? Number(route.params.gameId) : null)
 const currentVersionId = computed(() => route.params.versionId ? Number(route.params.versionId) : null)
+
+const dialogWidth = (desktop, tablet = '88%', mobile = '94%') => {
+  if (isPhone.value) return mobile
+  if (isTabletOrBelow.value) return tablet
+  return desktop
+}
 
 const panelTitle = computed(() => (
   isGameMode.value
@@ -1508,6 +1519,15 @@ onMounted(async () => {
   width: 260px;
 }
 
+.filter-select {
+  width: 180px;
+  max-width: 100%;
+}
+
+.filter-select-sm {
+  width: 150px;
+}
+
 .status-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1563,6 +1583,25 @@ onMounted(async () => {
 
 .subsection {
   margin-top: 18px;
+}
+
+@media (max-width: 920px) {
+  .head-row,
+  .detail-head {
+    flex-direction: column;
+  }
+
+  .actions,
+  .detail-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .keyword-input,
+  .filter-select,
+  .filter-select-sm {
+    width: 100%;
+  }
 }
 
 .subsection-title {

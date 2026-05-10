@@ -98,7 +98,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { approveGame, batchOpsReview, getOpsReviewOverview, getOpsReviewers, getOpsReviews, getOpsRuleTemplates, rejectGame } from '../../api'
+import { batchOpsReview, getOpsReviewOverview, getOpsReviewers, getOpsReviews, getOpsRuleTemplates } from '../../api'
 import { useI18nLite } from '../../i18n'
 import { formatDate } from './entityPageShared'
 
@@ -272,13 +272,14 @@ const batchReject = async () => {
 }
 
 const approvePendingGame = async (row) => {
+  if (!row?.versionId) return
   try {
     const reason = await promptReason(
       lt(`审核通过：${row.name}`, `審核通過：${row.name}`, `Approve: ${row.name}`),
       lt('请输入通过理由', '請輸入通過理由', 'Enter approval note'),
       'APPROVAL'
     )
-    await approveGame(row.gameId, reason)
+    await batchOpsReview({ versionIds: [row.versionId], action: 'APPROVE', reason })
     ElMessage.success(lt('审核已通过', '審核已通過', 'Approved'))
     await loadReviews()
   } catch (error) {
@@ -289,13 +290,14 @@ const approvePendingGame = async (row) => {
 }
 
 const rejectPendingGame = async (row) => {
+  if (!row?.versionId) return
   try {
     const reason = await promptReason(
       lt(`驳回版本：${row.name}`, `駁回版本：${row.name}`, `Reject: ${row.name}`),
       lt('请输入驳回原因', '請輸入駁回原因', 'Enter rejection reason'),
       'REJECTION'
     )
-    await rejectGame(row.gameId, reason)
+    await batchOpsReview({ versionIds: [row.versionId], action: 'REJECT', reason })
     ElMessage.success(lt('已驳回', '已駁回', 'Rejected'))
     await loadReviews()
   } catch (error) {

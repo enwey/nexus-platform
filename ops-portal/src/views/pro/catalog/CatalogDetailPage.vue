@@ -55,8 +55,8 @@
             class="section-card"
           >
             <template #header>{{ lt(...section.title) }}</template>
-            <el-descriptions v-if="section.type === 'fields'" :column="2" border>
-            <el-descriptions-item
+            <el-descriptions v-if="section.type === 'fields'" :column="descriptionColumns" border>
+              <el-descriptions-item
                 v-for="field in section.fields"
                 :key="field.label"
                 :label="Array.isArray(field.label) ? lt(...field.label) : field.label"
@@ -104,6 +104,7 @@ import { ElMessage } from 'element-plus'
 import { useI18nLite } from '../../../i18n'
 import { clearCatalogCache, getCatalogDefinition } from './catalogRegistry'
 import { isCustomCatalogKey } from './catalogCustomShared'
+import { useViewport } from '../../../composables/useViewport'
 import LibrarySlotWorkspace from './LibrarySlotWorkspace.vue'
 import DiscoverSlotWorkspace from './DiscoverSlotWorkspace.vue'
 import DiscoverCategoryWorkspace from './DiscoverCategoryWorkspace.vue'
@@ -125,10 +126,12 @@ const props = defineProps({
 const route = useRoute()
 const router = useRouter()
 const { lt } = useI18nLite()
+const { isPhone } = useViewport()
 const loading = ref(false)
 const detail = ref(null)
 
 const definition = computed(() => getCatalogDefinition(props.catalogKey))
+const descriptionColumns = computed(() => (isPhone.value ? 1 : 2))
 const customComponent = computed(() => {
   if (!isCustomCatalogKey(props.catalogKey)) return null
   return {
@@ -229,5 +232,9 @@ onMounted(() => load())
 .json-block { margin: 0; padding: 14px; border-radius: 12px; background: #0f172a; color: #e2e8f0; overflow: auto; font-size: 12px; line-height: 1.6; }
 @media (max-width: 980px) {
   .summary-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .head-row { flex-direction: column; }
+  .actions { width: 100%; }
 }
 </style>

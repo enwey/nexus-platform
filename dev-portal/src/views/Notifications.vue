@@ -48,9 +48,9 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="detailVisible" :title="activeNotice?.title || lt('通知详情', '通知詳情', 'Notice Detail')" width="720px" @close="handleCloseDetail">
+    <el-dialog v-model="detailVisible" :title="activeNotice?.title || lt('通知详情', '通知詳情', 'Notice Detail')" :width="detailDialogWidth" @close="handleCloseDetail">
       <template v-if="activeNotice">
-        <el-descriptions :column="2" border>
+        <el-descriptions :column="descriptionColumns" border>
           <el-descriptions-item :label="lt('分类', '分類', 'Category')">{{ categoryText(activeNotice.category) }}</el-descriptions-item>
           <el-descriptions-item :label="lt('生效状态', '生效狀態', 'Status')">{{ effectiveText(activeNotice.effectiveStatus) }}</el-descriptions-item>
           <el-descriptions-item :label="lt('开始时间', '開始時間', 'Start')">{{ formatDate(activeNotice.startAt) || '--' }}</el-descriptions-item>
@@ -71,10 +71,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getMyNotices } from '../api'
+import { useViewport } from '../composables/useViewport'
 import { useI18nLite } from '../i18n'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
@@ -84,6 +86,8 @@ const activeNotice = ref(null)
 
 const publishCount = computed(() => notices.value.filter((item) => item.category === 'PUBLISH').length)
 const reviewCount = computed(() => notices.value.filter((item) => item.category === 'REVIEW').length)
+const detailDialogWidth = computed(() => (isPhone.value ? '94%' : isTabletOrBelow.value ? '88%' : '720px'))
+const descriptionColumns = computed(() => (isPhone.value ? 1 : 2))
 
 const loadNotices = async () => {
   try {

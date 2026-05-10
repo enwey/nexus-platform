@@ -27,8 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -327,17 +325,16 @@ private fun LoginScreen(
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = if (passwordVisible) {
-                            stringResource(R.string.change_password_hide)
-                        } else {
-                            stringResource(R.string.change_password_show)
-                        },
-                        tint = TextMuted
-                    )
-                }
+                Text(
+                    text = if (passwordVisible) {
+                        stringResource(R.string.change_password_hide)
+                    } else {
+                        stringResource(R.string.change_password_show)
+                    },
+                    color = TextMuted,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.clickable { passwordVisible = !passwordVisible }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()

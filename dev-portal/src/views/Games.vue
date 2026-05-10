@@ -8,7 +8,7 @@
             <div class="panel-subtitle">{{ lt('管理主资料、素材库与运营投放资料，所有变更都会进入后端校验与留痕。', '管理主資料、素材庫與營運投放資料，所有變更都會進入後端校驗與留痕。', 'Manage metadata, media library, and operational assets with server-side validation and audit trails.') }}</div>
           </div>
           <div class="panel-actions">
-            <el-input v-model.trim="keyword" clearable style="width: 240px" :placeholder="lt('搜索游戏名 / AppID', '搜尋遊戲名 / AppID', 'Search by game name / AppID')" />
+            <el-input v-model.trim="keyword" clearable class="toolbar-input" :placeholder="lt('搜索游戏名 / AppID', '搜尋遊戲名 / AppID', 'Search by game name / AppID')" />
             <el-button @click="loadGames">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
           </div>
         </div>
@@ -41,7 +41,7 @@
       <el-empty v-if="!loading && !filteredGames.length" :description="lt('还没有游戏资产，先上传一个游戏包再回来完善资料。', '還沒有遊戲資產，先上傳一個遊戲包再回來完善資料。', 'No game assets yet. Upload a package first and then complete the content workspace.')" />
     </el-card>
 
-    <el-drawer v-model="drawerVisible" :title="lt('游戏资产工作台', '遊戲資產工作台', 'Game Content Workspace')" size="820px" @close="handleDrawerClose">
+    <el-drawer v-model="drawerVisible" :title="lt('游戏资产工作台', '遊戲資產工作台', 'Game Content Workspace')" :size="drawerSize" @close="handleDrawerClose">
       <template v-if="activeGame">
         <el-tabs v-model="activeTab">
           <el-tab-pane name="basic" :label="lt('主资料', '主資料', 'Metadata')">
@@ -102,7 +102,7 @@
                 <div class="section-tip">{{ lt('维护截图、封面、分享图等视觉素材；删除需二次确认。', '維護截圖、封面、分享圖等視覺素材；刪除需二次確認。', 'Manage screenshots, covers, and share creatives with delete confirmation.') }}</div>
               </div>
               <div class="section-actions">
-                <el-select v-model="assetGroupFilter" style="width: 160px" @change="loadAssets">
+                <el-select v-model="assetGroupFilter" class="toolbar-select" @change="loadAssets">
                   <el-option value="" :label="lt('全部分组', '全部分組', 'All groups')" />
                   <el-option value="LIBRARY" :label="lt('素材库', '素材庫', 'Library')" />
                   <el-option value="OPS" :label="lt('运营资产', '營運資產', 'Ops assets')" />
@@ -275,7 +275,7 @@
       </template>
     </el-drawer>
 
-    <el-dialog v-model="assetDialogVisible" :title="editingAssetId ? lt('编辑素材', '編輯素材', 'Edit Asset') : lt('新增素材', '新增素材', 'Add Asset')" width="640px">
+    <el-dialog v-model="assetDialogVisible" :title="editingAssetId ? lt('编辑素材', '編輯素材', 'Edit Asset') : lt('新增素材', '新增素材', 'Add Asset')" :width="assetDialogWidth">
       <el-form :model="assetForm" label-position="top">
         <el-row :gutter="16">
           <el-col :span="12">
@@ -394,11 +394,13 @@ import {
   updateGameMetadata,
   upsertDeveloperGameAsset
 } from '../api'
+import { useViewport } from '../composables/useViewport'
 import { useI18nLite } from '../i18n'
 import { useUserStore } from '../stores/user'
 import { formatDate, getGameStatusMeta } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
@@ -483,6 +485,9 @@ const filteredGames = computed(() => {
     (item.appId || '').toLowerCase().includes(key)
   )
 })
+
+const drawerSize = computed(() => (isPhone.value ? '100%' : isTabletOrBelow.value ? '92%' : '820px'))
+const assetDialogWidth = computed(() => (isPhone.value ? '94%' : '640px'))
 
 const syncRouteSelection = async () => {
   const gameId = Number(route.params.gameId)
@@ -864,6 +869,14 @@ watch(() => route.params.gameId, async () => {
   flex-wrap: wrap;
 }
 
+.toolbar-input {
+  width: 240px;
+}
+
+.toolbar-select {
+  width: 160px;
+}
+
 .drawer-form {
   padding-right: 8px;
 }
@@ -876,5 +889,22 @@ watch(() => route.params.gameId, async () => {
 
 .page-error {
   margin-bottom: 16px;
+}
+
+@media (max-width: 920px) {
+  .panel-head,
+  .section-head {
+    flex-direction: column;
+  }
+
+  .panel-actions,
+  .section-actions {
+    width: 100%;
+  }
+
+  .toolbar-input,
+  .toolbar-select {
+    width: 100%;
+  }
 }
 </style>

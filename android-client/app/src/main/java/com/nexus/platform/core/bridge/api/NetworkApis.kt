@@ -8,27 +8,28 @@ import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.nexus.platform.R
+import com.nexus.platform.core.network.BackendHttpClientFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 /**
  * Handle wx.request.
  */
 class RequestApi(private val context: Context) : ApiHandler {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
-    private val gson = Gson()
+    private companion object {
+        val client = BackendHttpClientFactory.create(
+            connectTimeoutSeconds = 30,
+            readTimeoutSeconds = 30,
+            writeTimeoutSeconds = 30
+        )
+        val gson = Gson()
+    }
 
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val url = params.get("url")?.asString ?: return mapOf("errMsg" to "request:fail")

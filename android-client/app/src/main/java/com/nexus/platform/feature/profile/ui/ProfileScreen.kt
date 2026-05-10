@@ -48,13 +48,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexus.platform.R
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.core.i18n.AppLanguage
 import com.nexus.platform.core.ui.showCenterToast
 import com.nexus.platform.data.local.CloudSyncStore
 import com.nexus.platform.data.local.GameCatalogCacheStore
 import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.data.local.LocalCacheManager
-import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.UserProfileDetail
 import com.nexus.platform.domain.model.WalletSummary
 import com.nexus.platform.ui.theme.AccentRed
@@ -82,7 +82,7 @@ fun ProfileScreen(
     onLogoutClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val backendApi = remember(context) { context.appContainer.platformBackendApi }
     val cloudSyncStore = remember(context) { CloudSyncStore(context) }
     val engagementStore = remember(context) { GameEngagementStore(context) }
     val catalogCacheStore = remember(context) { GameCatalogCacheStore(context) }

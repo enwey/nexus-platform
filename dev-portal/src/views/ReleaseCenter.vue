@@ -111,7 +111,7 @@
                 <div class="panel-title">{{ lt('版本管理', '版本管理', 'Version Management') }}</div>
                 <div class="panel-subtitle">{{ lt('查看历史版本、提交审核与回滚。', '查看歷史版本、提交審核與回滾。', 'Review version history, submit for audit, and roll back.') }}</div>
               </div>
-              <el-select v-model="activeGameId" filterable clearable style="width: 220px" @change="handleGameChange">
+              <el-select v-model="activeGameId" filterable clearable class="game-select" @change="handleGameChange">
                 <el-option v-for="game in games" :key="game.id" :label="game.name" :value="game.id" />
               </el-select>
             </div>
@@ -214,7 +214,7 @@
   <el-dialog
     v-model="preflightVisible"
     :title="lt('发布前检查', '發佈前檢查', 'Release Preflight')"
-    width="760px"
+    :width="preflightDialogWidth"
   >
     <template v-if="preflightRow">
       <div class="preflight-head">
@@ -252,11 +252,13 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createReviewAppeal, getDeveloperGames, getDeveloperReleaseHealth, getDeveloperUploadTasks, getDeveloperVersionPreflight, getGameVersions, getMyReviewAppeals, retryDeveloperUploadTask, rollbackVersion, submitGameVersion, uploadGame } from '../api'
+import { useViewport } from '../composables/useViewport'
 import { useI18nLite } from '../i18n'
 import { useUserStore } from '../stores/user'
 import { formatDate, getGameStatusMeta, summarizeVersionHealth } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
@@ -309,6 +311,7 @@ const healthDescription = computed(() => {
   }
   return row.blockingReason || lt('当前还不满足提审条件，请先处理阻塞项。', '目前還不滿足提審條件，請先處理阻塞項。', 'This release is not ready yet. Resolve the blockers first.')
 })
+const preflightDialogWidth = computed(() => (isPhone.value ? '94%' : isTabletOrBelow.value ? '88%' : '760px'))
 
 const syncRouteGame = async () => {
   const routeGameId = Number(route.params.gameId)
@@ -589,6 +592,10 @@ watch(() => route.params.gameId, async () => {
   gap: 16px;
 }
 
+.game-select {
+  width: 220px;
+}
+
 .panel-title {
   font-size: 17px;
   font-weight: 800;
@@ -640,5 +647,15 @@ watch(() => route.params.gameId, async () => {
 .preflight-version {
   color: #475467;
   font-weight: 600;
+}
+
+@media (max-width: 920px) {
+  .panel-head {
+    flex-direction: column;
+  }
+
+  .game-select {
+    width: 100%;
+  }
 }
 </style>

@@ -14,8 +14,11 @@ class GetApprovedGamesUseCase(private val gameRepository: GameRepository) {
         return gameRepository.getLibraryHome()
     }
 
-    suspend fun getDiscoverGames(category: String? = null): List<GameItem> {
-        return gameRepository.getDiscoverGames(category)
+    suspend fun getDiscoverGames(
+        category: String? = null,
+        preferHomeSnapshot: Boolean = true
+    ): List<GameItem> {
+        return gameRepository.getDiscoverGames(category, preferHomeSnapshot)
     }
 
     suspend fun getDiscoverHome(): DiscoverHomeSnapshot? {

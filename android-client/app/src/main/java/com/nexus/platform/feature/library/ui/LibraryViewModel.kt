@@ -6,9 +6,12 @@ import com.nexus.platform.data.local.GameCatalogCacheStore
 import com.nexus.platform.data.local.GameEngagementStore
 import com.nexus.platform.domain.model.DiscoverCategory
 import com.nexus.platform.domain.model.DiscoverHeroCard
+import com.nexus.platform.domain.model.DiscoverHomeSnapshot
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.LibraryHomeSnapshot
 import com.nexus.platform.domain.usecase.GetApprovedGamesUseCase
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,112 +67,18 @@ class LibraryViewModel(
             }
         }
         viewModelScope.launch {
-            runCatching { getApprovedGamesUseCase() }
-                .onSuccess { games ->
-                    val serverHome = runCatching { getApprovedGamesUseCase.getLibraryHome() }.getOrNull()
-                    val discoverHome = runCatching { getApprovedGamesUseCase.getDiscoverHome() }.getOrNull()
-                    val discoverGamesRaw = if (discoverHome != null) {
-                        (discoverHome.rankedGames + discoverHome.newbieMustPlay + discoverHome.everyonePlaying)
-                            .distinctBy { it.id }
-                    } else {
-                        runCatching { getApprovedGamesUseCase.getDiscoverGames(category = "all") }.getOrDefault(emptyList())
-                    }
-                    val discoverGames = if (discoverGamesRaw.isNotEmpty()) discoverGamesRaw else games
-                    catalogCacheStore.saveGames(games + discoverGames)
-                    val display = buildDisplayData(games, serverHome)
-                    val discoverCategories = discoverHome?.categories.orEmpty().ifEmpty {
-                        listOf(
-                            DiscoverCategory(key = "all", label = "all"),
-                            DiscoverCategory(key = "動作射擊", label = "動作射擊"),
-                            DiscoverCategory(key = "休閒益智", label = "休閒益智"),
-                            DiscoverCategory(key = "角色扮演", label = "角色扮演")
-                        )
-                    }
-                    val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
-                        display.newbieMustPlay
-                    } else {
-                        discoverHome?.newbieMustPlay.orEmpty()
-                    }
-                    val coldstartEveryone = if (display.everyonePlaying.isNotEmpty()) {
-                        display.everyonePlaying
-                    } else {
-                        discoverHome?.everyonePlaying.orEmpty()
-                    }
-                    val randomizedEveryone = coldstartEveryone
-                        .take(50)
-                        .shuffled(Random(System.currentTimeMillis()))
-                    _uiState.update {
-                        it.copy(
-                            loading = false,
-                            games = games,
-                            discoverGames = discoverGames,
-                            discoverHero = discoverHome?.hero,
-                            libraryTopBanner = discoverHome?.libraryTopBanner,
-                            discoverCategories = discoverCategories,
-                            discoverNewbie = discoverHome?.newbieMustPlay ?: emptyList(),
-                            discoverEveryone = discoverHome?.everyonePlaying ?: emptyList(),
-                            currentPlayingGame = display.currentPlaying,
-                            recentGames = display.recent,
-                            myGames = display.myGames,
-                            newbieMustPlay = coldstartNewbie,
-                            everyonePlaying = randomizedEveryone,
-                            favoriteCount = display.favoriteCount,
-                            shareCount = display.shareCount
-                        )
-                    }
+            runCatching { loadRemoteSnapshot() }
+                .onSuccess { snapshot ->
+                    catalogCacheStore.saveGames((snapshot.games + snapshot.discoverGames).distinctBy { it.id })
+                    applySnapshot(snapshot)
                 }
                 .onFailure { e ->
-                    val discoverHome = runCatching { getApprovedGamesUseCase.getDiscoverHome() }.getOrNull()
-                    val discoverGamesRaw = if (discoverHome != null) {
-                        (discoverHome.rankedGames + discoverHome.newbieMustPlay + discoverHome.everyonePlaying)
-                            .distinctBy { it.id }
-                    } else {
-                        runCatching { getApprovedGamesUseCase.getDiscoverGames(category = "all") }.getOrDefault(emptyList())
-                    }
                     val cachedCatalogGames = catalogCacheStore.loadGames()
-                    val fallbackGames = (discoverGamesRaw + cachedCatalogGames).distinctBy { it.id }
-                    val display = buildDisplayData(fallbackGames, serverHome = null)
-                    val discoverCategories = discoverHome?.categories.orEmpty().ifEmpty {
-                        listOf(
-                            DiscoverCategory(key = "all", label = "all"),
-                            DiscoverCategory(key = "動作射擊", label = "動作射擊"),
-                            DiscoverCategory(key = "休閒益智", label = "休閒益智"),
-                            DiscoverCategory(key = "角色扮演", label = "角色扮演")
-                        )
-                    }
-                    val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
-                        display.newbieMustPlay
-                    } else {
-                        discoverHome?.newbieMustPlay.orEmpty()
-                    }
-                    val coldstartEveryone = if (display.everyonePlaying.isNotEmpty()) {
-                        display.everyonePlaying
-                    } else {
-                        discoverHome?.everyonePlaying.orEmpty()
-                    }
-                    val randomizedEveryone = coldstartEveryone
-                        .take(50)
-                        .shuffled(Random(System.currentTimeMillis()))
-                    _uiState.update {
-                        it.copy(
-                            loading = false,
-                            errorMessage = if (fallbackGames.isEmpty()) (e.message ?: ERROR_LOAD_GAMES_FAILED) else null,
-                            games = fallbackGames,
-                            discoverGames = fallbackGames,
-                            discoverHero = discoverHome?.hero,
-                            libraryTopBanner = discoverHome?.libraryTopBanner,
-                            discoverCategories = discoverCategories,
-                            discoverNewbie = discoverHome?.newbieMustPlay ?: emptyList(),
-                            discoverEveryone = discoverHome?.everyonePlaying ?: emptyList(),
-                            currentPlayingGame = display.currentPlaying,
-                            recentGames = display.recent,
-                            myGames = display.myGames,
-                            newbieMustPlay = coldstartNewbie,
-                            everyonePlaying = randomizedEveryone,
-                            favoriteCount = display.favoriteCount,
-                            shareCount = display.shareCount
-                        )
-                    }
+                    val snapshot = loadFallbackSnapshot(cachedCatalogGames)
+                    applySnapshot(
+                        snapshot = snapshot,
+                        errorMessage = if (snapshot.games.isEmpty()) (e.message ?: ERROR_LOAD_GAMES_FAILED) else null
+                    )
                 }
         }
     }
@@ -251,6 +160,119 @@ class LibraryViewModel(
         val favoriteCount: Long,
         val shareCount: Long
     )
+
+    private data class RemoteSnapshot(
+        val games: List<GameItem>,
+        val discoverGames: List<GameItem>,
+        val serverHome: LibraryHomeSnapshot?,
+        val discoverHome: DiscoverHomeSnapshot?
+    )
+
+    private suspend fun loadRemoteSnapshot(): RemoteSnapshot = coroutineScope {
+        val gamesDeferred = async { getApprovedGamesUseCase() }
+        val libraryHomeDeferred = async { runCatching { getApprovedGamesUseCase.getLibraryHome() }.getOrNull() }
+        val discoverHomeDeferred = async { runCatching { getApprovedGamesUseCase.getDiscoverHome() }.getOrNull() }
+
+        val games = gamesDeferred.await()
+        val serverHome = libraryHomeDeferred.await()
+        val discoverHome = discoverHomeDeferred.await()
+        val discoverGames = resolveDiscoverGames(discoverHome, fallbackGames = games)
+
+        RemoteSnapshot(
+            games = games,
+            discoverGames = discoverGames,
+            serverHome = serverHome,
+            discoverHome = discoverHome
+        )
+    }
+
+    private suspend fun loadFallbackSnapshot(cachedCatalogGames: List<GameItem>): RemoteSnapshot {
+        val discoverHome = runCatching { getApprovedGamesUseCase.getDiscoverHome() }.getOrNull()
+        val discoverGames = resolveDiscoverGames(
+            discoverHome = discoverHome,
+            fallbackGames = cachedCatalogGames
+        )
+        return RemoteSnapshot(
+            games = discoverGames,
+            discoverGames = discoverGames,
+            serverHome = null,
+            discoverHome = discoverHome
+        )
+    }
+
+    private suspend fun resolveDiscoverGames(
+        discoverHome: DiscoverHomeSnapshot?,
+        fallbackGames: List<GameItem>
+    ): List<GameItem> {
+        val remoteDiscoverGames = discoverHome?.let {
+            (it.rankedGames + it.newbieMustPlay + it.everyonePlaying)
+                .distinctBy(GameItem::id)
+        } ?: runCatching {
+            getApprovedGamesUseCase.getDiscoverGames(
+                category = "all",
+                preferHomeSnapshot = false
+            )
+        }.getOrDefault(emptyList())
+
+        return if (remoteDiscoverGames.isNotEmpty()) {
+            remoteDiscoverGames
+        } else {
+            fallbackGames
+        }
+    }
+
+    private fun defaultDiscoverCategories(): List<DiscoverCategory> {
+        return listOf(
+            DiscoverCategory(key = "all", label = "all"),
+            DiscoverCategory(key = "動作射擊", label = "動作射擊"),
+            DiscoverCategory(key = "休閒益智", label = "休閒益智"),
+            DiscoverCategory(key = "角色扮演", label = "角色扮演")
+        )
+    }
+
+    private fun applySnapshot(
+        snapshot: RemoteSnapshot,
+        errorMessage: String? = null
+    ) {
+        val display = buildDisplayData(snapshot.games, snapshot.serverHome)
+        val discoverCategories = snapshot.discoverHome?.categories.orEmpty().ifEmpty {
+            defaultDiscoverCategories()
+        }
+        val coldstartNewbie = if (display.newbieMustPlay.isNotEmpty()) {
+            display.newbieMustPlay
+        } else {
+            snapshot.discoverHome?.newbieMustPlay.orEmpty()
+        }
+        val coldstartEveryone = if (display.everyonePlaying.isNotEmpty()) {
+            display.everyonePlaying
+        } else {
+            snapshot.discoverHome?.everyonePlaying.orEmpty()
+        }
+        val randomizedEveryone = coldstartEveryone
+            .take(50)
+            .shuffled(Random(System.currentTimeMillis()))
+
+        _uiState.update {
+            it.copy(
+                loading = false,
+                errorMessage = errorMessage,
+                games = snapshot.games,
+                discoverGames = snapshot.discoverGames,
+                discoverHero = snapshot.discoverHome?.hero,
+                libraryTopBanner = snapshot.discoverHome?.libraryTopBanner,
+                discoverCategories = discoverCategories,
+                discoverNewbie = snapshot.discoverHome?.newbieMustPlay ?: emptyList(),
+                discoverEveryone = snapshot.discoverHome?.everyonePlaying ?: emptyList(),
+                currentPlayingGame = display.currentPlaying,
+                recentGames = display.recent,
+                myGames = display.myGames,
+                newbieMustPlay = coldstartNewbie,
+                everyonePlaying = randomizedEveryone,
+                favoriteCount = display.favoriteCount,
+                shareCount = display.shareCount
+            )
+        }
+    }
 
     private fun buildDisplayData(games: List<GameItem>, serverHome: LibraryHomeSnapshot?): DisplayData {
         if (serverHome != null) {

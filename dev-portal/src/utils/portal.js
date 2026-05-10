@@ -1,8 +1,10 @@
+import { resolveLocaleTag } from '../i18n'
+
 export function formatDate(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(resolveLocaleTag(), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

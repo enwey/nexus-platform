@@ -295,7 +295,7 @@
       </el-col>
     </el-row>
 
-    <el-drawer v-model="detailVisible" :title="detailTitle" size="36%">
+    <el-drawer v-model="detailVisible" :title="detailTitle" :size="detailDrawerSize">
       <template v-if="detailRecord">
         <el-descriptions :column="1" border>
           <el-descriptions-item v-for="item in detailItems" :key="item.label" :label="item.label">
@@ -313,7 +313,7 @@
       </template>
     </el-drawer>
 
-    <el-dialog v-model="channelDialogVisible" :title="editingChannelCode ? lt('编辑渠道规则', '編輯渠道規則', 'Edit Channel Rule') : lt('新增渠道规则', '新增渠道規則', 'New Channel Rule')" width="520px">
+    <el-dialog v-model="channelDialogVisible" :title="editingChannelCode ? lt('编辑渠道规则', '編輯渠道規則', 'Edit Channel Rule') : lt('新增渠道规则', '新增渠道規則', 'New Channel Rule')" :width="dialogWidth('520px')">
       <el-form :model="channelForm" label-position="top">
         <el-form-item :label="lt('渠道编码', '渠道編碼', 'Channel Code')"><el-input v-model="channelForm.channelCode" :disabled="Boolean(editingChannelCode)" /></el-form-item>
         <el-form-item :label="lt('渠道名称', '渠道名稱', 'Channel Name')"><el-input v-model="channelForm.channelName" /></el-form-item>
@@ -336,7 +336,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="featureDialogVisible" :title="editingFeatureKey ? lt('编辑功能开关', '編輯功能開關', 'Edit Feature Toggle') : lt('新增功能开关', '新增功能開關', 'New Feature Toggle')" width="520px">
+    <el-dialog v-model="featureDialogVisible" :title="editingFeatureKey ? lt('编辑功能开关', '編輯功能開關', 'Edit Feature Toggle') : lt('新增功能开关', '新增功能開關', 'New Feature Toggle')" :width="dialogWidth('520px')">
       <el-form :model="featureForm" label-position="top">
         <el-form-item :label="lt('开关键', '開關鍵', 'Feature Key')"><el-input v-model="featureForm.featureKey" :disabled="Boolean(editingFeatureKey)" /></el-form-item>
         <el-form-item :label="lt('名称', '名稱', 'Name')"><el-input v-model="featureForm.featureName" /></el-form-item>
@@ -364,7 +364,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="experimentDialogVisible" :title="editingExperimentKey ? lt('编辑 AB 实验', '編輯 AB 實驗', 'Edit AB Experiment') : lt('新增 AB 实验', '新增 AB 實驗', 'New AB Experiment')" width="620px">
+    <el-dialog v-model="experimentDialogVisible" :title="editingExperimentKey ? lt('编辑 AB 实验', '編輯 AB 實驗', 'Edit AB Experiment') : lt('新增 AB 实验', '新增 AB 實驗', 'New AB Experiment')" :width="dialogWidth('620px')">
       <el-form :model="experimentForm" label-position="top">
         <el-form-item :label="lt('实验键', '實驗鍵', 'Experiment Key')"><el-input v-model="experimentForm.experimentKey" :disabled="Boolean(editingExperimentKey)" /></el-form-item>
         <el-form-item :label="lt('实验名称', '實驗名稱', 'Experiment Name')"><el-input v-model="experimentForm.experimentName" /></el-form-item>
@@ -396,7 +396,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="grayPlanDialogVisible" :title="editingGrayPlanCode ? lt('编辑灰度计划', '編輯灰度計畫', 'Edit Gray Plan') : lt('新增灰度计划', '新增灰度計畫', 'New Gray Plan')" width="620px">
+    <el-dialog v-model="grayPlanDialogVisible" :title="editingGrayPlanCode ? lt('编辑灰度计划', '編輯灰度計畫', 'Edit Gray Plan') : lt('新增灰度计划', '新增灰度計畫', 'New Gray Plan')" :width="dialogWidth('620px')">
       <el-form :model="grayPlanForm" label-position="top">
         <el-form-item :label="lt('计划编码', '計畫編碼', 'Plan Code')"><el-input v-model="grayPlanForm.planCode" :disabled="Boolean(editingGrayPlanCode)" /></el-form-item>
         <el-form-item :label="lt('计划名称', '計畫名稱', 'Plan Name')"><el-input v-model="grayPlanForm.planName" /></el-form-item>
@@ -432,7 +432,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="blacklistDialogVisible" :title="editingBlacklistCode ? lt('编辑兼容黑名单', '編輯相容黑名單', 'Edit Compatibility Blacklist') : lt('新增兼容黑名单', '新增相容黑名單', 'New Compatibility Blacklist')" width="560px">
+    <el-dialog v-model="blacklistDialogVisible" :title="editingBlacklistCode ? lt('编辑兼容黑名单', '編輯相容黑名單', 'Edit Compatibility Blacklist') : lt('新增兼容黑名单', '新增相容黑名單', 'New Compatibility Blacklist')" :width="dialogWidth('560px')">
       <el-form :model="blacklistForm" label-position="top">
         <el-form-item :label="lt('规则编码', '規則編碼', 'Rule Code')"><el-input v-model="blacklistForm.ruleCode" :disabled="Boolean(editingBlacklistCode)" /></el-form-item>
         <el-form-item :label="lt('状态', '狀態', 'Status')">
@@ -464,7 +464,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="breakerDialogVisible" :title="editingBreakerKey ? lt('编辑页面熔断', '編輯頁面熔斷', 'Edit Page Breaker') : lt('新增页面熔断', '新增頁面熔斷', 'New Page Breaker')" width="560px">
+    <el-dialog v-model="breakerDialogVisible" :title="editingBreakerKey ? lt('编辑页面熔断', '編輯頁面熔斷', 'Edit Page Breaker') : lt('新增页面熔断', '新增頁面熔斷', 'New Page Breaker')" :width="dialogWidth('560px')">
       <el-form :model="breakerForm" label-position="top">
         <el-form-item :label="lt('页面键', '頁面鍵', 'Page Key')"><el-input v-model="breakerForm.pageKey" :disabled="Boolean(editingBreakerKey)" /></el-form-item>
         <el-form-item :label="lt('页面名称', '頁面名稱', 'Page Name')"><el-input v-model="breakerForm.pageName" /></el-form-item>
@@ -527,8 +527,10 @@ import {
   upsertAndroidFeatureToggle
 } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const savingRuntime = ref(false)
 const savingDiscover = ref(false)
 const savingChannel = ref(false)
@@ -566,6 +568,13 @@ const discoverHero = ref({ appId: '', title: '', subtitle: '', badgeText: '', co
 const discoverGameTopBanners = ref([])
 const discoverTopBannerRows = ref([])
 const discoverCommunityItems = ref([])
+const detailDrawerSize = computed(() => (isPhone.value ? '100%' : isTabletOrBelow.value ? '72%' : '36%'))
+
+const dialogWidth = (desktop, tablet = '88%', mobile = '94%') => {
+  if (isPhone.value) return mobile
+  if (isTabletOrBelow.value) return tablet
+  return desktop
+}
 
 const runtimeForm = reactive({
   apiBaseUrl: '',
@@ -1029,4 +1038,7 @@ onMounted(loadData)
 .overview-chip { padding: 14px 16px; border-radius: 16px; background: #f8fafc; display: flex; flex-direction: column; gap: 6px; color: #475467; }
 .overview-chip strong { font-size: 20px; color: #101828; }
 .detail-actions { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 920px) {
+  .card-header-inline { flex-direction: column; align-items: flex-start; }
+}
 </style>

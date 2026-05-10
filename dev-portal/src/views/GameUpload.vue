@@ -8,7 +8,7 @@
     </header>
 
     <el-card>
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="upload-form">
         <el-form-item :label="lt('游戏名称', '遊戲名稱', 'Game Name')" prop="name">
           <el-input v-model="form.name" :placeholder="lt('请输入游戏名称', '請輸入遊戲名稱', 'Enter game name')" />
         </el-form-item>
@@ -29,8 +29,10 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :loading="uploading" @click="handleUpload">{{ lt('提交审核', '提交審核', 'Submit For Review') }}</el-button>
-          <el-button @click="$router.push('/games')">{{ lt('返回列表', '返回列表', 'Back to List') }}</el-button>
+          <div class="action-row">
+            <el-button type="primary" :loading="uploading" @click="handleUpload">{{ lt('提交审核', '提交審核', 'Submit For Review') }}</el-button>
+            <el-button @click="$router.push('/games')">{{ lt('返回列表', '返回列表', 'Back to List') }}</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
@@ -107,4 +109,12 @@ const handleUpload = async () => {
 .page-header h1 { margin: 0 0 8px; }
 .page-header p { margin: 0; color: #6b7280; }
 .upload-tip { color: #6b7280; }
+.upload-form { max-width: 720px; }
+.action-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .page-shell { padding: 16px; }
+  .action-row { width: 100%; }
+  .action-row :deep(.el-button) { flex: 1 1 100%; margin-left: 0; }
+}
 </style>

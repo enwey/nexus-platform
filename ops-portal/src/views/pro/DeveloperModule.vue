@@ -17,8 +17,8 @@
             <div class="panel-subtitle">{{ lt('从账号主体视角查看活跃度、审核表现和名下游戏分布。', '從帳號主體視角查看活躍度、審核表現和名下遊戲分布。', 'Inspect activity, review quality, and portfolio distribution by developer account.') }}</div>
           </div>
           <div class="actions">
-            <el-input v-model.trim="keyword" clearable style="width: 260px" :placeholder="lt('搜索用户名 / 邮箱 / 游戏名', '搜尋使用者名稱 / 電子郵件 / 遊戲名', 'Search username / email / game')" />
-            <el-select v-model="statusFilter" clearable style="width: 160px">
+            <el-input v-model.trim="keyword" clearable class="keyword-input" :placeholder="lt('搜索用户名 / 邮箱 / 游戏名', '搜尋使用者名稱 / 電子郵件 / 遊戲名', 'Search username / email / game')" />
+            <el-select v-model="statusFilter" clearable class="filter-select filter-select-sm">
               <el-option :label="lt('全部状态', '全部狀態', 'All Statuses')" value="" />
               <el-option :label="lt('正常', '正常', 'Active')" value="ACTIVE" />
               <el-option :label="lt('暂停', '暫停', 'Suspended')" value="SUSPENDED" />
@@ -93,7 +93,7 @@
       </el-table>
     </el-card>
 
-    <el-drawer v-model="detailVisible" :title="lt('开发者详情', '開發者詳情', 'Developer Detail')" size="42%">
+    <el-drawer v-model="detailVisible" :title="lt('开发者详情', '開發者詳情', 'Developer Detail')" :size="detailDrawerSize">
       <template v-if="detailRow">
         <el-descriptions :column="1" border>
           <el-descriptions-item :label="lt('账号', '帳號', 'Account')">{{ detailRow.username }}</el-descriptions-item>
@@ -117,8 +117,8 @@
       </template>
     </el-drawer>
 
-    <el-dialog v-model="governanceVisible" :title="lt('开发者治理', '開發者治理', 'Developer Governance')" width="620px">
-      <el-form :model="governanceForm" label-width="120px">
+    <el-dialog v-model="governanceVisible" :title="lt('开发者治理', '開發者治理', 'Developer Governance')" :width="dialogWidth('620px')">
+      <el-form :model="governanceForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('账号状态', '帳號狀態', 'Account Status')" required>
           <el-select v-model="governanceForm.accountStatus" style="width: 100%">
             <el-option :label="lt('正常', '正常', 'Active')" value="ACTIVE" />
@@ -168,7 +168,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="historyVisible" :title="lt('治理档案', '治理檔案', 'Governance History')" width="860px">
+    <el-dialog v-model="historyVisible" :title="lt('治理档案', '治理檔案', 'Governance History')" :width="dialogWidth('860px', '92%')">
       <div class="history-head">{{ historyDeveloperLabel }}</div>
       <el-table :data="historyRows" v-loading="historyLoading" :empty-text="lt('暂无治理记录', '暫無治理記錄', 'No governance records')">
         <el-table-column prop="actionType" :label="lt('动作', '動作', 'Action')" width="180" />
@@ -186,7 +186,7 @@
       </el-table>
     </el-dialog>
 
-    <el-dialog v-model="certificationVisible" :title="lt('开发者资质审核', '開發者資質審核', 'Developer Certification Review')" width="920px">
+    <el-dialog v-model="certificationVisible" :title="lt('开发者资质审核', '開發者資質審核', 'Developer Certification Review')" :width="dialogWidth('920px', '92%')">
       <div class="history-head">{{ certificationDeveloperLabel }}</div>
       <div class="summary-grid cert-grid">
         <div class="summary-item">
@@ -202,7 +202,7 @@
           <strong>{{ formatDate(certificationProfile.submittedAt) }}</strong>
         </div>
       </div>
-      <el-descriptions :column="2" border class="section-descriptions">
+      <el-descriptions :column="certificationDescriptionColumns" border class="section-descriptions">
         <el-descriptions-item :label="lt('主体类型', '主體類型', 'Subject Type')">{{ subjectTypeText(certificationProfile.subjectType) }}</el-descriptions-item>
         <el-descriptions-item :label="lt('主体名称', '主體名稱', 'Subject Name')">{{ certificationProfile.subjectName || '-' }}</el-descriptions-item>
         <el-descriptions-item :label="lt('法人/负责人', '法人/負責人', 'Legal Representative')">{{ certificationProfile.legalRepresentative || '-' }}</el-descriptions-item>
@@ -219,7 +219,7 @@
           <span v-if="!(certificationProfile.certificateAssets || []).length">-</span>
         </div>
       </el-card>
-      <el-form :model="certificationReviewForm" label-width="120px" class="section-descriptions">
+      <el-form :model="certificationReviewForm" :label-width="formLabelWidth" class="section-descriptions">
         <el-form-item :label="lt('审核动作', '審核動作', 'Review Decision')">
           <el-select v-model="certificationReviewForm.decision" style="width: 100%">
             <el-option :label="lt('认证通过', '認證通過', 'Verify')" value="VERIFIED" />
@@ -270,8 +270,10 @@ import {
   updateDeveloperGovernance
 } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const loading = ref(false)
 const saving = ref(false)
 const loadError = ref('')
@@ -322,6 +324,15 @@ const governanceForm = reactive({
   opsNote: '',
   reason: ''
 })
+const formLabelWidth = computed(() => (isPhone.value ? '96px' : '120px'))
+const certificationDescriptionColumns = computed(() => (isPhone.value ? 1 : 2))
+const detailDrawerSize = computed(() => (isPhone.value ? '100%' : isTabletOrBelow.value ? '72%' : '42%'))
+
+const dialogWidth = (desktop, tablet = '88%', mobile = '94%') => {
+  if (isPhone.value) return mobile
+  if (isTabletOrBelow.value) return tablet
+  return desktop
+}
 
 const loadDevelopers = async () => {
   loading.value = true
@@ -642,6 +653,9 @@ onMounted(loadDevelopers)
 .panel-title { font-size: 17px; font-weight: 800; color: #101828; }
 .panel-subtitle { margin-top: 6px; color: #667085; font-size: 13px; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.keyword-input { width: 260px; max-width: 100%; }
+.filter-select { width: 180px; max-width: 100%; }
+.filter-select-sm { width: 160px; }
 .tag-list { display: flex; gap: 6px; flex-wrap: wrap; }
 .history-head { margin-bottom: 12px; color: #344054; font-weight: 700; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -649,5 +663,11 @@ onMounted(loadDevelopers)
 .summary-item strong { font-size: 16px; color: #111827; }
 .cert-grid { margin-bottom: 12px; }
 .section-descriptions { margin-bottom: 14px; }
-@media (max-width: 920px) { .head-row { flex-direction: column; } }
+@media (max-width: 920px) {
+  .head-row { flex-direction: column; }
+  .actions { width: 100%; }
+  .keyword-input,
+  .filter-select,
+  .filter-select-sm { width: 100%; }
+}
 </style>

@@ -47,7 +47,23 @@ export function getRuntimeApiBaseUrl() {
   return resolveApiBaseUrl(import.meta.env || {})
 }
 
-export function getPortalApiConfigHelpText() {
+export function getPortalApiConfigHelpText(locale = 'zh-CN') {
+  if (locale === 'zh-TW') {
+    return [
+      `缺少 API 位址設定：請設定 ${API_BASE_URL_ENV_KEYS.join(' / ')}`,
+      '本機開發：使用 .env.development，或複製 .env.example 為 .env.local 後重新啟動 Vite',
+      '正式部署：在建置或託管環境中明確注入正式 API 位址，或使用同網域 /api/v1 反向代理'
+    ]
+  }
+
+  if (locale === 'en') {
+    return [
+      `Missing API base URL configuration: set ${API_BASE_URL_ENV_KEYS.join(' / ')}`,
+      'Local development: use .env.development, or copy .env.example to .env.local and restart Vite',
+      'Production: inject the real API base URL during build/deploy, or use a same-origin /api/v1 reverse proxy'
+    ]
+  }
+
   return [
     `缺少 API 地址配置：请设置 ${API_BASE_URL_ENV_KEYS.join(' / ')}`,
     '本地开发：使用 .env.development 或复制 .env.example 为 .env.local 后重启 Vite',

@@ -35,8 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.core.i18n.AppLanguageManager
-import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.ReferralRecord
 import com.nexus.platform.domain.model.ReferralSummary
 import com.nexus.platform.ui.theme.BackgroundBase
@@ -65,7 +65,7 @@ class ReferralActivity : ComponentActivity() {
 @Composable
 private fun ReferralScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
-    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val backendApi = remember(context) { context.appContainer.platformBackendApi }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var summary by remember { mutableStateOf<ReferralSummary?>(null) }
     var records by remember { mutableStateOf<List<ReferralRecord>>(emptyList()) }

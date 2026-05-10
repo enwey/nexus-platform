@@ -48,7 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.nexus.platform.R
-import com.nexus.platform.data.remote.PlatformBackendApi
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.RecommendTodayItem
 import com.nexus.platform.ui.components.GameLogo
@@ -72,7 +72,7 @@ fun RecommendScreen(
     onCardClick: (RecommendTodayItem, GameItem?) -> Unit
 ) {
     val context = LocalContext.current
-    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val backendApi = remember(context) { context.appContainer.platformBackendApi }
     var loading by remember { mutableStateOf(true) }
     var items by remember { mutableStateOf<List<RecommendTodayItem>>(emptyList()) }
     var refreshTick by remember { mutableIntStateOf(0) }

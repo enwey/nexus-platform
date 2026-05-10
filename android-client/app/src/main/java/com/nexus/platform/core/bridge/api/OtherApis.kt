@@ -14,20 +14,19 @@ import android.os.VibratorManager
 import android.provider.MediaStore
 import androidx.core.net.toUri
 import com.google.gson.JsonObject
-import com.nexus.platform.data.remote.PlatformBackendApi
+import com.nexus.platform.core.di.appContainer
+import com.nexus.platform.core.network.BackendHttpClientFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URLConnection
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 /**
@@ -89,7 +88,7 @@ class ClipboardApi(private val context: Context) : ApiHandler {
  * Handle user info APIs.
  */
 class UserInfoApi(private val context: Context) : ApiHandler {
-    private val backendApi = PlatformBackendApi(context)
+    private val backendApi = context.appContainer.platformBackendApi
 
     override suspend fun handle(api: String, params: JsonObject): Any? {
         val profile = runCatching { backendApi.getUserProfile() }.getOrNull()
@@ -123,11 +122,13 @@ class ShareApi(private val context: Context) : ApiHandler {
  * Handle image APIs.
  */
 class ImageApi(private val context: Context) : ApiHandler {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+    private companion object {
+        val client = BackendHttpClientFactory.create(
+            connectTimeoutSeconds = 20,
+            readTimeoutSeconds = 30,
+            writeTimeoutSeconds = 30
+        )
+    }
 
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return when (api) {
@@ -302,11 +303,13 @@ class ImageApi(private val context: Context) : ApiHandler {
  * Handle file APIs.
  */
 class FileApi(private val context: Context) : ApiHandler {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
-        .build()
+    private companion object {
+        val client = BackendHttpClientFactory.create(
+            connectTimeoutSeconds = 20,
+            readTimeoutSeconds = 60,
+            writeTimeoutSeconds = 60
+        )
+    }
 
     override suspend fun handle(api: String, params: JsonObject): Any? {
         return when (api) {

@@ -119,10 +119,14 @@ class PlatformBackendApi(context: Context) {
         }.toMap()
     }
 
-    suspend fun getDiscoverGames(limit: Int = 20, category: String? = null): List<GameItem> = withContext(Dispatchers.IO) {
+    suspend fun getDiscoverGames(
+        limit: Int = 20,
+        category: String? = null,
+        preferHomeSnapshot: Boolean = true
+    ): List<GameItem> = withContext(Dispatchers.IO) {
         val normalizedCategory = category?.trim().orEmpty().lowercase()
         val useHomeSnapshot = normalizedCategory.isBlank() || normalizedCategory == "all"
-        if (useHomeSnapshot) {
+        if (useHomeSnapshot && preferHomeSnapshot) {
             val home = runCatching { getDiscoverHome(limit) }.getOrNull()
             if (home != null) {
                 return@withContext (home.rankedGames + home.newbieMustPlay + home.everyonePlaying)

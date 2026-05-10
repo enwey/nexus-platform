@@ -8,16 +8,16 @@
         <div class="panel-subtitle">{{ lt('跟踪敏感操作、失败动作与验证码发送状态，并把风险事件推进成可分派、可升级、可留档的处置流。', '追蹤敏感操作、失敗動作與驗證碼發送狀態，並把風險事件推進成可分派、可升級、可留檔的處置流。', 'Track sensitive operations, failed actions, and verification-code delivery, while turning risk incidents into assignable, traceable handling flows.') }}</div>
           </div>
           <div class="actions">
-            <el-select v-model="auditFilters.success" clearable style="width: 140px">
+            <el-select v-model="auditFilters.success" clearable class="filter-select filter-select-sm">
               <el-option :label="lt('全部结果', '全部結果', 'All Results')" :value="undefined" />
               <el-option :label="lt('成功', '成功', 'Success')" :value="true" />
               <el-option :label="lt('失败', '失敗', 'Failed')" :value="false" />
             </el-select>
-            <el-select v-model="auditFilters.action" clearable filterable style="width: 180px">
+            <el-select v-model="auditFilters.action" clearable filterable class="filter-select">
               <el-option :label="lt('全部动作', '全部動作', 'All Actions')" value="" />
               <el-option v-for="item in actionOptions" :key="item" :label="item" :value="item" />
             </el-select>
-            <el-input v-model.trim="auditFilters.targetAppId" clearable style="width: 180px" :placeholder="lt('按 AppID 搜索', '按 AppID 搜尋', 'Search by AppID')" />
+            <el-input v-model.trim="auditFilters.targetAppId" clearable class="filter-input" :placeholder="lt('按 AppID 搜索', '按 AppID 搜尋', 'Search by AppID')" />
             <el-button size="small" @click="openAccessRuleCreate">{{ lt('新增访问规则', '新增訪問規則', 'New Access Rule') }}</el-button>
             <el-button size="small" :loading="loading" @click="loadData">{{ lt('刷新', '刷新', 'Refresh') }}</el-button>
           </div>
@@ -215,9 +215,9 @@
         <el-card class="panel-card">
           <template #header>{{ lt('验证码日志', '驗證碼日誌', 'Verification Logs') }}</template>
           <el-table :data="verificationLogs" v-loading="loading" :empty-text="lt('暂无验证码日志', '暫無驗證碼日誌', 'No verification logs')">
-            <el-table-column prop="email" :label="lt('邮箱', '電子郵件', 'Email')" min-width="180" />
+            <el-table-column prop="account" :label="lt('邮箱', '電子郵件', 'Email')" min-width="180" />
             <el-table-column prop="purpose" :label="lt('用途', '用途', 'Purpose')" width="140" />
-            <el-table-column prop="source" :label="lt('来源', '來源', 'Source')" width="130" />
+            <el-table-column prop="requestSource" :label="lt('来源', '來源', 'Source')" width="130" />
             <el-table-column :label="lt('发送结果', '發送結果', 'Result')" width="120">
               <template #default="{ row }">
                 <el-tag :type="row.success ? 'success' : 'danger'">{{ row.success ? lt('成功', '成功', 'Success') : lt('失败', '失敗', 'Failed') }}</el-tag>
@@ -231,8 +231,8 @@
       </el-col>
     </el-row>
 
-    <el-dialog v-model="incidentDialogVisible" :title="lt('登记风险事件', '登記風險事件', 'Create Risk Incident')" width="620px">
-      <el-form :model="incidentForm" label-width="110px">
+    <el-dialog v-model="incidentDialogVisible" :title="lt('登记风险事件', '登記風險事件', 'Create Risk Incident')" :width="dialogWidth('620px')">
+      <el-form :model="incidentForm" :label-width="compactLabelWidth">
         <el-form-item :label="lt('事件类型', '事件類型', 'Incident Type')">
           <el-select v-model="incidentForm.incidentType" style="width: 100%">
             <el-option label="ACCOUNT_RISK" value="ACCOUNT_RISK" />
@@ -274,7 +274,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="incidentHistoryVisible" :title="lt('风险事件记录', '風險事件記錄', 'Risk Incident Records')" width="860px">
+    <el-dialog v-model="incidentHistoryVisible" :title="lt('风险事件记录', '風險事件記錄', 'Risk Incident Records')" :width="dialogWidth('860px', '92%')">
       <div class="table-tip">{{ incidentHistoryTitle }}</div>
       <el-table :data="incidentHistoryRows" v-loading="incidentHistoryLoading" :empty-text="lt('暂无处理记录', '暫無處理記錄', 'No records')">
         <el-table-column prop="actionType" :label="lt('动作', '動作', 'Action')" width="160" />
@@ -288,7 +288,7 @@
       </el-table>
     </el-dialog>
 
-    <el-dialog v-model="auditDetailVisible" :title="lt('审计变更详情', '審計變更詳情', 'Audit Change Detail')" width="980px">
+    <el-dialog v-model="auditDetailVisible" :title="lt('审计变更详情', '審計變更詳情', 'Audit Change Detail')" :width="dialogWidth('980px', '94%')">
       <div v-if="auditDetailRow">
         <div class="table-tip" style="margin-bottom: 12px">
           {{ auditDetailRow.action }} / {{ auditDetailRow.snapshotType || '-' }} / {{ formatDate(auditDetailRow.createdAt) }}
@@ -316,8 +316,8 @@
       </div>
     </el-dialog>
 
-    <el-dialog v-model="accessRuleDialogVisible" :title="accessRuleDialogMode === 'edit' ? lt('编辑访问规则', '編輯訪問規則', 'Edit Access Rule') : lt('新增访问规则', '新增訪問規則', 'Create Access Rule')" width="620px">
-      <el-form :model="accessRuleForm" label-width="120px">
+    <el-dialog v-model="accessRuleDialogVisible" :title="accessRuleDialogMode === 'edit' ? lt('编辑访问规则', '編輯訪問規則', 'Edit Access Rule') : lt('新增访问规则', '新增訪問規則', 'Create Access Rule')" :width="dialogWidth('620px')">
+      <el-form :model="accessRuleForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('规则类型', '規則類型', 'Rule Type')">
           <el-select v-model="accessRuleForm.ruleType" style="width: 100%">
             <el-option label="IP_BLOCK" value="IP_BLOCK" />
@@ -356,7 +356,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="riskRuleDialogVisible" :title="lt('编辑高频行为规则', '編輯高頻行為規則', 'Edit High-frequency Risk Rule')" width="620px">
+    <el-dialog v-model="riskRuleDialogVisible" :title="lt('编辑高频行为规则', '編輯高頻行為規則', 'Edit High-frequency Risk Rule')" :width="dialogWidth('620px')">
       <el-form :model="riskRuleForm" label-width="120px">
         <el-form-item :label="lt('规则编码', '規則編碼', 'Rule Code')">
           <el-input v-model="riskRuleForm.ruleCode" :disabled="riskRuleDialogMode === 'edit'" maxlength="64" />
@@ -417,8 +417,10 @@ import {
   upsertOpsRiskRule
 } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const loading = ref(false)
 const auditLogs = ref([])
 const verificationLogs = ref([])
@@ -473,6 +475,14 @@ const riskRuleForm = reactive({
   actionType: 'ALERT',
   note: ''
 })
+const compactLabelWidth = computed(() => (isPhone.value ? '92px' : '110px'))
+const formLabelWidth = computed(() => (isPhone.value ? '96px' : '120px'))
+
+const dialogWidth = (desktop, tablet = '88%', mobile = '94%') => {
+  if (isPhone.value) return mobile
+  if (isTabletOrBelow.value) return tablet
+  return desktop
+}
 
 const actionOptions = [
   'GAME_SUBMIT',
@@ -730,10 +740,20 @@ onMounted(loadData)
 .panel-title { font-size: 17px; font-weight: 800; color: #101828; }
 .panel-subtitle { margin-top: 6px; color: #667085; font-size: 13px; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-input { width: 180px; max-width: 100%; }
+.filter-select { width: 180px; max-width: 100%; }
+.filter-select-sm { width: 140px; }
 .metric-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .metric-chip { padding: 8px 12px; border-radius: 999px; background: #f5f7fa; color: #344054; font-size: 13px; }
 .metric-chip.danger { background: #fff1f3; color: #c01048; }
 .metric-chip.warning { background: #fff7ed; color: #b54708; }
 .table-tip { color: #98a2b3; font-size: 12px; }
 .snapshot-pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.5; color: #344054; }
+@media (max-width: 920px) {
+  .head-row { flex-direction: column; align-items: flex-start; }
+  .actions { width: 100%; }
+  .filter-input,
+  .filter-select,
+  .filter-select-sm { width: 100%; }
+}
 </style>

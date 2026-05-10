@@ -52,3 +52,9 @@ export function ltGlobal(zhCN, zhTW, en) {
   if (locale.value === 'en') return en
   return zhCN
 }
+
+export function resolveLocaleTag() {
+  if (locale.value === 'zh-TW') return 'zh-TW'
+  if (locale.value === 'en') return 'en-US'
+  return 'zh-CN'
+}

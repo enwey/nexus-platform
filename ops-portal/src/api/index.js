@@ -229,6 +229,16 @@ export const submitGameForAudit = (id, note = '') =>
     data: { note }
   })
 
+export const submitGameVersionForAudit = (gameId, versionId, note = '', forceUpdate) =>
+  request({
+    url: `/game/${gameId}/submit-version/${versionId}`,
+    method: 'post',
+    data: {
+      note,
+      ...(typeof forceUpdate === 'boolean' ? { forceUpdate } : {})
+    }
+  })
+
 export const getAuditLogs = (params = {}) =>
   request({
     url: '/audit/logs',

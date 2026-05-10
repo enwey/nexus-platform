@@ -6,8 +6,10 @@ import com.nexus.platform.data.local.AuthSessionStore
 import com.nexus.platform.data.remote.BackendAuthApi
 import com.nexus.platform.domain.model.AuthSession
 
-class AuthRepository(context: Context) {
-    private val authApi = BackendAuthApi()
+class AuthRepository(
+    context: Context,
+    private val authApi: BackendAuthApi
+) {
     private val sessionStore = AuthSessionStore(context)
 
     suspend fun login(email: String, password: String): AuthSession {

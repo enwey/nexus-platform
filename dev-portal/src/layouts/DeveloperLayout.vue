@@ -1,6 +1,10 @@
 <template>
+  <transition name="developer-mask-fade">
+    <div v-if="isTabletOrBelow && sidebarOpen" class="developer-mask" @click="closeSidebar"></div>
+  </transition>
+
   <div class="developer-shell">
-    <aside class="developer-sider">
+    <aside :class="['developer-sider', { 'is-tablet': isTabletOrBelow, 'is-open': sidebarOpen || !isTabletOrBelow }]">
       <div class="brand-block">
         <div class="brand-title">Nexus Dev Console</div>
         <div class="brand-subtitle">{{ lt('开发者后台', '開發者後台', 'Developer Portal') }}</div>
@@ -30,12 +34,23 @@
 
     <section class="developer-main">
       <header class="developer-header">
-        <div>
-          <div class="page-title">{{ pageTitle }}</div>
-          <div class="page-subtitle">{{ pageSubtitle }}</div>
+        <div class="header-main">
+          <el-button
+            v-if="isTabletOrBelow"
+            circle
+            text
+            class="menu-trigger"
+            @click="toggleSidebar"
+          >
+            <el-icon><Menu /></el-icon>
+          </el-button>
+          <div>
+            <div class="page-title">{{ pageTitle }}</div>
+            <div class="page-subtitle">{{ pageSubtitle }}</div>
+          </div>
         </div>
         <div class="header-actions">
-          <el-select :model-value="currentLocale" size="small" style="width: 130px" @change="setLocale">
+          <el-select :model-value="currentLocale" size="small" class="locale-select" @change="setLocale">
             <el-option label="简体中文" value="zh-CN" />
             <el-option label="繁體中文" value="zh-TW" />
             <el-option label="English" value="en" />
@@ -56,18 +71,22 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Menu } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { logoutSession } from '../api'
 import { useI18nLite } from '../i18n'
 import { useUserStore } from '../stores/user'
 import { developerNavSections, resolveDeveloperPageTitle } from '../router/developerNavigation'
+import { useViewport } from '../composables/useViewport'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const { currentLocale, lt, setLocale } = useI18nLite()
+const { isTabletOrBelow } = useViewport()
+const sidebarOpen = ref(false)
 
 const menuSections = developerNavSections
 const activePath = computed(() => route.meta?.navKey || route.path)
@@ -85,6 +104,17 @@ const handleSelect = (path) => {
   if (path && path !== route.path) {
     router.push(path)
   }
+  if (isTabletOrBelow.value) {
+    sidebarOpen.value = false
+  }
+}
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
+const closeSidebar = () => {
+  sidebarOpen.value = false
 }
 
 const handleLogout = async () => {
@@ -98,15 +128,35 @@ const handleLogout = async () => {
   ElMessage.success(lt('已退出登录', '已退出登入', 'Signed out'))
   router.push('/login')
 }
+
+watch(() => route.path, () => {
+  if (isTabletOrBelow.value) {
+    sidebarOpen.value = false
+  }
+})
+
+watch(isTabletOrBelow, (next) => {
+  if (!next) {
+    sidebarOpen.value = false
+  }
+})
 </script>
 
 <style scoped>
 .developer-shell {
   height: 100vh;
   display: flex;
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(38, 94, 255, 0.22), transparent 34%),
     linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
+}
+
+.developer-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 30;
 }
 
 .developer-sider {
@@ -119,6 +169,21 @@ const handleLogout = async () => {
   color: #fff;
   padding: 22px 16px 18px;
   box-sizing: border-box;
+  position: relative;
+  z-index: 40;
+}
+
+.developer-sider.is-tablet {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translateX(-100%);
+  transition: transform 0.24s ease;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.28);
+}
+
+.developer-sider.is-tablet.is-open {
+  transform: translateX(0);
 }
 
 .brand-block {
@@ -152,6 +217,7 @@ const handleLogout = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .developer-header {
@@ -163,6 +229,19 @@ const handleLogout = async () => {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(17, 24, 39, 0.06);
+}
+
+.header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.menu-trigger {
+  color: #0f172a;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .page-title {
@@ -181,6 +260,10 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.locale-select {
+  width: 130px;
 }
 
 .user-badge {
@@ -210,35 +293,75 @@ const handleLogout = async () => {
   padding: 22px 24px 28px;
 }
 
+.developer-mask-fade-enter-active,
+.developer-mask-fade-leave-active {
+  transition: opacity 0.24s ease;
+}
+
+.developer-mask-fade-enter-from,
+.developer-mask-fade-leave-to {
+  opacity: 0;
+}
+
 @media (max-width: 980px) {
   .developer-shell {
-    height: auto;
     min-height: 100vh;
-    flex-direction: column;
   }
 
   .developer-sider {
-    width: 100%;
-    height: auto;
-  }
-
-  .developer-menu {
-    overflow: visible;
-  }
-
-  :deep(.el-sub-menu__title span),
-  :deep(.el-menu-item span) {
-    display: none;
+    height: 100vh;
   }
 
   .developer-header {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 16px 20px;
   }
 
   .header-actions {
     width: 100%;
     flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .developer-content {
+    padding: 18px 20px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .developer-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+  }
+
+  .page-title {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  .page-subtitle {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+
+  .locale-select {
+    width: 118px;
+  }
+
+  .user-badge {
+    min-width: 0;
+  }
+
+  .user-role {
+    display: none;
+  }
+
+  .developer-content {
+    padding: 14px 16px 20px;
   }
 }
 </style>

@@ -36,6 +36,7 @@ import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
 import com.nexus.platform.R
 import com.nexus.platform.core.bridge.NexusBridge
 import com.nexus.platform.core.bridge.RuntimeMetricsProvider
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.core.i18n.AppLanguageManager
 import com.nexus.platform.core.network.BackendConfig
 import com.nexus.platform.data.local.GameEngagementStore
@@ -154,7 +155,7 @@ class GameRuntimeActivity : AppCompatActivity() {
         }
         gameManager = GameManager(this)
         engagementStore = GameEngagementStore(this)
-        backendApi = PlatformBackendApi(this)
+        backendApi = appContainer.platformBackendApi
         applyCapsuleTheme(CapsuleTheme.BLACK)
     }
 

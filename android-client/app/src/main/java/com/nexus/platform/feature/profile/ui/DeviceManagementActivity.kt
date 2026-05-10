@@ -35,8 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nexus.platform.R
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.core.i18n.AppLanguageManager
-import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.domain.model.DeviceSession
 import com.nexus.platform.ui.theme.BackgroundBase
 import com.nexus.platform.ui.theme.BackgroundSurface
@@ -69,7 +69,7 @@ private fun DeviceManagementScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val backendApi = remember(context) { context.appContainer.platformBackendApi }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var devices by remember { mutableStateOf<List<DeviceSession>>(emptyList()) }
 

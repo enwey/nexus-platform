@@ -8,14 +8,14 @@
             <div class="panel-subtitle">{{ lt('集中处理待审核版本，执行版本检查、通过与驳回。', '集中處理待審核版本，執行版本檢查、通過與駁回。', 'Handle pending versions with inspection, approval, and rejection actions.') }}</div>
           </div>
           <div class="actions">
-            <el-select v-model="statusFilter" style="width: 150px">
+            <el-select v-model="statusFilter" class="filter-select filter-select-sm">
               <el-option :label="lt('全部状态', '全部狀態', 'All Statuses')" value="" />
               <el-option :label="lt('待审核', '待審核', 'Pending')" value="PENDING" />
               <el-option :label="lt('已通过', '已通過', 'Approved')" value="APPROVED" />
               <el-option :label="lt('已驳回', '已駁回', 'Rejected')" value="REJECTED" />
             </el-select>
-            <el-input v-model.trim="keyword" clearable style="width: 240px" :placeholder="lt('搜索游戏名 / AppID', '搜尋遊戲名 / AppID', 'Search game / AppID')" />
-            <el-select v-model="assigneeFilter" clearable style="width: 180px">
+            <el-input v-model.trim="keyword" clearable class="keyword-input" :placeholder="lt('搜索游戏名 / AppID', '搜尋遊戲名 / AppID', 'Search game / AppID')" />
+            <el-select v-model="assigneeFilter" clearable class="filter-select">
               <el-option :label="lt('全部负责人', '全部負責人', 'All Assignees')" value="" />
               <el-option v-for="item in reviewerOptions" :key="item.adminUserId" :label="`${item.username} (${item.adminUserId})`" :value="item.adminUserId" />
             </el-select>
@@ -129,9 +129,9 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="assignVisible" :title="lt('分配审核任务', '分配審核任務', 'Assign Review Task')" width="520px">
+    <el-dialog v-model="assignVisible" :title="lt('分配审核任务', '分配審核任務', 'Assign Review Task')" :width="dialogWidth('520px')">
       <div class="assign-head">{{ assignTargetLabel }}</div>
-      <el-form :model="assignForm" label-width="120px">
+      <el-form :model="assignForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('审核负责人', '審核負責人', 'Reviewer')">
           <el-select v-model="assignForm.reviewerId" style="width: 100%">
             <el-option v-for="item in reviewerOptions" :key="item.adminUserId" :label="`${item.username} (${item.adminUserId})`" :value="item.adminUserId" />
@@ -147,9 +147,9 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="batchAssignVisible" :title="lt('批量分配审核', '批量分配審核', 'Batch Assign Reviews')" width="520px">
+    <el-dialog v-model="batchAssignVisible" :title="lt('批量分配审核', '批量分配審核', 'Batch Assign Reviews')" :width="dialogWidth('520px')">
       <div class="assign-head">{{ lt(`已选择 ${selectedRows.length} 个待审版本`, `已選擇 ${selectedRows.length} 個待審版本`, `Selected ${selectedRows.length} pending versions`) }}</div>
-      <el-form :model="batchAssignForm" label-width="120px">
+      <el-form :model="batchAssignForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('审核负责人', '審核負責人', 'Reviewer')">
           <el-select v-model="batchAssignForm.reviewerId" style="width: 100%">
             <el-option v-for="item in reviewerOptions" :key="item.adminUserId" :label="`${item.username} (${item.adminUserId})`" :value="item.adminUserId" />
@@ -170,10 +170,12 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { batchOpsReview, approveGame, assignOpsReview, decideOpsReviewAppeal, getGameVersions, getOpsReviewAppeals, getOpsReviewOverview, getOpsReviewers, getOpsReviews, getOpsRuleTemplates, rejectGame, submitGameForAudit } from '../../api'
+import { batchOpsReview, assignOpsReview, decideOpsReviewAppeal, getGameVersions, getOpsReviewAppeals, getOpsReviewOverview, getOpsReviewers, getOpsReviews, getOpsRuleTemplates, submitGameVersionForAudit } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const games = ref([])
 const loading = ref(false)
 const appealsLoading = ref(false)
@@ -211,6 +213,13 @@ const batchAssignForm = reactive({
   reviewerId: null,
   note: ''
 })
+const formLabelWidth = computed(() => (isPhone.value ? '96px' : '120px'))
+
+const dialogWidth = (desktop, tablet = '88%', mobile = '94%') => {
+  if (isPhone.value) return mobile
+  if (isTabletOrBelow.value) return tablet
+  return desktop
+}
 
 const loadGames = async () => {
   loading.value = true
@@ -437,12 +446,13 @@ const promptReason = async (title, placeholder, templateType = '') => {
 }
 
 const submitForAudit = async (row) => {
+  if (!row?.gameId || !row?.versionId) return
   try {
     const reason = await promptReason(
       lt(`重新提交：${row.name}`, `重新提交：${row.name}`, `Resubmit: ${row.name}`),
       lt('请输入提审说明', '請輸入提審說明', 'Enter submission note')
     )
-    await submitGameForAudit(row.gameId, reason)
+    await submitGameVersionForAudit(row.gameId, row.versionId, reason, Boolean(row.forcedUpdate))
     ElMessage.success(lt('已提交审核', '已提交審核', 'Submitted for review'))
     await loadGames()
   } catch (error) {
@@ -453,13 +463,14 @@ const submitForAudit = async (row) => {
 }
 
 const approvePendingGame = async (row) => {
+  if (!row?.versionId) return
   try {
     const reason = await promptReason(
       lt(`审核通过：${row.name}`, `審核通過：${row.name}`, `Approve: ${row.name}`),
       lt('请输入通过理由', '請輸入通過理由', 'Enter approval note'),
       'APPROVAL'
     )
-    await approveGame(row.gameId, reason)
+    await batchOpsReview({ versionIds: [row.versionId], action: 'APPROVE', reason })
     ElMessage.success(lt('审核已通过', '審核已通過', 'Approved'))
     await loadGames()
   } catch (error) {
@@ -470,13 +481,14 @@ const approvePendingGame = async (row) => {
 }
 
 const rejectPendingGame = async (row) => {
+  if (!row?.versionId) return
   try {
     const reason = await promptReason(
       lt(`驳回版本：${row.name}`, `駁回版本：${row.name}`, `Reject: ${row.name}`),
       lt('请输入驳回原因', '請輸入駁回原因', 'Enter rejection reason'),
       'REJECTION'
     )
-    await rejectGame(row.gameId, reason)
+    await batchOpsReview({ versionIds: [row.versionId], action: 'REJECT', reason })
     ElMessage.success(lt('已驳回', '已駁回', 'Rejected'))
     await loadGames()
   } catch (error) {
@@ -594,6 +606,9 @@ onMounted(async () => {
 .panel-subtitle { margin-top: 6px; color: #667085; font-size: 13px; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .action-list { display: flex; gap: 8px; flex-wrap: wrap; }
+.keyword-input { width: 240px; max-width: 100%; }
+.filter-select { width: 180px; max-width: 100%; }
+.filter-select-sm { width: 150px; }
 .metric-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .metric-chip { padding: 8px 12px; border-radius: 999px; background: #f5f7fa; color: #344054; font-size: 13px; }
 .metric-chip.danger { background: #fff1f3; color: #c01048; }
@@ -605,5 +620,13 @@ onMounted(async () => {
 .bucket-label { color: #667085; font-size: 12px; }
 .bucket-value { margin-top: 6px; color: #101828; font-size: 24px; font-weight: 800; }
 .assign-head { margin-bottom: 12px; color: #344054; font-weight: 700; }
-@media (max-width: 920px) { .head-row { flex-direction: column; } .overview-grid { grid-template-columns: 1fr; } .bucket-list { grid-template-columns: 1fr; } }
+@media (max-width: 920px) {
+  .head-row { flex-direction: column; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .bucket-list { grid-template-columns: 1fr; }
+  .actions { width: 100%; justify-content: flex-start; }
+  .keyword-input,
+  .filter-select,
+  .filter-select-sm { width: 100%; }
+}
 </style>

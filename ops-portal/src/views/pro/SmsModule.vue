@@ -21,13 +21,13 @@
         <el-input
           v-model.trim="filters.email"
           clearable
-          style="width: 240px"
+          class="filter-input"
           :placeholder="lt('郵箱', '郵箱', 'Email')"
         />
         <el-select
           v-model="filters.purpose"
           clearable
-          style="width: 180px"
+          class="filter-select"
           :placeholder="lt('用途', '用途', 'Purpose')"
         >
           <el-option label="REGISTER" value="REGISTER" />
@@ -37,7 +37,7 @@
         <el-input
           v-model.trim="filters.source"
           clearable
-          style="width: 160px"
+          class="filter-source"
           :placeholder="lt('來源端', '來源端', 'Source')"
         />
         <el-input-number v-model="filters.limit" :min="20" :max="500" :step="20" />
@@ -65,7 +65,7 @@
       </el-table>
     </el-card>
 
-    <el-drawer v-model="detailVisible" :title="lt('验证码日志详情', '驗證碼日誌詳情', 'Verification Log Detail')" size="36%">
+    <el-drawer v-model="detailVisible" :title="lt('验证码日志详情', '驗證碼日誌詳情', 'Verification Log Detail')" :size="detailDrawerSize">
       <template v-if="detailRow">
         <el-descriptions :column="1" border>
           <el-descriptions-item :label="lt('时间', '時間', 'Time')">{{ detailRow.createdAt || '-' }}</el-descriptions-item>
@@ -87,8 +87,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getVerificationCodeLogs } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const loading = ref(false)
 const loadError = ref('')
 const logs = ref([])
@@ -100,6 +102,7 @@ const filters = reactive({
   source: '',
   limit: 100
 })
+const detailDrawerSize = computed(() => (isPhone.value ? '100%' : isTabletOrBelow.value ? '72%' : '36%'))
 
 const loadLogs = async () => {
   loading.value = true
@@ -136,7 +139,17 @@ onMounted(loadLogs)
 .pro-page { display: flex; flex-direction: column; gap: 16px; }
 .head-row { display: flex; justify-content: space-between; align-items: center; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filter-input { width: 240px; max-width: 100%; }
+.filter-select { width: 180px; max-width: 100%; }
+.filter-source { width: 160px; max-width: 100%; }
 .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .summary-item { padding: 14px 16px; border-radius: 16px; background: #f8fafc; display: flex; flex-direction: column; gap: 6px; color: #475467; }
 .summary-item strong { font-size: 18px; color: #101828; }
+@media (max-width: 920px) {
+  .head-row { flex-direction: column; align-items: flex-start; }
+  .filters { width: 100%; }
+  .filter-input,
+  .filter-select,
+  .filter-source { width: 100%; }
+}
 </style>

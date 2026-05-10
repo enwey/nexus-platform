@@ -373,7 +373,7 @@ async function loadSmsLogs(force = false) {
     const res = await getVerificationCodeLogs()
     return asArray(res.data).map((item) => ({
       ...item,
-      id: item.id || item.logId || `${item.phone || item.mobile}-${item.createdAt}`
+      id: item.id || item.logId || `${item.account || item.requestSource || 'verification'}-${item.createdAt}`
     }))
   }, force)
 }
@@ -1146,10 +1146,10 @@ export const catalogRegistry = {
     idKey: 'id',
     detailRouteName: 'OpsSmsLogDetail',
     listColumns: [
-      { prop: 'phone', label: tri('手机号', '手機號', 'Phone') },
-      { prop: 'scene', label: tri('场景', '場景', 'Scene') },
-      { prop: 'status', label: tri('状态', '狀態', 'Status'), type: 'tag' },
-      { prop: 'verified', label: tri('已验证', '已驗證', 'Verified'), formatter: (value) => (value ? 'YES' : 'NO') },
+      { prop: 'account', label: tri('邮箱', '電子郵件', 'Email') },
+      { prop: 'purpose', label: tri('用途', '用途', 'Purpose') },
+      { prop: 'success', label: tri('状态', '狀態', 'Status'), type: 'tag', formatter: (value) => (value ? 'SUCCESS' : 'FAILED') },
+      { prop: 'requestSource', label: tri('来源', '來源', 'Source') },
       { prop: 'createdAt', label: tri('时间', '時間', 'Time'), formatter: formatDateTime }
     ],
     loadList: loadSmsLogs,

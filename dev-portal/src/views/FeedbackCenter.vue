@@ -35,7 +35,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="createVisible" :title="lt('新建反馈工单', '新增回饋工單', 'Create Ticket')" width="620px">
+    <el-dialog v-model="createVisible" :title="lt('新建反馈工单', '新增回饋工單', 'Create Ticket')" :width="createDialogWidth">
       <el-form :model="createForm" label-position="top">
         <el-form-item :label="lt('问题类型', '問題類型', 'Ticket Type')">
           <el-select v-model="createForm.ticketType" style="width: 100%">
@@ -71,9 +71,9 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="detailVisible" :title="activeTicket?.ticketNo || lt('工单详情', '工單詳情', 'Ticket Detail')" width="860px">
+    <el-dialog v-model="detailVisible" :title="activeTicket?.ticketNo || lt('工单详情', '工單詳情', 'Ticket Detail')" :width="detailDialogWidth">
       <div v-if="activeTicket" class="detail-block">
-        <el-descriptions :column="2" border>
+        <el-descriptions :column="descriptionColumns" border>
           <el-descriptions-item :label="lt('标题', '標題', 'Title')">{{ activeTicket.title }}</el-descriptions-item>
           <el-descriptions-item :label="lt('状态', '狀態', 'Status')">{{ statusText(activeTicket.ticketStatus) }}</el-descriptions-item>
           <el-descriptions-item :label="lt('类型', '類型', 'Type')">{{ ticketTypeText(activeTicket.ticketType) }}</el-descriptions-item>
@@ -109,10 +109,12 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { createMyTicket, createMyTicketMessage, getMyTicketMessages, getMyTickets } from '../api'
+import { useViewport } from '../composables/useViewport'
 import { useI18nLite } from '../i18n'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
@@ -137,6 +139,9 @@ const createForm = reactive({
 const canReply = computed(() => {
   return activeTicket.value && !['RESOLVED', 'CLOSED'].includes(activeTicket.value.ticketStatus)
 })
+const createDialogWidth = computed(() => (isPhone.value ? '94%' : '620px'))
+const detailDialogWidth = computed(() => (isPhone.value ? '96%' : isTabletOrBelow.value ? '90%' : '860px'))
+const descriptionColumns = computed(() => (isPhone.value ? 1 : 2))
 
 const loadTickets = async () => {
   loading.value = true

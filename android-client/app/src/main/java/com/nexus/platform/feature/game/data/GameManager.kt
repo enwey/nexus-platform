@@ -5,7 +5,7 @@ import android.util.Base64
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.nexus.platform.data.remote.PlatformBackendApi
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.core.network.BackendConfig
 import com.nexus.platform.core.network.BackendHttpClientFactory
@@ -58,7 +58,7 @@ class GameManager(private val context: Context) {
         followSslRedirects(false)
     }
     private val gson = Gson()
-    private val backendApi = PlatformBackendApi(context)
+    private val backendApi = context.appContainer.platformBackendApi
     private val updateScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val updateStateMap = ConcurrentHashMap<String, UpdateState>()
 

@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,11 +47,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nexus.platform.NexusApplication
 import com.nexus.platform.R
+import com.nexus.platform.core.di.appContainer
 import com.nexus.platform.core.i18n.ApiErrorLocalizer
 import com.nexus.platform.core.ui.showCenterToast
-import com.nexus.platform.data.remote.PlatformBackendApi
 import com.nexus.platform.feature.common.ui.LegalWebViewActivity
 import com.nexus.platform.ui.components.ActionButton
 import com.nexus.platform.ui.theme.BackgroundBase
@@ -69,8 +66,8 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    val authRepository = remember(context) { (context.applicationContext as NexusApplication).container.authRepository }
-    val backendApi = remember(context) { PlatformBackendApi(context) }
+    val authRepository = remember(context) { context.appContainer.authRepository }
+    val backendApi = remember(context) { context.appContainer.platformBackendApi }
     val scope = rememberCoroutineScope()
 
     val emptyCredentials = stringResource(R.string.login_error_empty_credentials)
@@ -257,19 +254,18 @@ fun RegisterScreen(
                     Text(text = passwordError.orEmpty())
                 }
             },
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = if (passwordVisible) {
+                trailingIcon = {
+                    Text(
+                        text = if (passwordVisible) {
                             stringResource(R.string.change_password_hide)
                         } else {
                             stringResource(R.string.change_password_show)
                         },
-                        tint = TextMuted
+                        color = TextMuted,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.clickable { passwordVisible = !passwordVisible }
                     )
-                }
-            },
+                },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = textFieldColors

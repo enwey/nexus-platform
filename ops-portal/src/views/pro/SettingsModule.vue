@@ -221,7 +221,7 @@
       </el-col>
     </el-row>
 
-    <el-drawer v-model="configPreviewVisible" :title="configPreviewTitle" size="36%">
+    <el-drawer v-model="configPreviewVisible" :title="configPreviewTitle" :size="previewDrawerSize">
       <template v-if="configPreviewRecord">
         <el-descriptions :column="1" border>
           <el-descriptions-item v-for="item in configPreviewItems" :key="item.label" :label="item.label">{{ item.value }}</el-descriptions-item>
@@ -229,8 +229,8 @@
       </template>
     </el-drawer>
 
-    <el-dialog v-model="templateDialogVisible" :title="editingTemplateId ? lt('编辑治理模板', '編輯治理範本', 'Edit Governance Template') : lt('新建治理模板', '新增治理範本', 'Create Governance Template')" width="620px">
-      <el-form :model="templateForm" label-width="110px">
+    <el-dialog v-model="templateDialogVisible" :title="editingTemplateId ? lt('编辑治理模板', '編輯治理範本', 'Edit Governance Template') : lt('新建治理模板', '新增治理範本', 'Create Governance Template')" :width="dialogWidth('620px')">
+      <el-form :model="templateForm" :label-width="compactLabelWidth">
         <el-form-item :label="lt('模板类型', '範本類型', 'Template Type')">
           <el-select v-model="templateForm.templateType" style="width: 100%">
             <el-option label="APPROVAL" value="APPROVAL" />
@@ -254,7 +254,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="permissionDialogVisible" :title="lt('编辑角色权限', '編輯角色權限', 'Edit Role Permissions')" width="760px">
+    <el-dialog v-model="permissionDialogVisible" :title="lt('编辑角色权限', '編輯角色權限', 'Edit Role Permissions')" :width="dialogWidth('760px', '92%')">
       <div class="permission-role">{{ editingRole }}</div>
       <el-checkbox-group v-model="permissionForm.permissions" class="permission-grid">
         <el-checkbox v-for="permission in availablePermissions" :key="permission" :value="permission">{{ permission }}</el-checkbox>
@@ -266,7 +266,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="dataScopeDialogVisible" :title="lt('编辑管理员数据范围', '編輯管理員資料範圍', 'Edit Admin Data Scope')" width="520px">
+    <el-dialog v-model="dataScopeDialogVisible" :title="lt('编辑管理员数据范围', '編輯管理員資料範圍', 'Edit Admin Data Scope')" :width="dialogWidth('520px')">
       <div class="permission-role">{{ editingAdminLabel }}</div>
       <el-select v-model="dataScopeForm.scopeCode" style="width: 100%">
         <el-option value="ALL_DEVELOPERS" :label="lt('全部开发者', '全部開發者', 'All Developers')" />
@@ -281,8 +281,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="noticeTemplateDialogVisible" :title="editingNoticeTemplateId ? lt('编辑通知模板', '編輯通知範本', 'Edit Notice Template') : lt('新建通知模板', '新增通知範本', 'Create Notice Template')" width="680px">
-      <el-form :model="noticeTemplateForm" label-width="120px">
+    <el-dialog v-model="noticeTemplateDialogVisible" :title="editingNoticeTemplateId ? lt('编辑通知模板', '編輯通知範本', 'Edit Notice Template') : lt('新建通知模板', '新增通知範本', 'Create Notice Template')" :width="dialogWidth('680px')">
+      <el-form :model="noticeTemplateForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('模板编码', '範本編碼', 'Template Code')"><el-input v-model="noticeTemplateForm.templateCode" :disabled="Boolean(editingNoticeTemplateId)" /></el-form-item>
         <el-form-item :label="lt('模板名称', '範本名稱', 'Template Name')"><el-input v-model="noticeTemplateForm.templateName" /></el-form-item>
         <el-form-item :label="lt('渠道类型', '渠道類型', 'Channel Type')">
@@ -309,8 +309,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="dictionaryDialogVisible" :title="editingDictionaryId ? lt('编辑字典条目', '編輯字典條目', 'Edit Dictionary Entry') : lt('新建字典条目', '新增字典條目', 'Create Dictionary Entry')" width="620px">
-      <el-form :model="dictionaryForm" label-width="120px">
+    <el-dialog v-model="dictionaryDialogVisible" :title="editingDictionaryId ? lt('编辑字典条目', '編輯字典條目', 'Edit Dictionary Entry') : lt('新建字典条目', '新增字典條目', 'Create Dictionary Entry')" :width="dialogWidth('620px')">
+      <el-form :model="dictionaryForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('字典类型', '字典類型', 'Type')"><el-input v-model="dictionaryForm.dictType" :disabled="Boolean(editingDictionaryId)" /></el-form-item>
         <el-form-item :label="lt('键', '鍵', 'Key')"><el-input v-model="dictionaryForm.dictKey" :disabled="Boolean(editingDictionaryId)" /></el-form-item>
         <el-form-item :label="lt('标签', '標籤', 'Label')"><el-input v-model="dictionaryForm.dictLabel" /></el-form-item>
@@ -329,8 +329,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="menuPermissionDialogVisible" :title="editingMenuPermissionId ? lt('编辑菜单权限配置', '編輯菜單權限配置', 'Edit Menu Permission Profile') : lt('新建菜单权限配置', '新增菜單權限配置', 'Create Menu Permission Profile')" width="620px">
-      <el-form :model="menuPermissionForm" label-width="120px">
+    <el-dialog v-model="menuPermissionDialogVisible" :title="editingMenuPermissionId ? lt('编辑菜单权限配置', '編輯菜單權限配置', 'Edit Menu Permission Profile') : lt('新建菜单权限配置', '新增菜單權限配置', 'Create Menu Permission Profile')" :width="dialogWidth('620px')">
+      <el-form :model="menuPermissionForm" :label-width="formLabelWidth">
         <el-form-item :label="lt('角色', '角色', 'Role')"><el-input v-model="menuPermissionForm.roleCode" :disabled="Boolean(editingMenuPermissionId)" /></el-form-item>
         <el-form-item :label="lt('菜单键', '菜單鍵', 'Menu Code')"><el-input v-model="menuPermissionForm.menuCode" :disabled="Boolean(editingMenuPermissionId)" /></el-form-item>
         <el-form-item :label="lt('菜单名称', '菜單名稱', 'Menu Label')"><el-input v-model="menuPermissionForm.menuLabel" /></el-form-item>
@@ -344,8 +344,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="approvalTemplateDialogVisible" :title="editingApprovalTemplateId ? lt('编辑审批模板', '編輯審批範本', 'Edit Approval Template') : lt('新建审批模板', '新增審批範本', 'Create Approval Template')" width="680px">
-      <el-form :model="approvalTemplateForm" label-width="130px">
+    <el-dialog v-model="approvalTemplateDialogVisible" :title="editingApprovalTemplateId ? lt('编辑审批模板', '編輯審批範本', 'Edit Approval Template') : lt('新建审批模板', '新增審批範本', 'Create Approval Template')" :width="dialogWidth('680px')">
+      <el-form :model="approvalTemplateForm" :label-width="wideLabelWidth">
         <el-form-item :label="lt('模板编码', '範本編碼', 'Template Code')"><el-input v-model="approvalTemplateForm.templateCode" :disabled="Boolean(editingApprovalTemplateId)" /></el-form-item>
         <el-form-item :label="lt('模板名称', '範本名稱', 'Template Name')"><el-input v-model="approvalTemplateForm.templateName" /></el-form-item>
         <el-form-item :label="lt('业务类型', '業務類型', 'Biz Type')"><el-input v-model="approvalTemplateForm.bizType" /></el-form-item>
@@ -361,8 +361,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="sensitivePolicyDialogVisible" :title="editingSensitivePolicyId ? lt('编辑敏感策略', '編輯敏感策略', 'Edit Sensitive Policy') : lt('新建敏感策略', '新增敏感策略', 'Create Sensitive Policy')" width="680px">
-      <el-form :model="sensitivePolicyForm" label-width="130px">
+    <el-dialog v-model="sensitivePolicyDialogVisible" :title="editingSensitivePolicyId ? lt('编辑敏感策略', '編輯敏感策略', 'Edit Sensitive Policy') : lt('新建敏感策略', '新增敏感策略', 'Create Sensitive Policy')" :width="dialogWidth('680px')">
+      <el-form :model="sensitivePolicyForm" :label-width="wideLabelWidth">
         <el-form-item :label="lt('策略编码', '策略編碼', 'Policy Code')"><el-input v-model="sensitivePolicyForm.policyCode" :disabled="Boolean(editingSensitivePolicyId)" /></el-form-item>
         <el-form-item :label="lt('策略名称', '策略名稱', 'Policy Name')"><el-input v-model="sensitivePolicyForm.policyName" /></el-form-item>
         <el-form-item :label="lt('风险等级', '風險等級', 'Risk Level')"><el-select v-model="sensitivePolicyForm.riskLevel" style="width: 100%"><el-option label="LOW" value="LOW" /><el-option label="MEDIUM" value="MEDIUM" /><el-option label="HIGH" value="HIGH" /><el-option label="CRITICAL" value="CRITICAL" /></el-select></el-form-item>
@@ -407,8 +407,10 @@ import {
   updateProfile
 } from '../../api'
 import { useI18nLite } from '../../i18n'
+import { useViewport } from '../../composables/useViewport'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const saving = ref(false)
 const permissionLoading = ref(false)
 const permissionSaving = ref(false)
@@ -448,6 +450,16 @@ const editingRole = ref('')
 const editingAdminId = ref(null)
 const editingAdminLabel = ref('')
 const configPreviewType = ref('')
+const compactLabelWidth = computed(() => (isPhone.value ? '92px' : '110px'))
+const formLabelWidth = computed(() => (isPhone.value ? '96px' : '120px'))
+const wideLabelWidth = computed(() => (isPhone.value ? '108px' : '130px'))
+const previewDrawerSize = computed(() => (isPhone.value ? '100%' : isTabletOrBelow.value ? '72%' : '36%'))
+
+const dialogWidth = (desktop, tablet = '88%', mobile = '94%') => {
+  if (isPhone.value) return mobile
+  if (isTabletOrBelow.value) return tablet
+  return desktop
+}
 const configPreviewRecord = ref(null)
 const profileForm = reactive({
   displayName: '',
@@ -1019,6 +1031,9 @@ onMounted(() => {
 .permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .permission-help { margin-top: 14px; color: #667085; font-size: 13px; line-height: 1.7; }
 @media (max-width: 900px) {
+  .card-header-inline,
+  .rule-head { flex-direction: column; align-items: flex-start; }
+  .rule-actions { flex-wrap: wrap; }
   .permission-grid { grid-template-columns: 1fr; }
 }
 </style>

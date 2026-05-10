@@ -8,14 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.Forum
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.icons.outlined.Explore
-import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,10 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nexus.platform.R
 import com.nexus.platform.ui.navigation.MainDestination
 import com.nexus.platform.ui.theme.BackgroundSurface
 import com.nexus.platform.ui.theme.BorderLight
@@ -64,10 +58,16 @@ fun MainBottomBar(
                     selected = isSelected,
                     onClick = { if (!isSelected) onSelect(tab) },
                     icon = {
-                        Icon(
-                            imageVector = tabIcon(tab = tab, selected = isSelected),
-                            contentDescription = null
-                        )
+                        when (tab) {
+                            MainDestination.Profile -> Icon(
+                                imageVector = Icons.Outlined.Person,
+                                contentDescription = null
+                            )
+                            else -> Icon(
+                                painter = painterResource(tabIconRes(tab)),
+                                contentDescription = null
+                            )
+                        }
                     },
                     label = {
                         Text(
@@ -95,11 +95,11 @@ private fun tabLabel(tab: MainDestination): String {
     return stringResource(tab.labelRes)
 }
 
-private fun tabIcon(tab: MainDestination, selected: Boolean): ImageVector {
+private fun tabIconRes(tab: MainDestination): Int {
     return when (tab) {
-        MainDestination.Library -> if (selected) Icons.Filled.SportsEsports else Icons.Outlined.SportsEsports
-        MainDestination.Discover -> if (selected) Icons.Filled.Explore else Icons.Outlined.Explore
-        MainDestination.Recommend -> if (selected) Icons.Filled.Forum else Icons.Outlined.Forum
-        MainDestination.Profile -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
+        MainDestination.Library -> R.drawable.ic_launcher_gamepad
+        MainDestination.Discover -> R.drawable.ic_nav_explore
+        MainDestination.Recommend -> R.drawable.ic_nexus_feedback
+        MainDestination.Profile -> R.drawable.ic_default_avatar
     }
 }

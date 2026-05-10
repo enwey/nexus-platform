@@ -111,4 +111,14 @@ const handleLogin = async () => {
   gap: 8px;
   color: #6b7280;
 }
+
+@media (max-width: 520px) {
+  .auth-page {
+    padding: 16px;
+  }
+
+  .auth-footer {
+    flex-wrap: wrap;
+  }
+}
 </style>

@@ -319,5 +319,9 @@ onMounted(loadDashboard)
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .metric-value {
+    font-size: 24px;
+  }
 }
 </style>

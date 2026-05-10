@@ -16,6 +16,8 @@ import com.nexus.platform.R
 import com.nexus.platform.core.i18n.AppLanguageManager
 
 class LaunchAdWebViewActivity : AppCompatActivity() {
+    private var webView: WebView? = null
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguageManager.wrap(newBase))
     }
@@ -59,7 +61,7 @@ class LaunchAdWebViewActivity : AppCompatActivity() {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         }
 
-        val webView = WebView(this).apply {
+        webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = object : WebViewClient() {}
@@ -86,6 +88,17 @@ class LaunchAdWebViewActivity : AppCompatActivity() {
         root.addView(toolbar)
         root.addView(webView)
         setContentView(root)
+    }
+
+    override fun onDestroy() {
+        webView?.apply {
+            stopLoading()
+            loadUrl("about:blank")
+            removeAllViews()
+            destroy()
+        }
+        webView = null
+        super.onDestroy()
     }
 
     companion object {

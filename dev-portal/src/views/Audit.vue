@@ -1,103 +1,109 @@
-﻿<template>
-  <div class="page-shell">
-    <header class="page-header">
-      <div>
-        <h1>{{ lt('游戏审核', '遊戲審核', 'Game Review') }}</h1>
-        <p>{{ lt('查看待处理的版本并执行通过或拒绝操作。', '查看待處理版本並執行通過或拒絕操作。', 'Review pending versions and approve or reject them.') }}</p>
-      </div>
-    </header>
+<template>
+  <div class="legacy-page">
+    <el-card class="legacy-card">
+      <div class="legacy-badge">{{ lt('历史页面', '歷史頁面', 'Legacy Page') }}</div>
+      <h1>{{ lt('旧版审核页已停用', '舊版審核頁已停用', 'Legacy Review Page Retired') }}</h1>
+      <p>
+        {{
+          lt(
+            '开发者后台不再提供旧版“通过 / 拒绝”审核入口，当前审核相关流程已经迁移到版本发布、申诉记录和资质页。',
+            '開發者後台不再提供舊版「通過 / 拒絕」審核入口，目前審核相關流程已遷移到版本發布、申訴記錄與資質頁。',
+            'The developer portal no longer exposes the old approve/reject review entry. Review workflows now live in release management, appeal records, and certification pages.'
+          )
+        }}
+      </p>
 
-    <el-card>
-      <el-table :data="games" v-loading="loading" :empty-text="lt('暂无待审核数据', '暫無待審核資料', 'No pending review items')">
-        <el-table-column prop="name" :label="lt('游戏名称', '遊戲名稱', 'Game Name')" min-width="180" />
-        <el-table-column prop="description" :label="lt('描述', '描述', 'Description')" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="version" :label="lt('版本', '版本', 'Version')" width="120" />
-        <el-table-column prop="developerId" :label="lt('开发者 ID', '開發者 ID', 'Developer ID')" width="140" />
-        <el-table-column prop="status" :label="lt('状态', '狀態', 'Status')" width="140">
-          <template #default="{ row }"><el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag></template>
-        </el-table-column>
-        <el-table-column :label="lt('操作', '操作', 'Actions')" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button v-if="row.status === 'PENDING'" type="success" size="small" @click="handleApprove(row)">{{ lt('通过', '通過', 'Approve') }}</el-button>
-            <el-button v-if="row.status === 'PENDING'" type="danger" size="small" @click="handleReject(row)">{{ lt('拒绝', '拒絕', 'Reject') }}</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <el-alert
+        :title="lt('这样可以避免误用旧的游戏级审核接口，影响到错误版本。', '這樣可以避免誤用舊的遊戲級審核介面，影響到錯誤版本。', 'This avoids accidentally using legacy game-level review endpoints against the wrong version.')"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="legacy-alert"
+      />
+
+      <div class="legacy-actions">
+        <el-button type="primary" @click="router.push('/releases/list')">
+          {{ lt('前往版本发布', '前往版本發布', 'Open Release Center') }}
+        </el-button>
+        <el-button @click="router.push('/reviews/appeals')">
+          {{ lt('查看申诉记录', '查看申訴記錄', 'View Appeals') }}
+        </el-button>
+        <el-button @click="router.push('/reviews/certification')">
+          {{ lt('查看资质与审核', '查看資質與審核', 'Open Reviews & Certification') }}
+        </el-button>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { approveGame, getGameList, rejectGame } from '../api'
+import { useRouter } from 'vue-router'
 import { useI18nLite } from '../i18n'
 
-const games = ref([])
-const loading = ref(false)
+const router = useRouter()
 const { lt } = useI18nLite()
-
-const getStatusText = (status) => {
-  const map = {
-    DRAFT: lt('草稿', '草稿', 'Draft'),
-    PENDING: lt('待审核', '待審核', 'Pending'),
-    APPROVED: lt('已通过', '已通過', 'Approved'),
-    REJECTED: lt('已拒绝', '已拒絕', 'Rejected')
-  }
-  return map[status] || status || lt('未知', '未知', 'Unknown')
-}
-const getStatusType = (status) => ({ DRAFT: 'info', PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[status] || 'info')
-
-const loadGames = async () => {
-  loading.value = true
-  try {
-    const res = await getGameList()
-    games.value = (res.data || []).filter((game) => ['PENDING', 'APPROVED', 'REJECTED'].includes(game.status))
-  } catch (error) {
-    ElMessage.error(error.message || lt('加载审核列表失败', '載入審核列表失敗', 'Failed to load review list'))
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleApprove = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      lt(`确定通过游戏“${row.name}”吗？`, `確定通過遊戲「${row.name}」嗎？`, `Approve game "${row.name}"?`),
-      lt('审核通过', '審核通過', 'Approve Review'),
-      { confirmButtonText: lt('通过', '通過', 'Approve'), cancelButtonText: lt('取消', '取消', 'Cancel'), type: 'success' }
-    )
-
-    await approveGame(row.id)
-    ElMessage.success(lt('审核已通过', '審核已通過', 'Approved'))
-    await loadGames()
-  } catch (error) {
-    if (error !== 'cancel') ElMessage.error(error.message || lt('审核操作失败', '審核操作失敗', 'Review action failed'))
-  }
-}
-
-const handleReject = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      lt(`确定拒绝游戏“${row.name}”吗？`, `確定拒絕遊戲「${row.name}」嗎？`, `Reject game "${row.name}"?`),
-      lt('审核拒绝', '審核拒絕', 'Reject Review'),
-      { confirmButtonText: lt('拒绝', '拒絕', 'Reject'), cancelButtonText: lt('取消', '取消', 'Cancel'), type: 'warning' }
-    )
-
-    await rejectGame(row.id)
-    ElMessage.success(lt('已拒绝该游戏', '已拒絕該遊戲', 'Game rejected'))
-    await loadGames()
-  } catch (error) {
-    if (error !== 'cancel') ElMessage.error(error.message || lt('审核操作失败', '審核操作失敗', 'Review action failed'))
-  }
-}
-
-onMounted(loadGames)
 </script>
 
 <style scoped>
-.page-shell { padding: 24px; }
-.page-header { margin-bottom: 24px; }
-.page-header h1 { margin: 0 0 8px; }
-.page-header p { margin: 0; color: #6b7280; }
+.legacy-page {
+  padding: 24px;
+}
+
+.legacy-card {
+  max-width: 840px;
+  border-radius: 24px;
+}
+
+.legacy-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #2859c5;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.legacy-card h1 {
+  margin: 16px 0 10px;
+  font-size: 28px;
+  line-height: 1.2;
+  color: #101828;
+}
+
+.legacy-card p {
+  margin: 0;
+  color: #475467;
+  line-height: 1.7;
+}
+
+.legacy-alert {
+  margin-top: 18px;
+}
+
+.legacy-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+@media (max-width: 768px) {
+  .legacy-page {
+    padding: 16px;
+  }
+
+  .legacy-card h1 {
+    font-size: 22px;
+  }
+
+  .legacy-actions {
+    flex-direction: column;
+  }
+
+  .legacy-actions :deep(.el-button) {
+    margin-left: 0;
+  }
+}
 </style>

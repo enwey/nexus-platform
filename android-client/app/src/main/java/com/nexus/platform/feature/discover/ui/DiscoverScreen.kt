@@ -267,10 +267,13 @@ fun DiscoverScreen(
                     }
                 }
             } else {
-                items(rankedGames.size) { index ->
+                items(
+                    items = rankedGames,
+                    key = { game -> "discover_ranked_${game.id}" }
+                ) { game ->
                     Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp)) {
                         RankedItem(
-                            game = rankedGames[index],
+                            game = game,
                             onGameClick = onGameClick,
                             onQuickPlayClick = onQuickPlayClick
                         )

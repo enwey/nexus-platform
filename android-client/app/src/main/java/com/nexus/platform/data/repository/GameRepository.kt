@@ -9,8 +9,10 @@ import com.nexus.platform.domain.model.GameItem
 import com.nexus.platform.domain.model.LibraryHomeSnapshot
 import com.nexus.platform.feature.game.data.LocalGameMetadataResolver
 
-class GameRepository(context: Context) {
-    private val backendApi = PlatformBackendApi(context)
+class GameRepository(
+    context: Context,
+    private val backendApi: PlatformBackendApi
+) {
     private val authSessionStore = AuthSessionStore(context)
     private val localMetadataResolver = LocalGameMetadataResolver(context)
 
@@ -70,11 +72,17 @@ class GameRepository(context: Context) {
         }
     }
 
-    suspend fun getDiscoverGames(category: String? = null): List<GameItem> {
+    suspend fun getDiscoverGames(
+        category: String? = null,
+        preferHomeSnapshot: Boolean = true
+    ): List<GameItem> {
         return if (BuildConfig.USE_MOCK_DATA) {
             emptyList()
         } else {
-            backendApi.getDiscoverGames(category = category).map(localMetadataResolver::merge)
+            backendApi.getDiscoverGames(
+                category = category,
+                preferHomeSnapshot = preferHomeSnapshot
+            ).map(localMetadataResolver::merge)
         }
     }
 

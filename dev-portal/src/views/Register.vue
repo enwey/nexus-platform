@@ -205,4 +205,23 @@ onBeforeUnmount(() => {
   gap: 8px;
   color: #6b7280;
 }
+
+@media (max-width: 520px) {
+  .auth-page {
+    padding: 16px;
+  }
+
+  .code-row {
+    flex-direction: column;
+  }
+
+  .code-row :deep(.el-button) {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .auth-footer {
+    flex-wrap: wrap;
+  }
+}
 </style>

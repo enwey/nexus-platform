@@ -19,7 +19,6 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import en from 'element-plus/es/locale/lang/en'
 import { useI18nLite } from './i18n'
-import 'element-plus/dist/index.css'
 
 const { currentLocale, setLocale } = useI18nLite()
 

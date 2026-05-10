@@ -1,18 +1,31 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
 import { getPortalApiConfigHelpText, getRuntimeApiBaseUrl } from './config/apiBaseUrl'
+import { registerElement } from './plugins/element'
+
+function detectStaticLocale() {
+  const nav = navigator.language || 'zh-CN'
+  if (nav.toLowerCase().includes('tw') || nav.toLowerCase().includes('hk')) return 'zh-TW'
+  if (nav.toLowerCase().startsWith('en')) return 'en'
+  return 'zh-CN'
+}
 
 function renderConfigError(error) {
   const root = document.querySelector('#app')
   if (!root) return
-  const helpLines = getPortalApiConfigHelpText()
+  const locale = detectStaticLocale()
+  const helpLines = getPortalApiConfigHelpText(locale)
+  const title = locale === 'en'
+    ? 'Developer portal configuration missing'
+    : locale === 'zh-TW'
+      ? '開發者後台設定缺失'
+      : '开发者后台配置缺失'
   root.innerHTML = `
     <section style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f6f8fc;padding:24px;">
       <article style="max-width:720px;background:#fff;border-radius:20px;padding:32px;box-shadow:0 18px 48px rgba(15,23,42,.12);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-        <h1 style="margin:0 0 12px;font-size:28px;color:#111827;">开发者后台配置缺失</h1>
+        <h1 style="margin:0 0 12px;font-size:28px;color:#111827;">${title}</h1>
         <p style="margin:0 0 16px;color:#374151;line-height:1.7;">${error.message}</p>
         <ul style="margin:0;padding-left:20px;color:#4b5563;line-height:1.8;">
           ${helpLines.map((item) => `<li>${item}</li>`).join('')}
@@ -35,7 +48,7 @@ async function bootstrap() {
 
   app.use(createPinia())
   app.use(router)
-  app.use(ElementPlus)
+  registerElement(app)
   app.mount('#app')
 }
 

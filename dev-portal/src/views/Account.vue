@@ -303,7 +303,7 @@
       </el-col>
     </el-row>
 
-    <el-dialog v-model="teamDialogVisible" :title="editingMemberId ? lt('编辑成员', '編輯成員', 'Edit Member') : lt('新增成员', '新增成員', 'Add Member')" width="520px">
+    <el-dialog v-model="teamDialogVisible" :title="editingMemberId ? lt('编辑成员', '編輯成員', 'Edit Member') : lt('新增成员', '新增成員', 'Add Member')" :width="formDialogWidth">
       <el-form :model="teamForm" label-position="top">
         <el-form-item :label="lt('成员名称', '成員名稱', 'Member Name')">
           <el-input v-model="teamForm.memberName" />
@@ -331,7 +331,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="apiKeyDialogVisible" :title="lt('创建 API 凭证', '建立 API 憑證', 'Create API Key')" width="520px">
+    <el-dialog v-model="apiKeyDialogVisible" :title="lt('创建 API 凭证', '建立 API 憑證', 'Create API Key')" :width="formDialogWidth">
       <el-form :model="apiKeyForm" label-position="top">
         <el-form-item :label="lt('凭证名称', '憑證名稱', 'Key Name')">
           <el-input v-model="apiKeyForm.keyName" />
@@ -356,7 +356,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="secretDialogVisible" :title="lt('请立即保存密钥', '請立即保存密鑰', 'Save Your Secret Now')" width="560px">
+    <el-dialog v-model="secretDialogVisible" :title="lt('请立即保存密钥', '請立即保存密鑰', 'Save Your Secret Now')" :width="secretDialogWidth">
       <div class="secret-box">
         <div class="secret-label">Access Key</div>
         <div class="secret-value">{{ createdKey.accessKey }}</div>
@@ -369,7 +369,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="revokeDialogVisible" :title="lt('撤销 API 凭证', '撤銷 API 憑證', 'Revoke API Key')" width="460px">
+    <el-dialog v-model="revokeDialogVisible" :title="lt('撤销 API 凭证', '撤銷 API 憑證', 'Revoke API Key')" :width="confirmDialogWidth">
       <div class="danger-desc">{{ lt('撤销后凭证将立刻失效，且不能恢复。请输入 REVOKE 确认。', '撤銷後憑證會立刻失效，且無法恢復。請輸入 REVOKE 確認。', 'Revoked keys stop working immediately and cannot be restored. Enter REVOKE to confirm.') }}</div>
       <el-input v-model="revokeConfirmText" class="danger-input" placeholder="REVOKE" />
       <template #footer>
@@ -378,7 +378,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="rotateDialogVisible" :title="lt('轮换 API 凭证', '輪換 API 憑證', 'Rotate API Key')" width="520px">
+    <el-dialog v-model="rotateDialogVisible" :title="lt('轮换 API 凭证', '輪換 API 憑證', 'Rotate API Key')" :width="formDialogWidth">
       <div class="danger-desc">{{ lt('轮换会立即生成一把新密钥，并撤销当前旧密钥。请输入 REVOKE 确认。', '輪換會立即產生一把新密鑰，並撤銷目前舊密鑰。請輸入 REVOKE 確認。', 'Rotation creates a new key immediately and revokes the current one. Enter REVOKE to confirm.') }}</div>
       <el-form :model="rotateForm" label-position="top">
         <el-form-item :label="lt('确认文本', '確認文字', 'Confirm Text')">
@@ -430,11 +430,13 @@ import {
   updateTeamMember,
   updateTeamMemberStatus
 } from '../api'
+import { useViewport } from '../composables/useViewport'
 import { useI18nLite } from '../i18n'
 import { useUserStore } from '../stores/user'
 import { formatDate } from '../utils/portal'
 
 const { lt } = useI18nLite()
+const { isTabletOrBelow, isPhone } = useViewport()
 const route = useRoute()
 const userStore = useUserStore()
 const savingProfile = ref(false)
@@ -468,6 +470,9 @@ const certificationReviews = ref([])
 const revokeTarget = ref(null)
 const revokeConfirmText = ref('')
 const rotateTarget = ref(null)
+const formDialogWidth = computed(() => (isPhone.value ? '94%' : '520px'))
+const secretDialogWidth = computed(() => (isPhone.value ? '94%' : isTabletOrBelow.value ? '88%' : '560px'))
+const confirmDialogWidth = computed(() => (isPhone.value ? '92%' : '460px'))
 const certificationAssetsText = ref('')
 const createdKey = reactive({
   accessKey: '',
@@ -1125,8 +1130,18 @@ watch(() => route.meta?.focusSection, async () => {
     flex-direction: column;
   }
 
+  .table-tools {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .password-form {
+    max-width: none;
   }
 }
 </style>

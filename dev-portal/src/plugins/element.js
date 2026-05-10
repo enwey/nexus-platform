@@ -1,0 +1,82 @@
+import {
+  ElAlert,
+  ElButton,
+  ElCard,
+  ElCol,
+  ElConfigProvider,
+  ElDatePicker,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElDialog,
+  ElDivider,
+  ElDrawer,
+  ElEmpty,
+  ElForm,
+  ElFormItem,
+  ElIcon,
+  ElInput,
+  ElInputNumber,
+  ElLink,
+  ElLoading,
+  ElMenu,
+  ElMenuItem,
+  ElOption,
+  ElProgress,
+  ElRow,
+  ElSelect,
+  ElSkeleton,
+  ElSpace,
+  ElSubMenu,
+  ElSwitch,
+  ElTabPane,
+  ElTable,
+  ElTableColumn,
+  ElTabs,
+  ElTag,
+  ElUpload
+} from 'element-plus'
+
+const components = [
+  ElAlert,
+  ElButton,
+  ElCard,
+  ElCol,
+  ElConfigProvider,
+  ElDatePicker,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElDialog,
+  ElDivider,
+  ElDrawer,
+  ElEmpty,
+  ElForm,
+  ElFormItem,
+  ElIcon,
+  ElInput,
+  ElInputNumber,
+  ElLink,
+  ElMenu,
+  ElMenuItem,
+  ElOption,
+  ElProgress,
+  ElRow,
+  ElSelect,
+  ElSkeleton,
+  ElSpace,
+  ElSubMenu,
+  ElSwitch,
+  ElTabPane,
+  ElTable,
+  ElTableColumn,
+  ElTabs,
+  ElTag,
+  ElUpload
+]
+
+export function registerElement(app) {
+  components.forEach((component) => {
+    app.use(component)
+  })
+
+  app.use(ElLoading)
+}
