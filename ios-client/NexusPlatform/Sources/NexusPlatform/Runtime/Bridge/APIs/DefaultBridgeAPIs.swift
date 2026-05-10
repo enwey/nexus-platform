@@ -219,37 +219,35 @@ struct BridgeHTTPResponse: Sendable {
 
 actor BridgeRequestClient {
     private let session: URLSession
-    private let backendBaseURL: URL
-    private let accessPolicy: BridgeRequestAccessPolicy
 
-    init(session: URLSession = BackendPinnedSession.shared, backendBaseURL: URL = BackendEnvironment.current().apiBaseURL) {
+    init(session: URLSession = BackendPinnedSession.shared) {
         self.session = session
-        self.backendBaseURL = backendBaseURL
-        self.accessPolicy = BridgeRequestAccessPolicy(backendBaseURL: backendBaseURL)
     }
 
     func send(params: [String: AnySendable]) async throws -> [String: AnySendable] {
-        let url = try accessPolicy.resolveURL(from: resolveRawURL(params: params))
-        var request = URLRequest(url: url)
-        request.httpMethod = resolveMethod(params: params)
-        request.timeoutInterval = resolveTimeout(params: params)
-
-        var headers = resolveHeaders(params: params)
-        if accessPolicy.shouldAttachAuthHeaders(to: url) {
-            headers.merge(await resolveAuthHeaders(url: url), uniquingKeysWith: { existing, _ in existing })
-        }
-        for (k, v) in headers {
-            request.setValue(v, forHTTPHeaderField: k)
-        }
-
-        if let body = params["data"] {
-            if request.value(forHTTPHeaderField: "Content-Type") == nil {
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            }
-            request.httpBody = try JSONSerialization.data(withJSONObject: body.toFoundationObject())
-        }
-
         do {
+            let environment = try BackendEnvironment.current()
+            let accessPolicy = BridgeRequestAccessPolicy(backendBaseURL: environment.apiBaseURL)
+            let url = try accessPolicy.resolveURL(from: resolveRawURL(params: params))
+            var request = URLRequest(url: url)
+            request.httpMethod = resolveMethod(params: params)
+            request.timeoutInterval = resolveTimeout(params: params)
+
+            var headers = resolveHeaders(params: params)
+            if accessPolicy.shouldAttachAuthHeaders(to: url) {
+                headers.merge(await resolveAuthHeaders(url: url), uniquingKeysWith: { existing, _ in existing })
+            }
+            for (k, v) in headers {
+                request.setValue(v, forHTTPHeaderField: k)
+            }
+
+            if let body = params["data"] {
+                if request.value(forHTTPHeaderField: "Content-Type") == nil {
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                }
+                request.httpBody = try JSONSerialization.data(withJSONObject: body.toFoundationObject())
+            }
+
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else {
                 throw JSBridgeError(code: -1, message: "request:fail invalid response")

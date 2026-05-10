@@ -3,6 +3,7 @@ import WebKit
 
 final class NexusSchemeHandler: NSObject, WKURLSchemeHandler {
     private let fileResolver: SandboxFileResolver
+    private var activeTaskIDs = Set<ObjectIdentifier>()
     private var cancelledTaskIDs = Set<ObjectIdentifier>()
     private let lock = NSLock()
 
@@ -13,6 +14,9 @@ final class NexusSchemeHandler: NSObject, WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         let taskID = ObjectIdentifier(urlSchemeTask)
+        markActive(taskID: taskID)
+        defer { clearState(taskID: taskID) }
+
         guard let requestURL = urlSchemeTask.request.url else {
             urlSchemeTask.didFailWithError(URLError(.badURL))
             return
@@ -58,7 +62,25 @@ final class NexusSchemeHandler: NSObject, WKURLSchemeHandler {
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
         let taskID = ObjectIdentifier(urlSchemeTask)
         lock.lock()
-        cancelledTaskIDs.insert(taskID)
+        if activeTaskIDs.contains(taskID) {
+            cancelledTaskIDs.insert(taskID)
+        } else {
+            cancelledTaskIDs.remove(taskID)
+        }
+        lock.unlock()
+    }
+
+    private func markActive(taskID: ObjectIdentifier) {
+        lock.lock()
+        activeTaskIDs.insert(taskID)
+        cancelledTaskIDs.remove(taskID)
+        lock.unlock()
+    }
+
+    private func clearState(taskID: ObjectIdentifier) {
+        lock.lock()
+        activeTaskIDs.remove(taskID)
+        cancelledTaskIDs.remove(taskID)
         lock.unlock()
     }
 

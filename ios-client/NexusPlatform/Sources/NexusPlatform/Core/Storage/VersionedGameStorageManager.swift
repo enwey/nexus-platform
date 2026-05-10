@@ -1,26 +1,31 @@
 import Foundation
 import CryptoKit
+import CryptoSwift
 import WebKit
 import ZIPFoundation
 
 actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     private let securePackageV1 = "NEXUS_SECURE_ZIP_V1"
     private let supportedPackageFormatsHeader = "NEXUS_SECURE_ZIP_V1"
+    private let cryptoChunkSize = 64 * 1024
     private let fileManager: FileManager
     private let gamesRoot: URL
+    private let legacyGamesRoot: URL
     private let session: URLSession
 
     init(fileManager: FileManager = .default, session: URLSession = BackendPinnedSession.shared) {
         self.fileManager = fileManager
-        let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        self.gamesRoot = documents.appendingPathComponent("games", isDirectory: true)
+        self.gamesRoot = GameStoragePaths.gamesRoot(fileManager: fileManager)
+        self.legacyGamesRoot = GameStoragePaths.legacyGamesRoot(fileManager: fileManager)
         self.session = session
     }
 
     func bootstrapStorageIfNeeded() throws {
+        try migrateLegacyStorageIfNeeded()
         if fileManager.fileExists(atPath: gamesRoot.path) == false {
             try fileManager.createDirectory(at: gamesRoot, withIntermediateDirectories: true)
         }
+        try markGamesRootExcludedFromBackup()
     }
 
     func rootDirectory(for gameID: String) -> URL {
@@ -173,6 +178,9 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
 
         if fileManager.fileExists(atPath: gamesRoot.path) {
             try fileManager.removeItem(at: gamesRoot)
+        }
+        if legacyGamesRoot.path != gamesRoot.path, fileManager.fileExists(atPath: legacyGamesRoot.path) {
+            try fileManager.removeItem(at: legacyGamesRoot)
         }
 
         try clearDirectoryContents(at: fileManager.temporaryDirectory)
@@ -333,8 +341,15 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     }
 
     private func calculateMD5(fileURL: URL) throws -> String {
-        let data = try Data(contentsOf: fileURL)
-        let digest = Insecure.MD5.hash(data: data)
+        let handle = try FileHandle(forReadingFrom: fileURL)
+        defer { try? handle.close() }
+
+        var hasher = Insecure.MD5()
+        while let chunk = try handle.read(upToCount: cryptoChunkSize), chunk.isEmpty == false {
+            hasher.update(data: chunk)
+        }
+
+        let digest = hasher.finalize()
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
@@ -372,25 +387,17 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
 
     private func decryptSecurePackageV1(_ securePackage: SecurePackageContainer, package: GamePackageDescriptor) async throws -> URL {
         let contentKey = try await fetchRuntimePackageKey(gameID: package.gameID, version: package.version)
-        let encryptedPayload = try Data(contentsOf: securePackage.payloadURL)
         let nonceData = Data(base64Encoded: securePackage.manifest.encryption.nonce) ?? Data()
         guard nonceData.count == 12 else {
             throw StorageError.invalidSecurePackage
         }
-        guard encryptedPayload.count > 16 else {
-            throw StorageError.invalidSecurePackage
-        }
-
-        let cipherText = encryptedPayload.dropLast(16)
-        let tag = encryptedPayload.suffix(16)
-        let sealedBox = try AES.GCM.SealedBox(
-            nonce: AES.GCM.Nonce(data: nonceData),
-            ciphertext: Data(cipherText),
-            tag: Data(tag)
-        )
-        let plainZIP = try AES.GCM.open(sealedBox, using: SymmetricKey(data: contentKey))
         let outputURL = fileManager.temporaryDirectory.appendingPathComponent("secure_plain_\(UUID().uuidString).zip")
-        try Data(plainZIP).write(to: outputURL, options: .atomic)
+        try decryptSecurePayload(
+            inputURL: securePackage.payloadURL,
+            outputURL: outputURL,
+            key: contentKey,
+            nonce: nonceData
+        )
         return outputURL
     }
 
@@ -401,8 +408,10 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
         }
         let deviceID = runtimeDeviceID()
 
+        let environment = try BackendEnvironment.current()
+
         var ticketComponents = URLComponents(
-            url: BackendEnvironment.current()
+            url: environment
                 .apiBaseURL
                 .appendingPathComponent("game")
                 .appendingPathComponent(gameID)
@@ -414,7 +423,7 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
             throw StorageError.invalidSecurePackage
         }
 
-        let client = BackendAPIClient(session: session, baseURL: BackendEnvironment.current().apiBaseURL)
+        let client = BackendAPIClient(session: session, baseURL: environment.apiBaseURL)
         guard let ticketPayload = try await client.request(
             url: ticketURL,
             authMode: .required,
@@ -428,7 +437,7 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
             throw StorageError.runtimeKeyUnavailable
         }
 
-        let redeemURL = BackendEnvironment.current()
+        let redeemURL = environment
             .apiBaseURL
             .appendingPathComponent("game")
             .appendingPathComponent(gameID)
@@ -492,10 +501,13 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
     }
 
     private func measurableCacheDirectories() -> [URL] {
-        return [
-            gamesRoot,
-            fileManager.temporaryDirectory
-        ].compactMap { $0 }
+        return Array(
+            Set([
+                gamesRoot,
+                legacyGamesRoot,
+                fileManager.temporaryDirectory
+            ])
+        )
     }
 
     private func clearWebKitCache() async {
@@ -507,6 +519,99 @@ actor VersionedGameStorageManager: @preconcurrency GameStorageManagerProtocol {
                     continuation.resume()
                 }
             }
+        }
+    }
+
+    private func markGamesRootExcludedFromBackup() throws {
+        if fileManager.fileExists(atPath: gamesRoot.path) {
+            try GameStoragePaths.excludeFromBackup(at: gamesRoot)
+        }
+    }
+
+    private func migrateLegacyStorageIfNeeded() throws {
+        let legacyRoot = legacyGamesRoot.standardizedFileURL
+        let currentRoot = gamesRoot.standardizedFileURL
+        guard legacyRoot.path != currentRoot.path else { return }
+        guard fileManager.fileExists(atPath: legacyRoot.path) else { return }
+
+        try fileManager.createDirectory(at: currentRoot.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if fileManager.fileExists(atPath: currentRoot.path) == false {
+            try fileManager.moveItem(at: legacyRoot, to: currentRoot)
+            return
+        }
+
+        let entries = try fileManager.contentsOfDirectory(at: legacyRoot, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
+        for entry in entries {
+            let target = currentRoot.appendingPathComponent(entry.lastPathComponent, isDirectory: true)
+            if fileManager.fileExists(atPath: target.path) {
+                try? fileManager.removeItem(at: entry)
+                continue
+            }
+            try fileManager.moveItem(at: entry, to: target)
+        }
+
+        let remainingEntries = try fileManager.contentsOfDirectory(at: legacyRoot, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
+        if remainingEntries.isEmpty {
+            try? fileManager.removeItem(at: legacyRoot)
+        }
+    }
+
+    private func decryptSecurePayload(
+        inputURL: URL,
+        outputURL: URL,
+        key: Data,
+        nonce: Data
+    ) throws {
+        let inputHandle = try FileHandle(forReadingFrom: inputURL)
+        defer { try? inputHandle.close() }
+
+        let totalSize = try inputHandle.seekToEnd()
+        let tagLength = 16
+        guard totalSize > UInt64(tagLength) else {
+            throw StorageError.invalidSecurePackage
+        }
+
+        try inputHandle.seek(toOffset: totalSize - UInt64(tagLength))
+        let tagData = try inputHandle.read(upToCount: tagLength) ?? Data()
+        guard tagData.count == tagLength else {
+            throw StorageError.invalidSecurePackage
+        }
+
+        if fileManager.fileExists(atPath: outputURL.path) {
+            try fileManager.removeItem(at: outputURL)
+        }
+        fileManager.createFile(atPath: outputURL.path, contents: nil)
+        let outputHandle = try FileHandle(forWritingTo: outputURL)
+        defer { try? outputHandle.close() }
+
+        do {
+            try inputHandle.seek(toOffset: 0)
+            let gcm = CryptoSwift.GCM(iv: Array(nonce), authenticationTag: Array(tagData), mode: .detached)
+            let aes = try CryptoSwift.AES(key: Array(key), blockMode: gcm, padding: .noPadding)
+            var decryptor = try aes.makeDecryptor()
+            var remainingCiphertextBytes = Int(totalSize) - tagLength
+
+            while remainingCiphertextBytes > 0 {
+                let chunkSize = min(cryptoChunkSize, remainingCiphertextBytes)
+                let chunk = try inputHandle.read(upToCount: chunkSize) ?? Data()
+                guard chunk.isEmpty == false else {
+                    throw StorageError.invalidSecurePackage
+                }
+
+                remainingCiphertextBytes -= chunk.count
+                let plainChunk = try decryptor.update(withBytes: Array(chunk))
+                if plainChunk.isEmpty == false {
+                    try outputHandle.write(contentsOf: Data(plainChunk))
+                }
+            }
+
+            let finalChunk = try decryptor.finish()
+            if finalChunk.isEmpty == false {
+                try outputHandle.write(contentsOf: Data(finalChunk))
+            }
+        } catch {
+            try? fileManager.removeItem(at: outputURL)
+            throw error
         }
     }
 }

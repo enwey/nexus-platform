@@ -37,9 +37,18 @@ private struct LegacyBridgeRequestAccessPolicy {
 }
 
 class RequestApi: ApiHandler {
-    private let accessPolicy = LegacyBridgeRequestAccessPolicy(backendBaseURL: BackendEnvironment.current().apiBaseURL)
-
     func handle(api: String, params: [String: Any]) async throws -> Any {
+        let accessPolicy: LegacyBridgeRequestAccessPolicy
+        do {
+            let environment = try BackendEnvironment.current()
+            accessPolicy = LegacyBridgeRequestAccessPolicy(backendBaseURL: environment.apiBaseURL)
+        } catch {
+            return [
+                "errMsg": "request:fail \(error.localizedDescription)",
+                "error": error.localizedDescription
+            ]
+        }
+
         guard let urlString = params["url"] as? String else {
             throw ApiError.invalidParameter
         }

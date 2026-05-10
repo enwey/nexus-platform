@@ -6,6 +6,7 @@ struct GameView: View {
     let game: Game
 
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var runtimeSession = GameRuntimeSession()
     @State private var isLoading = true
     @State private var isContentVisible = false
     @State private var showLoadingOverlay = true
@@ -32,8 +33,6 @@ struct GameView: View {
     private let runtimeMenuCloseAnimation = Animation.easeInOut(duration: 0.34)
     private let runtimeMenuHiddenOffset: CGFloat = 520
 
-    private let bridge = JSBridge()
-    private let schemeHandler = NexusSchemeHandler()
     private let libraryService: LibraryHomeServiceProtocol = LibraryHomeService()
     private let runtimeProfileService: GameRuntimeProfileServiceProtocol = GameRuntimeProfileService()
     private var copy: GameRuntimeCopy {
@@ -49,8 +48,8 @@ struct GameView: View {
                 if gameReady {
                     GameWebView(
                         initialURL: gameEntryURL(),
-                        bridge: bridge,
-                        schemeHandler: schemeHandler,
+                        bridge: runtimeSession.bridge,
+                        schemeHandler: runtimeSession.schemeHandler,
                         sdkScript: GameManager.shared.getSDKContent(),
                         layoutMetrics: layoutMetrics(in: proxy),
                         language: language,
@@ -96,14 +95,14 @@ struct GameView: View {
                 await ensureAuthenticatedAndBoot()
                 runtimeProfile = try? await runtimeProfileService.fetchRuntimeProfile(appID: game.id)
                 await MainActor.run {
-                    bridge.updateMenuRectProvider {
+                    runtimeSession.bridge.updateMenuRectProvider {
                         menuButtonRect(in: proxy)
                     }
                 }
             }
             .onChange(of: proxy.size) {
                 Task { @MainActor in
-                    bridge.updateMenuRectProvider {
+                    runtimeSession.bridge.updateMenuRectProvider {
                         menuButtonRect(in: proxy)
                     }
                 }
@@ -703,6 +702,12 @@ struct GameView: View {
             menuButtonRect: menuButtonRect(in: proxy)
         )
     }
+}
+
+@MainActor
+private final class GameRuntimeSession: ObservableObject {
+    let bridge = JSBridge()
+    let schemeHandler = NexusSchemeHandler()
 }
 
 private struct RuntimeLoadingBar: View {

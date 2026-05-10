@@ -6,8 +6,7 @@ struct SandboxFileResolver {
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
-        let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        self.gamesRoot = documents.appendingPathComponent("games", isDirectory: true)
+        self.gamesRoot = GameStoragePaths.gamesRoot(fileManager: fileManager)
     }
 
     func resolveFileURL(for requestURL: URL) -> URL? {

@@ -225,20 +225,15 @@ struct BackendAPIClient {
 enum BackendPinnedSession {
     static let shared: URLSession = {
         let config = URLSessionConfiguration.default
-        let delegate = BackendPinningDelegate(environment: .current())
+        let delegate = BackendPinningDelegate()
         return URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
     }()
 }
 
 private final class BackendPinningDelegate: NSObject, URLSessionDelegate {
     private let expectedCertSHA256Pins: Set<String>
-    private let pinnedHost: String?
-    private let isHTTPS: Bool
 
-    init(environment: BackendEnvironment) {
-        self.pinnedHost = environment.apiBaseURL.host
-        self.isHTTPS = environment.apiBaseURL.scheme?.lowercased() == "https"
-
+    override init() {
         if let raw = ProcessInfo.processInfo.environment["BACKEND_CERT_SHA256"], raw.isEmpty == false {
             self.expectedCertSHA256Pins = Self.parsePins(raw)
         } else if let raw = Bundle.main.object(forInfoDictionaryKey: "BACKEND_CERT_SHA256") as? String, raw.isEmpty == false {
@@ -254,6 +249,13 @@ private final class BackendPinningDelegate: NSObject, URLSessionDelegate {
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
+        guard let environment = try? BackendEnvironment.current() else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        let pinnedHost = environment.apiBaseURL.host
+        let isHTTPS = environment.apiBaseURL.scheme?.lowercased() == "https"
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               isHTTPS,
               expectedCertSHA256Pins.isEmpty == false,

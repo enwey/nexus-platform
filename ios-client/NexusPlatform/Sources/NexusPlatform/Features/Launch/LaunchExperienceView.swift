@@ -388,8 +388,9 @@ struct LaunchAdCachedPayload: Codable, Sendable {
 actor LaunchAdService {
     static let shared = LaunchAdService()
 
-    private var client: BackendAPIClient {
-        .init(session: BackendPinnedSession.shared, baseURL: BackendEnvironment.current().apiBaseURL)
+    private func makeClient() throws -> BackendAPIClient {
+        let environment = try BackendEnvironment.current()
+        return .init(session: BackendPinnedSession.shared, baseURL: environment.apiBaseURL)
     }
 
     func refreshCacheIfNeeded() async {
@@ -404,6 +405,7 @@ actor LaunchAdService {
     }
 
     private func fetchCurrent() async throws -> LaunchAdRemotePayload? {
+        let client = try makeClient()
         guard let payload = try await client.request(path: "launch/ad/current", authMode: .optional) as? [String: Any] else {
             return nil
         }

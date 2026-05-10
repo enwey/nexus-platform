@@ -32,38 +32,46 @@ enum GameUpdateCheckError: LocalizedError {
     }
 }
 
+enum BackendEnvironmentError: LocalizedError, Sendable {
+    case missingBaseURL
+    case invalidBaseURL
+
+    var errorDescription: String? {
+        switch self {
+        case .missingBaseURL:
+            return "Missing backend API base URL configuration."
+        case .invalidBaseURL:
+            return "Invalid backend API base URL configuration."
+        }
+    }
+}
+
 struct BackendEnvironment {
     let apiBaseURL: URL
 
-    static func current() -> BackendEnvironment {
-        if let raw = ProcessInfo.processInfo.environment["PLATFORM_API_BASE_URL"],
-           let url = normalizedURL(from: raw) {
+    static func current() throws -> BackendEnvironment {
+        let candidates = [
+            ProcessInfo.processInfo.environment["PLATFORM_API_BASE_URL"],
+            ProcessInfo.processInfo.environment["BACKEND_BASE_URL"],
+            Bundle.main.object(forInfoDictionaryKey: "PLATFORM_API_BASE_URL") as? String,
+            Bundle.main.object(forInfoDictionaryKey: "BACKEND_BASE_URL") as? String
+        ]
+
+        for raw in candidates {
+            guard let raw else { continue }
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.isEmpty == false else { continue }
+            guard let url = normalizedURL(from: trimmed) else {
+                throw BackendEnvironmentError.invalidBaseURL
+            }
             return BackendEnvironment(apiBaseURL: url)
         }
-        if let raw = ProcessInfo.processInfo.environment["BACKEND_BASE_URL"],
-           let url = normalizedURL(from: raw) {
-            return BackendEnvironment(apiBaseURL: url)
-        }
-        if let raw = Bundle.main.object(forInfoDictionaryKey: "PLATFORM_API_BASE_URL") as? String,
-           let url = normalizedURL(from: raw) {
-            return BackendEnvironment(apiBaseURL: url)
-        }
-        if let raw = Bundle.main.object(forInfoDictionaryKey: "BACKEND_BASE_URL") as? String,
-           let url = normalizedURL(from: raw) {
-            return BackendEnvironment(apiBaseURL: url)
-        }
-        fatalError(
-            "Missing PLATFORM_API_BASE_URL (or legacy BACKEND_BASE_URL). " +
-            "Inject a backend API base URL through the scheme, build settings, or launch script."
-        )
+
+        throw BackendEnvironmentError.missingBaseURL
     }
 
     private static func normalizedURL(from raw: String) -> URL? {
-        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard value.isEmpty == false else {
-            return nil
-        }
-        guard let url = URL(string: value),
+        guard let url = URL(string: raw),
               let scheme = url.scheme?.lowercased(),
               ["http", "https"].contains(scheme),
               url.host?.isEmpty == false else {
@@ -74,15 +82,21 @@ struct BackendEnvironment {
 }
 
 struct BackendGameUpdateService: GameUpdateCheckServiceProtocol {
-    private let baseURL: URL
+    private let configuredBaseURL: URL?
     private let session: URLSession
 
-    init(environment: BackendEnvironment = .current(), session: URLSession = BackendPinnedSession.shared) {
-        self.baseURL = environment.apiBaseURL
+    init(environment: BackendEnvironment? = nil, session: URLSession = BackendPinnedSession.shared) {
+        self.configuredBaseURL = environment?.apiBaseURL
         self.session = session
     }
 
     func checkUpdate(appID: String, localVersion: String) async throws -> GameUpdateInfo {
+        let baseURL: URL
+        if let configuredBaseURL {
+            baseURL = configuredBaseURL
+        } else {
+            baseURL = try BackendEnvironment.current().apiBaseURL
+        }
         var components = URLComponents(url: baseURL.appendingPathComponent("game/check-update"), resolvingAgainstBaseURL: false)
         components?.queryItems = [
             URLQueryItem(name: "appId", value: appID),

@@ -57,7 +57,7 @@ actor GameLaunchCoordinator {
         do {
             updateInfo = try await updateService.checkUpdate(appID: game.id, localVersion: localVersion)
         } catch {
-            if current == nil {
+            if current == nil, game.downloadUrl.isEmpty {
                 throw GameLaunchError.updateCheckFailed(error.localizedDescription)
             }
             updateInfo = nil
